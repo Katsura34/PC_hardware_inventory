@@ -1,0 +1,1 @@
+# hardware_inventory_system
