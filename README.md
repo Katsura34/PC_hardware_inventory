@@ -1,1 +1,1 @@
-# hardware_inventory_system
+# PC_hardware_inventory_system
