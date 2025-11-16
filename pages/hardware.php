@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt = $conn->prepare("UPDATE hardware SET name=?, category_id=?, type=?, brand=?, model=?, serial_number=?, 
                                total_quantity=?, unused_quantity=?, in_use_quantity=?, damaged_quantity=?, 
                                repair_quantity=?, location=? WHERE id=?");
-        $stmt->bind_param("sissssiiiiiisi", $name, $category_id, $type, $brand, $model, $serial_number, 
+        $stmt->bind_param("sissssiiiiisi", $name, $category_id, $type, $brand, $model, $serial_number, 
                          $total_quantity, $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity, $location, $id);
         
         if ($stmt->execute()) {
