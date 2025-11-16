@@ -1,0 +1,25 @@
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.log
+*.cache
+
+# Sensitive configuration (if you customize it)
+# config/database.php
+
+# Backup files
+*.bak
+*.backup
+*.sql.gz
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
