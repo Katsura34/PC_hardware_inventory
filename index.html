@@ -1,106 +1,53 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Login — PC Hardware Inventory</title>
-  <style>
-    :root{--bg:#f4f7fb;--card:#ffffff;--accent:#0b5cff;--muted:#6b7280}
-    *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,var(--bg),#eef2ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-    .card{width:100%;max-width:420px;background:var(--card);border-radius:12px;box-shadow:0 6px 24px rgba(12,18,37,0.08);padding:28px}
-    h1{margin:0 0 8px;font-size:20px;color:#0f172a}p.lead{margin:0 0 20px;color:var(--muted);font-size:13px}
-    .form-group{margin-bottom:14px}label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input[type=text],input[type=password],input[type=email]{width:100%;padding:10px 12px;border:1px solid #e6e9ef;border-radius:8px;font-size:14px}input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px rgba(11,92,255,0.06)}.row{display:flex;gap:10px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}.btn.secondary{background:#eef2ff;color:var(--accent);border:1px solid rgba(11,92,255,0.08)}.help{font-size:12px;color:var(--muted);margin-top:8px}.error{color:#b91c1c;font-size:13px;margin-top:8px}
-    .actions{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
-    .showpass{background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:13px}
-    @media (max-width:480px){.card{padding:20px}}
-  </style>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=login.php">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting to PC Hardware Inventory</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .loader {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid white;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        a {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-  <main class="card" aria-labelledby="login-heading">
-    <h1 id="login-heading">Sign in to PC Hardware Inventory</h1>
-    <p class="lead">Enter your account details to access the inventory dashboard.</p>
-
-    <form id="login-form" autocomplete="on" novalidate>
-      <div class="form-group">
-        <label for="username">Email or username</label>
-        <input id="username" name="username" type="text" inputmode="email" placeholder="you@example.com or your-username" required aria-required="true">
-      </div>
-
-      <div class="form-group">
-        <label for="password">Password</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="password" name="password" type="password" placeholder="Enter your password" required aria-required="true">
-          <button type="button" class="showpass" id="toggle-pass" aria-pressed="false" aria-label="Show password">Show</button>
-        </div>
-      </div>
-
-      <div class="actions">
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
-          <input type="checkbox" id="remember" name="remember"> Remember me
-        </label>
-        <a href="#" style="font-size:13px;color:var(--accent);text-decoration:none">Forgot password?</a>
-      </div>
-
-      <div style="margin-top:18px;display:flex;gap:8px">
-        <button class="btn" type="submit">Sign in</button>
-        <button type="button" class="btn secondary" id="demo-login">Try demo</button>
-      </div>
-
-      <div id="form-msg" role="status" aria-live="polite"></div>
-    </form>
-
-    <p class="help">New here? <a href="#" style="color:var(--accent)">Create an account</a></p>
-  </main>
-
-  <script>
-    const form = document.getElementById('login-form');
-    const username = document.getElementById('username');
-    const password = document.getElementById('password');
-    const msg = document.getElementById('form-msg');
-    const toggle = document.getElementById('toggle-pass');
-    const demo = document.getElementById('demo-login');
-
-    toggle.addEventListener('click', ()=>{
-      const isHidden = password.type === 'password';
-      password.type = isHidden ? 'text' : 'password';
-      toggle.textContent = isHidden ? 'Hide' : 'Show';
-      toggle.setAttribute('aria-pressed', String(isHidden));
-      toggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-    });
-
-    demo.addEventListener('click', ()=>{
-      username.value = 'demo@pc-inventory.local';
-      password.value = 'Dem0Pass!';
-      msg.textContent = 'Filled demo credentials (client-side only). Click Sign in.';
-    });
-
-    form.addEventListener('submit', (e)=>{
-      e.preventDefault();
-      msg.textContent = '';
-
-      // Simple client-side validation
-      if(!username.value.trim()){
-        msg.innerHTML = '<div class="error">Please enter your email or username.</div>';
-        username.focus();
-        return;
-      }
-      if(password.value.length < 6){
-        msg.innerHTML = '<div class="error">Password must be at least 6 characters.</div>';
-        password.focus();
-        return;
-      }
-
-      // NOTE: This is a placeholder for real authentication. Replace with secure server-side logic.
-      msg.textContent = 'Signing in...';
-
-      // Simulate network request
-      setTimeout(()=>{
-        // For now, just show success and log the (trimmed) values to console for developer use only.
-        console.log('Login attempt:', {username: username.value.trim(), password: password.value});
-        msg.innerHTML = '<div style="color:green;font-size:13px;margin-top:8px">Signed in (simulated). Redirecting to dashboard...</div>'
-        // In a real app, redirect on success: window.location.href = '/dashboard'
-      }, 700);
-    });
-  </script>
+    <div class="container">
+        <h1>PC Hardware Inventory System</h1>
+        <div class="loader"></div>
+        <p>Redirecting to login page...</p>
+        <p><small>If not redirected, <a href="login.php">click here</a></small></p>
+    </div>
 </body>
 </html>
