@@ -80,7 +80,8 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
             <div class="login-header">
                 <i class="bi bi-pc-display" style="font-size: 48px;"></i>
                 <h2>PC Hardware Inventory</h2>
-                <p class="mb-0">Sign in to your account</p>
+                <p class="mb-0" style="font-size: 1.1rem; font-weight: 500;">ACLC College of Ormoc</p>
+                <p class="mb-0" style="font-size: 0.9rem; opacity: 0.9;">Sign in to your account</p>
             </div>
             <div class="login-body">
                 <?php if (!empty($error)): ?>

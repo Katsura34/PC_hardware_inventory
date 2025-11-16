@@ -13,6 +13,30 @@ $conn = getDBConnection();
 if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     
+    // Get hardware details before deleting for history log
+    $old_stmt = $conn->prepare("SELECT name, total_quantity, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity FROM hardware WHERE id = ?");
+    $old_stmt->bind_param("i", $id);
+    $old_stmt->execute();
+    $old_result = $old_stmt->get_result();
+    $old_data = $old_result->fetch_assoc();
+    $old_stmt->close();
+    
+    if ($old_data) {
+        // Log to history before deleting
+        $user_id = $_SESSION['user_id'];
+        $quantity_change = -$old_data['total_quantity'];
+        
+        $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, user_id, action_type, quantity_change, 
+                                   old_unused, old_in_use, old_damaged, old_repair, 
+                                   new_unused, new_in_use, new_damaged, new_repair) 
+                                   VALUES (?, ?, 'Deleted', ?, ?, ?, ?, ?, 0, 0, 0, 0)");
+        $log_stmt->bind_param("iiiiiiii", $id, $user_id, $quantity_change, 
+                             $old_data['unused_quantity'], $old_data['in_use_quantity'], 
+                             $old_data['damaged_quantity'], $old_data['repair_quantity']);
+        $log_stmt->execute();
+        $log_stmt->close();
+    }
+    
     // Delete hardware
     $stmt = $conn->prepare("DELETE FROM hardware WHERE id = ?");
     $stmt->bind_param("i", $id);
@@ -84,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt = $conn->prepare("UPDATE hardware SET name=?, category_id=?, type=?, brand=?, model=?, serial_number=?, 
                                total_quantity=?, unused_quantity=?, in_use_quantity=?, damaged_quantity=?, 
                                repair_quantity=?, location=? WHERE id=?");
-        $stmt->bind_param("sissssiiiiiisi", $name, $category_id, $type, $brand, $model, $serial_number, 
+        $stmt->bind_param("sissssiiiiisi", $name, $category_id, $type, $brand, $model, $serial_number, 
                          $total_quantity, $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity, $location, $id);
         
         if ($stmt->execute()) {
@@ -133,6 +157,9 @@ include '../includes/header.php';
 
 <div class="row mb-4">
     <div class="col-12">
+        <div class="aclc-branding">
+            <h6><i class="bi bi-building"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
+        </div>
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h1 class="text-gradient mb-1">

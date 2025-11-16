@@ -25,7 +25,7 @@ if (!isset($pageTitle)) {
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand" href="/PC_hardware_inventory/dashboard.php">
-                <i class="bi bi-pc-display"></i> PC Inventory
+                <i class="bi bi-pc-display"></i> PC Inventory - ACLC Ormoc
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
