@@ -72,7 +72,7 @@ include 'includes/header.php';
 
 <div class="row mb-4">
     <div class="col-12">
-        <div class="aclc-branding">
+        <div class="system-branding">
             <h6><i class="bi bi-building"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
         </div>
         <h1 class="text-gradient mb-1">
