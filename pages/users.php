@@ -101,8 +101,8 @@ include '../includes/header.php';
         <div class="system-branding">
             <h6><i class="bi bi-building"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
         </div>
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
                 <h1 class="text-gradient mb-1">
                     <i class="bi bi-people"></i> User Management
                 </h1>
@@ -117,9 +117,9 @@ include '../includes/header.php';
 
 <!-- Users Table -->
 <div class="card table-card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-table"></i> All Users</h5>
-        <input type="text" id="searchInput" class="form-control form-control-sm" style="max-width: 300px;" 
+    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+        <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Users</h5>
+        <input type="text" id="searchInput" class="form-control form-control-sm w-100" style="max-width: 300px;" 
                placeholder="Search..." onkeyup="searchTable('searchInput', 'usersTable')">
     </div>
     <div class="card-body p-0">
@@ -130,7 +130,7 @@ include '../includes/header.php';
                         <th>Username</th>
                         <th>Full Name</th>
                         <th>Role</th>
-                        <th>Date Created</th>
+                        <th class="d-none d-md-table-cell">Date Created</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -156,15 +156,15 @@ include '../includes/header.php';
                             <span class="badge bg-secondary">Staff</span>
                             <?php endif; ?>
                         </td>
-                        <td><small><?php echo date('M d, Y', strtotime($user['date_created'])); ?></small></td>
+                        <td class="d-none d-md-table-cell"><small><?php echo date('M d, Y', strtotime($user['date_created'])); ?></small></td>
                         <td>
                             <button class="btn btn-sm btn-info" onclick='editUser(<?php echo json_encode($user); ?>)'>
-                                <i class="bi bi-pencil"></i>
+                                <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
                             </button>
                             <?php if ($user['id'] !== $_SESSION['user_id']): ?>
                             <a href="?delete=<?php echo $user['id']; ?>" class="btn btn-sm btn-danger" 
                                onclick="return confirmDelete('Are you sure you want to delete this user?')">
-                                <i class="bi bi-trash"></i>
+                                <i class="bi bi-trash"></i><span class="d-none d-sm-inline"> Delete</span>
                             </a>
                             <?php endif; ?>
                         </td>

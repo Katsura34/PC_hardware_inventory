@@ -160,8 +160,8 @@ include '../includes/header.php';
         <div class="system-branding">
             <h6><i class="bi bi-building"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
         </div>
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
                 <h1 class="text-gradient mb-1">
                     <i class="bi bi-cpu"></i> Hardware Management
                 </h1>
@@ -176,13 +176,13 @@ include '../includes/header.php';
 
 <!-- Hardware Table -->
 <div class="card table-card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-table"></i> All Hardware</h5>
-        <div class="d-flex gap-2">
-            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search..." 
+    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+        <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Hardware</h5>
+        <div class="d-flex gap-2 w-100 w-md-auto">
+            <input type="text" id="searchInput" class="form-control form-control-sm flex-grow-1" placeholder="Search..." 
                    onkeyup="searchTable('searchInput', 'hardwareTable')">
             <button class="btn btn-sm btn-success" onclick="exportTableToCSV('hardwareTable', 'hardware_inventory.csv')">
-                <i class="bi bi-download"></i> Export
+                <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
             </button>
         </div>
     </div>
@@ -192,15 +192,15 @@ include '../includes/header.php';
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Category</th>
-                        <th>Brand/Model</th>
-                        <th>Serial</th>
+                        <th class="d-none d-md-table-cell">Category</th>
+                        <th class="d-none d-lg-table-cell">Brand/Model</th>
+                        <th class="d-none d-lg-table-cell">Serial</th>
                         <th>Total</th>
                         <th>Available</th>
-                        <th>In Use</th>
-                        <th>Damaged</th>
-                        <th>Repair</th>
-                        <th>Location</th>
+                        <th class="d-none d-md-table-cell">In Use</th>
+                        <th class="d-none d-lg-table-cell">Damaged</th>
+                        <th class="d-none d-lg-table-cell">Repair</th>
+                        <th class="d-none d-lg-table-cell">Location</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -212,28 +212,34 @@ include '../includes/header.php';
                     <?php else: ?>
                     <?php foreach ($hardware as $item): ?>
                     <tr>
-                        <td><strong><?php echo escapeOutput($item['name']); ?></strong></td>
-                        <td><span class="badge bg-primary"><?php echo escapeOutput($item['category_name']); ?></span></td>
                         <td>
+                            <strong><?php echo escapeOutput($item['name']); ?></strong>
+                            <!-- Show category on mobile -->
+                            <div class="d-md-none">
+                                <small><span class="badge bg-primary"><?php echo escapeOutput($item['category_name']); ?></span></small>
+                            </div>
+                        </td>
+                        <td class="d-none d-md-table-cell"><span class="badge bg-primary"><?php echo escapeOutput($item['category_name']); ?></span></td>
+                        <td class="d-none d-lg-table-cell">
                             <small>
                                 <?php echo escapeOutput($item['brand'] ?: '-'); ?><br>
                                 <?php echo escapeOutput($item['model'] ?: '-'); ?>
                             </small>
                         </td>
-                        <td><small class="text-muted"><?php echo escapeOutput($item['serial_number'] ?: '-'); ?></small></td>
+                        <td class="d-none d-lg-table-cell"><small class="text-muted"><?php echo escapeOutput($item['serial_number'] ?: '-'); ?></small></td>
                         <td><span class="badge bg-info"><?php echo $item['total_quantity']; ?></span></td>
                         <td><span class="badge bg-success"><?php echo $item['unused_quantity']; ?></span></td>
-                        <td><span class="badge bg-warning"><?php echo $item['in_use_quantity']; ?></span></td>
-                        <td><span class="badge bg-danger"><?php echo $item['damaged_quantity']; ?></span></td>
-                        <td><span class="badge bg-secondary"><?php echo $item['repair_quantity']; ?></span></td>
-                        <td><small><?php echo escapeOutput($item['location'] ?: '-'); ?></small></td>
+                        <td class="d-none d-md-table-cell"><span class="badge bg-warning"><?php echo $item['in_use_quantity']; ?></span></td>
+                        <td class="d-none d-lg-table-cell"><span class="badge bg-danger"><?php echo $item['damaged_quantity']; ?></span></td>
+                        <td class="d-none d-lg-table-cell"><span class="badge bg-secondary"><?php echo $item['repair_quantity']; ?></span></td>
+                        <td class="d-none d-lg-table-cell"><small><?php echo escapeOutput($item['location'] ?: '-'); ?></small></td>
                         <td>
                             <button class="btn btn-sm btn-info" onclick='editHardware(<?php echo json_encode($item); ?>)'>
-                                <i class="bi bi-pencil"></i>
+                                <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
                             </button>
                             <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" 
                                onclick="return confirmDelete('Are you sure you want to delete this hardware?')">
-                                <i class="bi bi-trash"></i>
+                                <i class="bi bi-trash"></i><span class="d-none d-sm-inline"> Delete</span>
                             </a>
                         </td>
                     </tr>
