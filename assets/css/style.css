@@ -234,6 +234,126 @@ footer {
     .stat-card {
         margin-bottom: 15px;
     }
+    
+    /* Mobile-friendly navigation */
+    .navbar-brand {
+        font-size: 16px;
+    }
+    
+    /* Make tables responsive on mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Adjust table font size on mobile */
+    .table {
+        font-size: 12px;
+    }
+    
+    .table thead th {
+        font-size: 10px;
+        padding: 10px 8px;
+    }
+    
+    .table tbody td {
+        padding: 10px 8px;
+    }
+    
+    /* Stack action buttons vertically on mobile */
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+    
+    /* Adjust card padding on mobile */
+    .card-body {
+        padding: 15px;
+    }
+    
+    .card-header {
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+    
+    /* System branding adjustments */
+    .system-branding {
+        padding: 15px;
+    }
+    
+    .system-branding h6 {
+        font-size: 0.8rem;
+    }
+    
+    /* Adjust heading sizes */
+    h1.text-gradient {
+        font-size: 1.5rem;
+    }
+    
+    /* Form controls on mobile */
+    .form-control, .form-select {
+        font-size: 14px;
+    }
+    
+    /* Search input adjustment */
+    .card-header .form-control {
+        max-width: 100% !important;
+        margin-top: 10px;
+    }
+    
+    /* Modal adjustments */
+    .modal-body {
+        padding: 15px;
+    }
+}
+
+/* Extra small devices (phones in portrait mode) */
+@media (max-width: 576px) {
+    /* Container adjustments */
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    /* Further reduce table font size */
+    .table {
+        font-size: 11px;
+    }
+    
+    .table thead th {
+        font-size: 9px;
+        padding: 8px 5px;
+    }
+    
+    .table tbody td {
+        padding: 8px 5px;
+    }
+    
+    /* Hide less critical columns on very small screens */
+    .table th:nth-child(3),
+    .table td:nth-child(3) {
+        display: none;
+    }
+    
+    /* Stack header elements vertically */
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .card-header h5 {
+        margin-bottom: 10px;
+    }
+    
+    /* Stat cards take full width */
+    .stat-value {
+        font-size: 24px;
+    }
+    
+    .stat-icon {
+        font-size: 36px;
+    }
 }
 
 /* Loading Spinner */

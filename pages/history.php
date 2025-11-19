@@ -39,9 +39,9 @@ include '../includes/header.php';
 
 <!-- History Table -->
 <div class="card table-card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-table"></i> Activity Log</h5>
-        <input type="text" id="searchInput" class="form-control form-control-sm" style="max-width: 300px;" 
+    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+        <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> Activity Log</h5>
+        <input type="text" id="searchInput" class="form-control form-control-sm w-100" style="max-width: 300px;" 
                placeholder="Search history..." onkeyup="searchTable('searchInput', 'historyTable')">
     </div>
     <div class="card-body p-0">
@@ -51,10 +51,10 @@ include '../includes/header.php';
                     <tr>
                         <th>Date & Time</th>
                         <th>Hardware Item</th>
-                        <th>Category</th>
+                        <th class="d-none d-md-table-cell">Category</th>
                         <th>Action Type</th>
-                        <th>Modified By</th>
-                        <th>Quantity Change</th>
+                        <th class="d-none d-lg-table-cell">Modified By</th>
+                        <th class="d-none d-lg-table-cell">Quantity Change</th>
                         <th>Previous Status</th>
                         <th>New Status</th>
                     </tr>
@@ -80,8 +80,15 @@ include '../includes/header.php';
                             <?php if (!empty($item['serial_number'])): ?>
                             <br><small class="text-muted">SN: <?php echo escapeOutput($item['serial_number']); ?></small>
                             <?php endif; ?>
+                            <!-- Show category and user on mobile (inline) -->
+                            <div class="d-md-none mt-1">
+                                <small><span class="badge bg-primary"><?php echo escapeOutput($item['category_name'] ?: 'N/A'); ?></span></small>
+                            </div>
+                            <div class="d-lg-none mt-1">
+                                <small class="text-muted">By: <?php echo escapeOutput($item['user_name']); ?></small>
+                            </div>
                         </td>
-                        <td><span class="badge bg-primary"><?php echo escapeOutput($item['category_name'] ?: 'N/A'); ?></span></td>
+                        <td class="d-none d-md-table-cell"><span class="badge bg-primary"><?php echo escapeOutput($item['category_name'] ?: 'N/A'); ?></span></td>
                         <td>
                             <?php
                             $badge_class = 'bg-info';
@@ -90,9 +97,22 @@ include '../includes/header.php';
                             if ($item['action_type'] === 'Removed') $badge_class = 'bg-danger';
                             ?>
                             <span class="badge <?php echo $badge_class; ?>"><?php echo escapeOutput($item['action_type']); ?></span>
+                            <!-- Show quantity change on mobile (inline) -->
+                            <div class="d-lg-none mt-1">
+                                <?php
+                                $change = $item['quantity_change'];
+                                if ($change > 0) {
+                                    echo '<span class="badge bg-success"><i class="bi bi-arrow-up"></i> +' . $change . '</span>';
+                                } elseif ($change < 0) {
+                                    echo '<span class="badge bg-danger"><i class="bi bi-arrow-down"></i> ' . $change . '</span>';
+                                } else {
+                                    echo '<span class="badge bg-secondary">No Change</span>';
+                                }
+                                ?>
+                            </div>
                         </td>
-                        <td><small><?php echo escapeOutput($item['user_name']); ?></small></td>
-                        <td>
+                        <td class="d-none d-lg-table-cell"><small><?php echo escapeOutput($item['user_name']); ?></small></td>
+                        <td class="d-none d-lg-table-cell">
                             <?php
                             $change = $item['quantity_change'];
                             if ($change > 0) {
@@ -106,18 +126,45 @@ include '../includes/header.php';
                         </td>
                         <td>
                             <small>
-                                <div><span class="text-success"><i class="bi bi-check-circle"></i> Available:</span> <?php echo $item['old_unused']; ?></div>
-                                <div><span class="text-warning"><i class="bi bi-play-circle"></i> In Use:</span> <?php echo $item['old_in_use']; ?></div>
-                                <div><span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Damaged:</span> <?php echo $item['old_damaged']; ?></div>
-                                <div><span class="text-secondary"><i class="bi bi-tools"></i> In Repair:</span> <?php echo $item['old_repair']; ?></div>
+                                <?php
+                                $changes = [];
+                                if ($item['old_unused'] != $item['new_unused']) {
+                                    $changes[] = ['label' => 'Available', 'icon' => 'bi-check-circle', 'class' => 'text-success', 'old' => $item['old_unused'], 'new' => $item['new_unused']];
+                                }
+                                if ($item['old_in_use'] != $item['new_in_use']) {
+                                    $changes[] = ['label' => 'In Use', 'icon' => 'bi-play-circle', 'class' => 'text-warning', 'old' => $item['old_in_use'], 'new' => $item['new_in_use']];
+                                }
+                                if ($item['old_damaged'] != $item['new_damaged']) {
+                                    $changes[] = ['label' => 'Damaged', 'icon' => 'bi-exclamation-triangle', 'class' => 'text-danger', 'old' => $item['old_damaged'], 'new' => $item['new_damaged']];
+                                }
+                                if ($item['old_repair'] != $item['new_repair']) {
+                                    $changes[] = ['label' => 'In Repair', 'icon' => 'bi-tools', 'class' => 'text-secondary', 'old' => $item['old_repair'], 'new' => $item['new_repair']];
+                                }
+                                
+                                if (empty($changes)) {
+                                    echo '<span class="text-muted">No changes</span>';
+                                } else {
+                                    foreach ($changes as $change) {
+                                        echo '<div><span class="' . $change['class'] . '"><i class="bi ' . $change['icon'] . '"></i> ' . $change['label'] . ':</span> ' . $change['old'] . '</div>';
+                                    }
+                                }
+                                ?>
                             </small>
                         </td>
                         <td>
                             <small>
-                                <div><span class="text-success"><i class="bi bi-check-circle"></i> Available:</span> <?php echo $item['new_unused']; ?></div>
-                                <div><span class="text-warning"><i class="bi bi-play-circle"></i> In Use:</span> <?php echo $item['new_in_use']; ?></div>
-                                <div><span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Damaged:</span> <?php echo $item['new_damaged']; ?></div>
-                                <div><span class="text-secondary"><i class="bi bi-tools"></i> In Repair:</span> <?php echo $item['new_repair']; ?></div>
+                                <?php
+                                if (empty($changes)) {
+                                    echo '<span class="text-muted">-</span>';
+                                } else {
+                                    foreach ($changes as $change) {
+                                        $diff = $change['new'] - $change['old'];
+                                        $arrow = $diff > 0 ? '↑' : '↓';
+                                        $diffClass = $diff > 0 ? 'text-success' : 'text-danger';
+                                        echo '<div><span class="' . $change['class'] . '"><i class="bi ' . $change['icon'] . '"></i> ' . $change['label'] . ':</span> ' . $change['new'] . ' <span class="' . $diffClass . '">(' . $arrow . abs($diff) . ')</span></div>';
+                                    }
+                                }
+                                ?>
                             </small>
                         </td>
                     </tr>
