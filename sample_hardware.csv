@@ -1,0 +1,6 @@
+name,category_id,type,brand,model,serial_number,unused_quantity,in_use_quantity,damaged_quantity,repair_quantity,location
+AMD Ryzen 5,1,3rd Gen,AMD,Ryzen 5 3600,SNCPU002,3,2,0,0,Lab 1
+Kingston 16GB RAM,2,DDR4,Kingston,HyperX,SNRAM002,5,3,1,0,Lab 2
+WD SSD 1TB,3,NVMe,Western Digital,Blue SN550,SNSSD002,4,2,0,0,Lab 1
+LG Monitor 27",6,IPS,LG,27GL850,SNMON002,6,4,0,0,Office
+Logitech Mouse,8,Wireless,Logitech,MX Master 3,SNMOU001,10,8,1,0,Lab 3
