@@ -209,6 +209,32 @@ body {
     letter-spacing: -0.5px;
 }
 
+.navbar-brand img {
+    transition: transform 0.2s;
+}
+
+.navbar-brand:hover img {
+    transform: scale(1.1);
+}
+
+/* Active navbar link highlighting */
+.navbar-nav .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.navbar-nav .nav-link {
+    transition: all 0.2s;
+    margin: 0 4px;
+    padding: 8px 12px !important;
+    border-radius: 6px;
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Footer Styles */
 footer {
     margin-top: auto;

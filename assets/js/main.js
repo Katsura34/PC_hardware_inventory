@@ -132,3 +132,140 @@ function hideLoading(elementId) {
         element.innerHTML = '';
     }
 }
+
+// CSV Import functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const csvFileInput = document.getElementById('csvFile');
+    const importForm = document.getElementById('importCSVForm');
+    const importPreview = document.getElementById('importPreview');
+    const previewTable = document.getElementById('previewTable');
+    
+    // Preview CSV file
+    if (csvFileInput) {
+        csvFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const text = event.target.result;
+                const lines = text.split('\n').filter(line => line.trim());
+                
+                if (lines.length < 2) {
+                    alert('CSV file is empty or invalid');
+                    return;
+                }
+                
+                // Show preview
+                const headers = lines[0].split(',');
+                const previewRows = lines.slice(1, 6); // First 5 data rows
+                
+                let tableHTML = '<thead><tr>';
+                headers.forEach(header => {
+                    tableHTML += `<th>${header.trim()}</th>`;
+                });
+                tableHTML += '</tr></thead><tbody>';
+                
+                previewRows.forEach(row => {
+                    const cells = row.split(',');
+                    tableHTML += '<tr>';
+                    cells.forEach(cell => {
+                        tableHTML += `<td>${cell.trim()}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                tableHTML += '</tbody>';
+                
+                previewTable.innerHTML = tableHTML;
+                importPreview.classList.remove('d-none');
+            };
+            reader.readAsText(file);
+        });
+    }
+    
+    // Handle CSV import form submission
+    if (importForm) {
+        importForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(importForm);
+            const importBtn = document.getElementById('importBtn');
+            const originalText = importBtn.innerHTML;
+            
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+            
+            fetch('/PC_hardware_inventory/pages/import_csv.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                importBtn.disabled = false;
+                importBtn.innerHTML = originalText;
+                
+                if (data.success) {
+                    alert(data.message);
+                    // Close modal and reload page
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
+                    modal.hide();
+                    window.location.reload();
+                } else {
+                    alert('Import failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                importBtn.disabled = false;
+                importBtn.innerHTML = originalText;
+                alert('Error importing CSV: ' + error.message);
+            });
+        });
+    }
+});
+
+// Location filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const locationFilters = document.querySelectorAll('.location-filter');
+    
+    locationFilters.forEach(filter => {
+        filter.addEventListener('click', function(e) {
+            e.preventDefault();
+            const location = this.getAttribute('data-location');
+            
+            // Update dropdown button text
+            const dropdownBtn = document.getElementById('locationDropdown');
+            if (location === 'all') {
+                dropdownBtn.innerHTML = '<i class="bi bi-geo-alt"></i> <span class="d-lg-inline">Location</span>';
+            } else {
+                dropdownBtn.innerHTML = `<i class="bi bi-geo-alt"></i> <span class="d-lg-inline">${location}</span>`;
+            }
+            
+            // Filter table rows
+            filterTableByLocation(location);
+        });
+    });
+});
+
+function filterTableByLocation(location) {
+    // Find the hardware table
+    const table = document.getElementById('hardwareTable');
+    if (!table) return;
+    
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        if (location === 'all') {
+            row.style.display = '';
+        } else {
+            const locationCell = row.querySelector('td:nth-last-child(2)'); // Location is second to last column
+            if (locationCell) {
+                const cellText = locationCell.textContent.trim();
+                if (cellText === location || cellText === '-') {
+                    row.style.display = cellText === location ? '' : 'none';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+    });
+}
