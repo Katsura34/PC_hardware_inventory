@@ -489,6 +489,11 @@ include '../includes/header.php';
                         <strong><i class="bi bi-info-circle"></i> CSV Format:</strong>
                         <br>name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
                         <br><small class="text-muted">First row should be the header</small>
+                        <br><br>
+                        <strong>Category IDs:</strong> 1=CPU, 2=RAM, 3=SSD, 4=Hard Drive, 5=GPU, 6=Monitor, 7=Keyboard, 8=Mouse, 9=Power Cord
+                        <br><strong>Locations:</strong> Lab 1, Lab 2, Lab 3, Lab 4, Office, Storage, Warehouse
+                        <br><br>
+                        <small><a href="/PC_hardware_inventory/sample_hardware.csv" download class="text-decoration-none"><i class="bi bi-download"></i> Download sample CSV file</a></small>
                     </div>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Select CSV File</label>
