@@ -62,22 +62,6 @@ if (!isset($pageTitle)) {
                     <?php endif; ?>
                 </ul>
                 <ul class="navbar-nav align-items-lg-center">
-                    <!-- Location Dropdown Filter -->
-                    <li class="nav-item dropdown me-2">
-                        <a class="nav-link dropdown-toggle" href="#" id="locationDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-geo-alt"></i> <span class="d-lg-inline">Location</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item location-filter" href="#" data-location="all">All Locations</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Lab 1">Lab 1</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Lab 2">Lab 2</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Lab 3">Lab 3</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Lab 4">Lab 4</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Office">Office</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Storage">Storage</a></li>
-                        </ul>
-                    </li>
                     <!-- User Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
