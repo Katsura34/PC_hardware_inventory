@@ -22,15 +22,29 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     $old_stmt->close();
     
     if ($old_data) {
-        // Log to history before deleting
+        // Get additional data for history logging (denormalized)
+        $detail_stmt = $conn->prepare("SELECT h.name, h.serial_number, c.name as category_name 
+                                       FROM hardware h 
+                                       LEFT JOIN categories c ON h.category_id = c.id 
+                                       WHERE h.id = ?");
+        $detail_stmt->bind_param("i", $id);
+        $detail_stmt->execute();
+        $detail_result = $detail_stmt->get_result();
+        $detail_data = $detail_result->fetch_assoc();
+        $detail_stmt->close();
+        
+        // Log to history before deleting with denormalized data
         $user_id = $_SESSION['user_id'];
+        $user_name = $_SESSION['full_name'];
         $quantity_change = -$old_data['total_quantity'];
         
-        $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, user_id, action_type, quantity_change, 
+        $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                   user_id, user_name, action_type, quantity_change, 
                                    old_unused, old_in_use, old_damaged, old_repair, 
                                    new_unused, new_in_use, new_damaged, new_repair) 
-                                   VALUES (?, ?, 'Deleted', ?, ?, ?, ?, ?, 0, 0, 0, 0)");
-        $log_stmt->bind_param("iiiiiiii", $id, $user_id, $quantity_change, 
+                                   VALUES (?, ?, ?, ?, ?, ?, 'Deleted', ?, ?, ?, ?, ?, 0, 0, 0, 0)");
+        $log_stmt->bind_param("isssissiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
+                             $detail_data['serial_number'], $user_id, $user_name, $quantity_change, 
                              $old_data['unused_quantity'], $old_data['in_use_quantity'], 
                              $old_data['damaged_quantity'], $old_data['repair_quantity']);
         $log_stmt->execute();
@@ -76,13 +90,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if ($stmt->execute()) {
             $hardware_id = $conn->insert_id;
             
-            // Log to history
+            // Get category name for history logging (denormalized)
+            $cat_stmt = $conn->prepare("SELECT name FROM categories WHERE id = ?");
+            $cat_stmt->bind_param("i", $category_id);
+            $cat_stmt->execute();
+            $cat_result = $cat_stmt->get_result();
+            $cat_data = $cat_result->fetch_assoc();
+            $category_name = $cat_data['name'];
+            $cat_stmt->close();
+            
+            // Log to history with denormalized data
             $user_id = $_SESSION['user_id'];
-            $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, user_id, action_type, quantity_change, 
+            $user_name = $_SESSION['full_name'];
+            $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                       user_id, user_name, action_type, quantity_change, 
                                        old_unused, old_in_use, old_damaged, old_repair, 
                                        new_unused, new_in_use, new_damaged, new_repair) 
-                                       VALUES (?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
-            $log_stmt->bind_param("iiiiiiii", $hardware_id, $user_id, $total_quantity, 
+                                       VALUES (?, ?, ?, ?, ?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
+            $log_stmt->bind_param("isssissiiiiii", $hardware_id, $name, $category_name, $serial_number, 
+                                 $user_id, $user_name, $total_quantity, 
                                  $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
             $log_stmt->execute();
             $log_stmt->close();
@@ -112,16 +138,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                          $total_quantity, $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity, $location, $id);
         
         if ($stmt->execute()) {
-            // Log to history
+            // Get hardware and category name for history logging (denormalized)
+            $detail_stmt = $conn->prepare("SELECT h.name, h.serial_number, c.name as category_name 
+                                          FROM hardware h 
+                                          LEFT JOIN categories c ON h.category_id = c.id 
+                                          WHERE h.id = ?");
+            $detail_stmt->bind_param("i", $id);
+            $detail_stmt->execute();
+            $detail_result = $detail_stmt->get_result();
+            $detail_data = $detail_result->fetch_assoc();
+            $detail_stmt->close();
+            
+            // Log to history with denormalized data
             $user_id = $_SESSION['user_id'];
+            $user_name = $_SESSION['full_name'];
             $quantity_change = $total_quantity - ($old_data['unused_quantity'] + $old_data['in_use_quantity'] + 
                                                    $old_data['damaged_quantity'] + $old_data['repair_quantity']);
             
-            $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, user_id, action_type, quantity_change, 
+            $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                       user_id, user_name, action_type, quantity_change, 
                                        old_unused, old_in_use, old_damaged, old_repair, 
                                        new_unused, new_in_use, new_damaged, new_repair) 
-                                       VALUES (?, ?, 'Updated', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $log_stmt->bind_param("iiiiiiiiiiii", $id, $user_id, $quantity_change, 
+                                       VALUES (?, ?, ?, ?, ?, ?, 'Updated', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $log_stmt->bind_param("isssissiiiiiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
+                                 $detail_data['serial_number'], $user_id, $user_name, $quantity_change, 
                                  $old_data['unused_quantity'], $old_data['in_use_quantity'], 
                                  $old_data['damaged_quantity'], $old_data['repair_quantity'],
                                  $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
@@ -152,6 +192,23 @@ while ($row = $result->fetch_assoc()) {
     $categories[] = $row;
 }
 
+// Get distinct locations for dropdown
+$locations = [];
+$result = $conn->query("SELECT DISTINCT location FROM hardware WHERE location IS NOT NULL AND location != '' ORDER BY location");
+while ($row = $result->fetch_assoc()) {
+    if (!empty($row['location'])) {
+        $locations[] = $row['location'];
+    }
+}
+// Add default locations if not present
+$default_locations = ['Lab 1', 'Lab 2', 'Lab 3', 'Lab 4', 'Office', 'Storage', 'Warehouse'];
+foreach ($default_locations as $loc) {
+    if (!in_array($loc, $locations)) {
+        $locations[] = $loc;
+    }
+}
+sort($locations);
+
 include '../includes/header.php';
 ?>
 
@@ -167,9 +224,14 @@ include '../includes/header.php';
                 </h1>
                 <p class="text-muted">Manage your hardware inventory</p>
             </div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHardwareModal">
-                <i class="bi bi-plus-circle"></i> Add Hardware
-            </button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importCSVModal">
+                    <i class="bi bi-upload"></i> Import CSV
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHardwareModal">
+                    <i class="bi bi-plus-circle"></i> Add Hardware
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -294,7 +356,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="location" class="form-label">Location</label>
-                            <input type="text" class="form-control" id="location" name="location">
+                            <input type="text" class="form-control" id="location" name="location" list="locationList" placeholder="Select or type location">
+                            <datalist id="locationList">
+                                <?php foreach ($locations as $loc): ?>
+                                <option value="<?php echo escapeOutput($loc); ?>">
+                                <?php endforeach; ?>
+                            </datalist>
                         </div>
                         <div class="col-12"><hr></div>
                         <div class="col-md-3">
@@ -373,7 +440,7 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="edit_location" class="form-label">Location</label>
-                            <input type="text" class="form-control" id="edit_location" name="location">
+                            <input type="text" class="form-control" id="edit_location" name="location" list="locationList" placeholder="Select or type location">
                         </div>
                         <div class="col-12"><hr></div>
                         <div class="col-md-3">
@@ -397,6 +464,46 @@ include '../includes/header.php';
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Update Hardware</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div class="modal fade" id="importCSVModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-upload"></i> Import Hardware from CSV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="importCSVForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong><i class="bi bi-info-circle"></i> CSV Format:</strong>
+                        <br>name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
+                        <br><small class="text-muted">First row should be the header</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="csvFile" class="form-label">Select CSV File</label>
+                        <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv" required>
+                    </div>
+                    <div id="importPreview" class="d-none">
+                        <h6>Preview (First 5 rows):</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered" id="previewTable">
+                                <thead></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="importBtn">
+                        <i class="bi bi-upload"></i> Import
+                    </button>
                 </div>
             </form>
         </div>

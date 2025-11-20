@@ -78,11 +78,17 @@ VALUES
 -- ==========================================
 -- 4. Inventory History Table
 -- ==========================================
+-- Modified to store denormalized data to avoid foreign key constraint issues
+-- This allows deletion of hardware/users without losing history
 CREATE TABLE IF NOT EXISTS inventory_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    hardware_id INT NOT NULL,
-    user_id INT,
-    action_type VARCHAR(50) NOT NULL,        -- Added, Updated, Removed
+    hardware_id INT,                         -- Optional reference (can be NULL if deleted)
+    hardware_name VARCHAR(255) NOT NULL,     -- Denormalized: actual hardware name
+    category_name VARCHAR(100),              -- Denormalized: category name
+    serial_number VARCHAR(100),              -- Denormalized: serial number
+    user_id INT,                             -- Optional reference (can be NULL if deleted)
+    user_name VARCHAR(255),                  -- Denormalized: actual user name
+    action_type VARCHAR(50) NOT NULL,        -- Added, Updated, Deleted
     quantity_change INT,
     old_unused INT,
     old_in_use INT,
@@ -92,13 +98,12 @@ CREATE TABLE IF NOT EXISTS inventory_history (
     new_in_use INT,
     new_damaged INT,
     new_repair INT,
-    action_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (hardware_id) REFERENCES hardware(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    action_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- NO FOREIGN KEY CONSTRAINTS - history is permanent and independent
 );
 
--- Sample History
-INSERT INTO inventory_history (hardware_id, user_id, action_type, quantity_change, old_unused, old_in_use, old_damaged, old_repair, new_unused, new_in_use, new_damaged, new_repair)
+-- Sample History (updated with denormalized data)
+INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, user_id, user_name, action_type, quantity_change, old_unused, old_in_use, old_damaged, old_repair, new_unused, new_in_use, new_damaged, new_repair)
 VALUES
-(1, 1, 'Added', 5, 0, 0, 0, 0, 2, 2, 1, 0),
-(2, 2, 'Updated', 2, 2, 2, 2, 1, 4, 3, 2, 1);
+(1, 'Intel Core i5', 'CPU', 'SNCPU001', 1, 'John Admin', 'Added', 5, 0, 0, 0, 0, 2, 2, 1, 0),
+(2, 'Corsair 8GB RAM', 'RAM', 'SNRAM001', 2, 'Mary Staff', 'Updated', 2, 2, 2, 2, 1, 4, 3, 2, 1);

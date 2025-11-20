@@ -83,13 +83,25 @@ try {
             if ($stmt->execute()) {
                 $hardware_id = $conn->insert_id;
                 
-                // Log to history
+                // Get category name for history logging (denormalized)
+                $cat_stmt = $conn->prepare("SELECT name FROM categories WHERE id = ?");
+                $cat_stmt->bind_param("i", $category_id);
+                $cat_stmt->execute();
+                $cat_result = $cat_stmt->get_result();
+                $cat_data = $cat_result->fetch_assoc();
+                $category_name = $cat_data ? $cat_data['name'] : 'Unknown';
+                $cat_stmt->close();
+                
+                // Log to history with denormalized data
                 $user_id = $_SESSION['user_id'];
-                $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, user_id, action_type, quantity_change, 
+                $user_name = $_SESSION['full_name'];
+                $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                           user_id, user_name, action_type, quantity_change, 
                                            old_unused, old_in_use, old_damaged, old_repair, 
                                            new_unused, new_in_use, new_damaged, new_repair) 
-                                           VALUES (?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
-                $log_stmt->bind_param("iiiiiiii", $hardware_id, $user_id, $total_quantity, 
+                                           VALUES (?, ?, ?, ?, ?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
+                $log_stmt->bind_param("isssissiiiiii", $hardware_id, $name, $category_name, $serial_number, 
+                                     $user_id, $user_name, $total_quantity, 
                                      $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
                 $log_stmt->execute();
                 $log_stmt->close();
