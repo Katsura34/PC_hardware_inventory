@@ -78,12 +78,6 @@ if (!isset($pageTitle)) {
                             <li><a class="dropdown-item location-filter" href="#" data-location="Storage">Storage</a></li>
                         </ul>
                     </li>
-                    <!-- CSV Import Button -->
-                    <li class="nav-item me-2">
-                        <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#importCSVModal">
-                            <i class="bi bi-upload"></i> <span class="d-none d-lg-inline">Import CSV</span>
-                        </button>
-                    </li>
                     <!-- User Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -99,44 +93,6 @@ if (!isset($pageTitle)) {
             </div>
         </div>
     </nav>
-    
-    <!-- CSV Import Modal -->
-    <div class="modal fade" id="importCSVModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-upload"></i> Import Hardware from CSV</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form id="importCSVForm" enctype="multipart/form-data">
-                    <div class="modal-body">
-                        <div class="alert alert-info">
-                            <strong>CSV Format:</strong> name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
-                        </div>
-                        <div class="mb-3">
-                            <label for="csvFile" class="form-label">Select CSV File</label>
-                            <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv" required>
-                        </div>
-                        <div id="importPreview" class="d-none">
-                            <h6>Preview (First 5 rows):</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered" id="previewTable">
-                                    <thead></thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="importBtn">
-                            <i class="bi bi-upload"></i> Import
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
     <?php endif; ?>
     
     <div class="container-fluid py-4">

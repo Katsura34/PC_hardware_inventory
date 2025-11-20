@@ -11,7 +11,11 @@ $conn = getDBConnection();
 
 // Get inventory history
 $history = [];
-$result = $conn->query("SELECT ih.*, h.name as hardware_name, h.serial_number, u.full_name as user_name, c.name as category_name
+$result = $conn->query("SELECT ih.*, 
+                              COALESCE(h.name, ih.hardware_name) as hardware_name, 
+                              COALESCE(h.serial_number, ih.serial_number) as serial_number, 
+                              COALESCE(u.full_name, ih.user_name) as user_name, 
+                              COALESCE(c.name, ih.category_name) as category_name
                        FROM inventory_history ih
                        LEFT JOIN hardware h ON ih.hardware_id = h.id
                        LEFT JOIN users u ON ih.user_id = u.id
@@ -76,16 +80,19 @@ include '../includes/header.php';
                             <small class="text-muted"><?php echo date('h:i A', strtotime($item['action_date'])); ?></small>
                         </td>
                         <td>
-                            <strong><?php echo escapeOutput($item['hardware_name']); ?></strong>
+                            <strong><?php echo escapeOutput($item['hardware_name'] ?: 'Deleted Item'); ?></strong>
                             <?php if (!empty($item['serial_number'])): ?>
                             <br><small class="text-muted">SN: <?php echo escapeOutput($item['serial_number']); ?></small>
+                            <?php endif; ?>
+                            <?php if (empty($item['hardware_id']) || $item['action_type'] === 'Deleted'): ?>
+                            <br><small class="badge bg-secondary">Deleted from System</small>
                             <?php endif; ?>
                             <!-- Show category and user on mobile (inline) -->
                             <div class="d-md-none mt-1">
                                 <small><span class="badge bg-primary"><?php echo escapeOutput($item['category_name'] ?: 'N/A'); ?></span></small>
                             </div>
                             <div class="d-lg-none mt-1">
-                                <small class="text-muted">By: <?php echo escapeOutput($item['user_name']); ?></small>
+                                <small class="text-muted">By: <?php echo escapeOutput($item['user_name'] ?: 'Unknown'); ?></small>
                             </div>
                         </td>
                         <td class="d-none d-md-table-cell"><span class="badge bg-primary"><?php echo escapeOutput($item['category_name'] ?: 'N/A'); ?></span></td>
@@ -94,7 +101,7 @@ include '../includes/header.php';
                             $badge_class = 'bg-info';
                             if ($item['action_type'] === 'Added') $badge_class = 'bg-success';
                             if ($item['action_type'] === 'Updated') $badge_class = 'bg-warning';
-                            if ($item['action_type'] === 'Removed') $badge_class = 'bg-danger';
+                            if ($item['action_type'] === 'Deleted') $badge_class = 'bg-danger';
                             ?>
                             <span class="badge <?php echo $badge_class; ?>"><?php echo escapeOutput($item['action_type']); ?></span>
                             <!-- Show quantity change on mobile (inline) -->
@@ -111,7 +118,7 @@ include '../includes/header.php';
                                 ?>
                             </div>
                         </td>
-                        <td class="d-none d-lg-table-cell"><small><?php echo escapeOutput($item['user_name']); ?></small></td>
+                        <td class="d-none d-lg-table-cell"><small><?php echo escapeOutput($item['user_name'] ?: 'Unknown'); ?></small></td>
                         <td class="d-none d-lg-table-cell">
                             <?php
                             $change = $item['quantity_change'];
@@ -186,7 +193,7 @@ include '../includes/header.php';
                     <ul class="mb-0 mt-2">
                         <li><span class="badge bg-success">Added</span> - New hardware item was added to inventory</li>
                         <li><span class="badge bg-warning">Updated</span> - Hardware quantities or details were modified</li>
-                        <li><span class="badge bg-danger">Removed</span> - Hardware item was deleted from inventory</li>
+                        <li><span class="badge bg-danger">Deleted</span> - Hardware item was deleted from inventory</li>
                     </ul>
                 </div>
                 <div class="col-md-6 mb-3">
