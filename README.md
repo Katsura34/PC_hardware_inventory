@@ -12,6 +12,13 @@ A comprehensive web-based inventory management system for tracking PC hardware c
 - 📤 **CSV Import** - Bulk import hardware from CSV files
 - 🏢 **Location Tracking** - Track hardware by physical location
 
+### Recent Updates (v2.1)
+- ✅ **Enhanced CSV Import** - Added category ID reference and location guide with sample CSV download
+- ✅ **Location Dropdown in Modals** - Changed location input to dropdown for consistency
+- ✅ **Removed Navbar Filter** - Removed location filter from navbar for cleaner interface
+- ✅ **Confirmation Messages** - Added confirmation dialogs for add, update, and delete operations
+- ✅ **Improved Sample CSV** - Updated with diverse location examples (Lab 1-4, Office, Storage, Warehouse)
+
 ### Recent Updates (v2.0)
 - ✅ **Denormalized History** - History preserved even after deletions
 - ✅ **No Foreign Key Errors** - Fixed constraint issues when deleting users
@@ -90,7 +97,24 @@ If you have an existing installation, see [MIGRATION_GUIDE.md](MIGRATION_GUIDE.m
 ```csv
 name,category_id,type,brand,model,serial_number,unused_quantity,in_use_quantity,damaged_quantity,repair_quantity,location
 AMD Ryzen 5,1,3rd Gen,AMD,Ryzen 5 3600,SNCPU002,3,2,0,0,Lab 1
+Kingston 16GB RAM,2,DDR4,Kingston,HyperX,SNRAM002,5,3,1,0,Lab 2
 ```
+
+**Category IDs:**
+- 1 = CPU
+- 2 = RAM
+- 3 = SSD
+- 4 = Hard Drive
+- 5 = GPU
+- 6 = Monitor
+- 7 = Keyboard
+- 8 = Mouse
+- 9 = Power Cord
+
+**Available Locations:**
+Lab 1, Lab 2, Lab 3, Lab 4, Office, Storage, Warehouse
+
+**Download:** You can download a sample CSV file from the Import CSV modal in the Hardware page.
 
 ### Managing Users (Admin Only)
 1. Navigate to **Users** page

@@ -356,12 +356,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="location" class="form-label">Location</label>
-                            <input type="text" class="form-control" id="location" name="location" list="locationList" placeholder="Select or type location">
-                            <datalist id="locationList">
+                            <select class="form-select" id="location" name="location">
+                                <option value="">Select Location</option>
                                 <?php foreach ($locations as $loc): ?>
-                                <option value="<?php echo escapeOutput($loc); ?>">
+                                <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
                                 <?php endforeach; ?>
-                            </datalist>
+                            </select>
                         </div>
                         <div class="col-12"><hr></div>
                         <div class="col-md-3">
@@ -389,7 +389,7 @@ include '../includes/header.php';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Hardware</button>
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you want to add this hardware?')">Add Hardware</button>
                 </div>
             </form>
         </div>
@@ -440,7 +440,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="edit_location" class="form-label">Location</label>
-                            <input type="text" class="form-control" id="edit_location" name="location" list="locationList" placeholder="Select or type location">
+                            <select class="form-select" id="edit_location" name="location">
+                                <option value="">Select Location</option>
+                                <?php foreach ($locations as $loc): ?>
+                                <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-12"><hr></div>
                         <div class="col-md-3">
@@ -463,7 +468,7 @@ include '../includes/header.php';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Hardware</button>
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you want to update this hardware?')">Update Hardware</button>
                 </div>
             </form>
         </div>
@@ -484,6 +489,11 @@ include '../includes/header.php';
                         <strong><i class="bi bi-info-circle"></i> CSV Format:</strong>
                         <br>name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
                         <br><small class="text-muted">First row should be the header</small>
+                        <br><br>
+                        <strong>Category IDs:</strong> 1=CPU, 2=RAM, 3=SSD, 4=Hard Drive, 5=GPU, 6=Monitor, 7=Keyboard, 8=Mouse, 9=Power Cord
+                        <br><strong>Locations:</strong> Lab 1, Lab 2, Lab 3, Lab 4, Office, Storage, Warehouse
+                        <br><br>
+                        <small><a href="/PC_hardware_inventory/sample_hardware.csv" download class="text-decoration-none"><i class="bi bi-download"></i> Download sample CSV file</a></small>
                     </div>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Select CSV File</label>
