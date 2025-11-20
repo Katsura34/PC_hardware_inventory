@@ -30,7 +30,7 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
                                    old_unused, old_in_use, old_damaged, old_repair, 
                                    new_unused, new_in_use, new_damaged, new_repair) 
                                    VALUES (?, ?, 'Deleted', ?, ?, ?, ?, ?, 0, 0, 0, 0)");
-        $log_stmt->bind_param("iiiiiiii", $id, $user_id, $quantity_change, 
+        $log_stmt->bind_param("iiiiiii", $id, $user_id, $quantity_change, 
                              $old_data['unused_quantity'], $old_data['in_use_quantity'], 
                              $old_data['damaged_quantity'], $old_data['repair_quantity']);
         $log_stmt->execute();
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                        old_unused, old_in_use, old_damaged, old_repair, 
                                        new_unused, new_in_use, new_damaged, new_repair) 
                                        VALUES (?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
-            $log_stmt->bind_param("iiiiiiii", $hardware_id, $user_id, $total_quantity, 
+            $log_stmt->bind_param("iiiiiii", $hardware_id, $user_id, $total_quantity, 
                                  $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
             $log_stmt->execute();
             $log_stmt->close();
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                        old_unused, old_in_use, old_damaged, old_repair, 
                                        new_unused, new_in_use, new_damaged, new_repair) 
                                        VALUES (?, ?, 'Updated', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $log_stmt->bind_param("iiiiiiiiiiii", $id, $user_id, $quantity_change, 
+            $log_stmt->bind_param("iiiiiiiiiii", $id, $user_id, $quantity_change, 
                                  $old_data['unused_quantity'], $old_data['in_use_quantity'], 
                                  $old_data['damaged_quantity'], $old_data['repair_quantity'],
                                  $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
