@@ -17,7 +17,7 @@ if (!isset($pageTitle)) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/PC_hardware_inventory/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
     <?php if (isLoggedIn()): ?>
@@ -29,8 +29,8 @@ if (!isset($pageTitle)) {
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="/PC_hardware_inventory/dashboard.php">
-                <img src="/PC_hardware_inventory/assets/images/logo.svg" alt="Logo" height="32" class="me-2">
+            <a class="navbar-brand d-flex align-items-center" href="/dashboard.php">
+                <img src="/assets/images/logo.svg" alt="Logo" height="32" class="me-2">
                 <span>PC Inventory - ACLC Ormoc</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -39,45 +39,29 @@ if (!isset($pageTitle)) {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'dashboard.php') ? 'active' : ''; ?>" href="/PC_hardware_inventory/dashboard.php">
+                        <a class="nav-link <?php echo ($current_page === 'dashboard.php') ? 'active' : ''; ?>" href="/dashboard.php">
                             <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'hardware.php') ? 'active' : ''; ?>" href="/PC_hardware_inventory/pages/hardware.php">
+                        <a class="nav-link <?php echo ($current_page === 'hardware.php') ? 'active' : ''; ?>" href="/pages/hardware.php">
                             <i class="bi bi-cpu"></i> Hardware
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'history.php') ? 'active' : ''; ?>" href="/PC_hardware_inventory/pages/history.php">
+                        <a class="nav-link <?php echo ($current_page === 'history.php') ? 'active' : ''; ?>" href="/pages/history.php">
                             <i class="bi bi-clock-history"></i> History
                         </a>
                     </li>
                     <?php if (isAdmin()): ?>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'users.php') ? 'active' : ''; ?>" href="/PC_hardware_inventory/pages/users.php">
+                        <a class="nav-link <?php echo ($current_page === 'users.php') ? 'active' : ''; ?>" href="/pages/users.php">
                             <i class="bi bi-people"></i> Users
                         </a>
                     </li>
                     <?php endif; ?>
                 </ul>
                 <ul class="navbar-nav align-items-lg-center">
-                    <!-- Location Dropdown Filter -->
-                    <li class="nav-item dropdown me-2">
-                        <a class="nav-link dropdown-toggle" href="#" id="locationDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-geo-alt"></i> <span class="d-lg-inline">Location</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item location-filter" href="#" data-location="all">All Locations</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Lab 1">Lab 1</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Lab 2">Lab 2</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Lab 3">Lab 3</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Lab 4">Lab 4</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Office">Office</a></li>
-                            <li><a class="dropdown-item location-filter" href="#" data-location="Storage">Storage</a></li>
-                        </ul>
-                    </li>
                     <!-- User Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -86,7 +70,7 @@ if (!isset($pageTitle)) {
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><span class="dropdown-item-text"><small class="text-muted">Role: <?php echo escapeOutput(ucfirst($_SESSION['role'])); ?></small></span></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/PC_hardware_inventory/logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                            <li><a class="dropdown-item" href="/logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>
