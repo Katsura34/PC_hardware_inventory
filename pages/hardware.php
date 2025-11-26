@@ -43,7 +43,7 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
                                    old_unused, old_in_use, old_damaged, old_repair, 
                                    new_unused, new_in_use, new_damaged, new_repair) 
                                    VALUES (?, ?, ?, ?, ?, ?, 'Deleted', ?, ?, ?, ?, ?, 0, 0, 0, 0)");
-        $log_stmt->bind_param("isssissiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
+        $log_stmt->bind_param("isssisiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
                              $detail_data['serial_number'], $user_id, $user_name, $quantity_change, 
                              $old_data['unused_quantity'], $old_data['in_use_quantity'], 
                              $old_data['damaged_quantity'], $old_data['repair_quantity']);
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                        old_unused, old_in_use, old_damaged, old_repair, 
                                        new_unused, new_in_use, new_damaged, new_repair) 
                                        VALUES (?, ?, ?, ?, ?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
-            $log_stmt->bind_param("isssissiiiiii", $hardware_id, $name, $category_name, $serial_number, 
+            $log_stmt->bind_param("isssisiiiii", $hardware_id, $name, $category_name, $serial_number, 
                                  $user_id, $user_name, $total_quantity, 
                                  $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
             $log_stmt->execute();
@@ -160,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                        old_unused, old_in_use, old_damaged, old_repair, 
                                        new_unused, new_in_use, new_damaged, new_repair) 
                                        VALUES (?, ?, ?, ?, ?, ?, 'Updated', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $log_stmt->bind_param("isssissiiiiiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
+            $log_stmt->bind_param("isssisiiiiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
                                  $detail_data['serial_number'], $user_id, $user_name, $quantity_change, 
                                  $old_data['unused_quantity'], $old_data['in_use_quantity'], 
                                  $old_data['damaged_quantity'], $old_data['repair_quantity'],
@@ -356,12 +356,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="location" class="form-label">Location</label>
-                            <input type="text" class="form-control" id="location" name="location" list="locationList" placeholder="Select or type location">
-                            <datalist id="locationList">
+                            <select class="form-select" id="location" name="location">
+                                <option value="">Select Location</option>
                                 <?php foreach ($locations as $loc): ?>
-                                <option value="<?php echo escapeOutput($loc); ?>">
+                                <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
                                 <?php endforeach; ?>
-                            </datalist>
+                            </select>
                         </div>
                         <div class="col-12"><hr></div>
                         <div class="col-md-3">
@@ -440,7 +440,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="edit_location" class="form-label">Location</label>
-                            <input type="text" class="form-control" id="edit_location" name="location" list="locationList" placeholder="Select or type location">
+                            <select class="form-select" id="edit_location" name="location">
+                                <option value="">Select Location</option>
+                                <?php foreach ($locations as $loc): ?>
+                                <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-12"><hr></div>
                         <div class="col-md-3">
