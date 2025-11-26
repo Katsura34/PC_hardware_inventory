@@ -100,7 +100,7 @@ try {
                                            old_unused, old_in_use, old_damaged, old_repair, 
                                            new_unused, new_in_use, new_damaged, new_repair) 
                                            VALUES (?, ?, ?, ?, ?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
-                $log_stmt->bind_param("isssisiiiiii", $hardware_id, $name, $category_name, $serial_number, 
+                $log_stmt->bind_param("isssisiiiii", $hardware_id, $name, $category_name, $serial_number, 
                                      $user_id, $user_name, $total_quantity, 
                                      $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
                 $log_stmt->execute();
