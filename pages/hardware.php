@@ -43,7 +43,7 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
                                    old_unused, old_in_use, old_damaged, old_repair, 
                                    new_unused, new_in_use, new_damaged, new_repair) 
                                    VALUES (?, ?, ?, ?, ?, ?, 'Deleted', ?, ?, ?, ?, ?, 0, 0, 0, 0)");
-        $log_stmt->bind_param("isssisiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
+        $log_stmt->bind_param("isssisiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
                              $detail_data['serial_number'], $user_id, $user_name, $quantity_change, 
                              $old_data['unused_quantity'], $old_data['in_use_quantity'], 
                              $old_data['damaged_quantity'], $old_data['repair_quantity']);
