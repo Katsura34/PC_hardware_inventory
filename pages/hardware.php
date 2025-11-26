@@ -56,9 +56,9 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     $stmt->bind_param("i", $id);
     
     if ($stmt->execute()) {
-        redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Hardware deleted successfully.', 'success');
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware deleted successfully.', 'success');
     } else {
-        redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Failed to delete hardware.', 'error');
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to delete hardware.', 'error');
     }
     $stmt->close();
 }
@@ -113,9 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $log_stmt->execute();
             $log_stmt->close();
             
-            redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Hardware added successfully.', 'success');
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware added successfully.', 'success');
         } else {
-            redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Failed to add hardware.', 'error');
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to add hardware.', 'error');
         }
         $stmt->close();
         
@@ -168,9 +168,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $log_stmt->execute();
             $log_stmt->close();
             
-            redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Hardware updated successfully.', 'success');
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware updated successfully.', 'success');
         } else {
-            redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Failed to update hardware.', 'error');
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to update hardware.', 'error');
         }
         $stmt->close();
     }

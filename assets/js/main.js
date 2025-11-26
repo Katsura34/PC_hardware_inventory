@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
             importBtn.disabled = true;
             importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
             
-            fetch('/PC_hardware_inventory/pages/import_csv.php', {
+            fetch(window.BASE_PATH + 'pages/import_csv.php', {
                 method: 'POST',
                 body: formData
             })
