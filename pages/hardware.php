@@ -1824,8 +1824,15 @@ function confirmBatchStatusUpdate() {
     ).then(function(confirmed) {
         if (confirmed) {
             showLoading('Updating status...');
-            // Add ids as hidden inputs and submit form
             var form = document.querySelector('#batchStatusModal form');
+            
+            // Remove any previously added hidden inputs to prevent duplicates
+            var existingInputs = form.querySelectorAll('input[name="ids[]"]');
+            existingInputs.forEach(function(input) {
+                input.remove();
+            });
+            
+            // Add ids as hidden inputs and submit form
             ids.forEach(function(id) {
                 var input = document.createElement('input');
                 input.type = 'hidden';

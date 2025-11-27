@@ -29,7 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         // Disable foreign key checks at the start of backup
         $backup_content .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
         
-        // Get all tables (order: tables with foreign keys should be dropped first)
+        // Get all tables in dependency order for safe restore:
+        // - inventory_history: no foreign keys (references are optional/nullable)
+        // - hardware: depends on categories (category_id foreign key)
+        // - users: no foreign keys
+        // - categories: referenced by hardware (must be created before hardware)
+        // Note: With FOREIGN_KEY_CHECKS=0, order doesn't matter for DROP, but matters for CREATE
         $tables = ['inventory_history', 'hardware', 'users', 'categories'];
         
         foreach ($tables as $table) {
