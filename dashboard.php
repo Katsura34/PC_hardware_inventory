@@ -95,10 +95,7 @@ include 'includes/header.php';
             </div>
         </div>
         
-        <!-- System Branding - HCI Principle: Visibility -->
-        <div class="system-branding">
-            <h6><i class="bi bi-building" aria-hidden="true"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
-        </div>
+
         
         <h1 class="text-gradient mb-1">
             <i class="bi bi-speedometer2" aria-hidden="true"></i> Dashboard

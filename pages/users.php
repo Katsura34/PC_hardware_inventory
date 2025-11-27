@@ -118,9 +118,7 @@ include '../includes/header.php';
 
 <div class="row mb-4">
     <div class="col-12">
-        <div class="system-branding">
-            <h6><i class="bi bi-building" aria-hidden="true"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
-        </div>
+
         <!-- Page Header with Toolbar - HCI: Clear hierarchy -->
         <div class="page-header-hci">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
