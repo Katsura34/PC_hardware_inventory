@@ -72,67 +72,91 @@ include 'includes/header.php';
 
 <div class="row mb-4">
     <div class="col-12">
-        <div class="system-branding">
-            <h6><i class="bi bi-building"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
+        <!-- Welcome Banner - HCI Principle: User-centered Design -->
+        <div class="welcome-banner mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-hand-wave me-2" aria-hidden="true"></i>
+                        Welcome back, <?php echo escapeOutput($_SESSION['full_name']); ?>!
+                    </h2>
+                    <p class="mb-0 opacity-75">
+                        <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>
+                        <?php echo date('l, F j, Y'); ?>
+                    </p>
+                </div>
+                <div class="mt-3 mt-md-0">
+                    <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-light">
+                        <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>
+                        Add Hardware
+                    </a>
+                </div>
+            </div>
         </div>
+        
+        <!-- System Branding - HCI Principle: Visibility -->
+        <div class="system-branding">
+            <h6><i class="bi bi-building" aria-hidden="true"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
+        </div>
+        
         <h1 class="text-gradient mb-1">
-            <i class="bi bi-speedometer2"></i> Dashboard
+            <i class="bi bi-speedometer2" aria-hidden="true"></i> Dashboard
         </h1>
-        <p class="text-muted">Welcome back, <?php echo escapeOutput($_SESSION['full_name']); ?>!</p>
+        <p class="text-muted">Overview of your hardware inventory at a glance</p>
     </div>
 </div>
 
-<!-- Statistics Cards -->
-<div class="row g-3 mb-4">
+<!-- Statistics Cards - HCI Principle: Visibility & Mapping -->
+<div class="row g-3 mb-4" role="region" aria-label="Inventory Statistics">
     <div class="col-md-4 col-lg-2">
-        <div class="card stat-card border-primary">
+        <div class="card stat-card border-primary" role="article" aria-label="Total Items">
             <div class="card-body text-center">
-                <i class="bi bi-boxes stat-icon text-primary"></i>
+                <i class="bi bi-boxes stat-icon text-primary" aria-hidden="true"></i>
                 <div class="stat-value text-primary"><?php echo $stats['total_hardware']; ?></div>
                 <div class="stat-label">Total Items</div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
-        <div class="card stat-card border-info">
+        <div class="card stat-card border-info" role="article" aria-label="Total Quantity">
             <div class="card-body text-center">
-                <i class="bi bi-layers stat-icon text-info"></i>
+                <i class="bi bi-layers stat-icon text-info" aria-hidden="true"></i>
                 <div class="stat-value text-info"><?php echo $stats['total_quantity']; ?></div>
                 <div class="stat-label">Total Quantity</div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
-        <div class="card stat-card border-success">
+        <div class="card stat-card border-success" role="article" aria-label="Available Items">
             <div class="card-body text-center">
-                <i class="bi bi-check-circle stat-icon text-success"></i>
+                <i class="bi bi-check-circle stat-icon text-success" aria-hidden="true"></i>
                 <div class="stat-value text-success"><?php echo $stats['available']; ?></div>
                 <div class="stat-label">Available</div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
-        <div class="card stat-card border-warning">
+        <div class="card stat-card border-warning" role="article" aria-label="Items In Use">
             <div class="card-body text-center">
-                <i class="bi bi-play-circle stat-icon text-warning"></i>
+                <i class="bi bi-play-circle stat-icon text-warning" aria-hidden="true"></i>
                 <div class="stat-value text-warning"><?php echo $stats['in_use']; ?></div>
                 <div class="stat-label">In Use</div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
-        <div class="card stat-card border-danger">
+        <div class="card stat-card border-danger" role="article" aria-label="Damaged Items">
             <div class="card-body text-center">
-                <i class="bi bi-exclamation-triangle stat-icon text-danger"></i>
+                <i class="bi bi-exclamation-triangle stat-icon text-danger" aria-hidden="true"></i>
                 <div class="stat-value text-danger"><?php echo $stats['damaged']; ?></div>
                 <div class="stat-label">Damaged</div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
-        <div class="card stat-card border-secondary">
+        <div class="card stat-card border-secondary" role="article" aria-label="Items In Repair">
             <div class="card-body text-center">
-                <i class="bi bi-tools stat-icon text-secondary"></i>
+                <i class="bi bi-tools stat-icon text-secondary" aria-hidden="true"></i>
                 <div class="stat-value text-secondary"><?php echo $stats['repair']; ?></div>
                 <div class="stat-label">In Repair</div>
             </div>
