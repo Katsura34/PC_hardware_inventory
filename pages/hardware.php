@@ -754,11 +754,11 @@ include '../includes/header.php';
                             <?php if ($isDeleted): ?>
                                 <?php if (isAdmin()): ?>
                                 <a href="?restore=<?php echo $item['id']; ?>&<?php echo http_build_query($pagination_params); ?>" class="btn btn-sm btn-success" 
-                                   onclick="return confirm('Are you sure you want to restore this hardware?')">
+                                   onclick="return confirmRestore('Are you sure you want to restore this hardware?', this)">
                                     <i class="bi bi-arrow-counterclockwise"></i><span class="d-none d-sm-inline"> Restore</span>
                                 </a>
                                 <a href="?permanent_delete=<?php echo $item['id']; ?>&<?php echo http_build_query($pagination_params); ?>" class="btn btn-sm btn-danger" 
-                                   onclick="return confirmDelete('Are you sure you want to PERMANENTLY delete this hardware? This cannot be undone.', this)">
+                                   onclick="return confirmPermanentDelete('Are you sure you want to PERMANENTLY delete this hardware? This action cannot be undone.', this)">
                                     <i class="bi bi-x-circle"></i><span class="d-none d-sm-inline"> Permanent</span>
                                 </a>
                                 <?php endif; ?>
@@ -1299,6 +1299,47 @@ if (!window.hardwarePageKeyboardHandlerAdded) {
     });
 }
 
+// ============ Confirmation Modals for Restore and Permanent Delete ============
+// Handle restore confirmation with custom modal
+function confirmRestore(message, element) {
+    if (element) {
+        var evt = window.event || arguments.callee.caller.arguments[0];
+        if (evt) {
+            evt.preventDefault();
+        }
+        const href = element.getAttribute('href');
+        
+        showConfirmation(message, 'Confirm Restore', 'Restore', 'info').then(function(confirmed) {
+            if (confirmed) {
+                showLoading('Restoring hardware...');
+                window.location.href = href;
+            }
+        });
+        return false;
+    }
+    return false;
+}
+
+// Handle permanent delete confirmation with custom modal
+function confirmPermanentDelete(message, element) {
+    if (element) {
+        var evt = window.event || arguments.callee.caller.arguments[0];
+        if (evt) {
+            evt.preventDefault();
+        }
+        const href = element.getAttribute('href');
+        
+        showConfirmation(message, 'Confirm Permanent Delete', 'Delete Permanently', 'danger').then(function(confirmed) {
+            if (confirmed) {
+                showLoading('Permanently deleting...');
+                window.location.href = href;
+            }
+        });
+        return false;
+    }
+    return false;
+}
+
 // ============ Batch Operations ============
 function toggleSelectAll(checkbox) {
     var checkboxes = document.querySelectorAll('.item-checkbox');
@@ -1362,33 +1403,41 @@ function showBatchStatusModal() {
 function batchDelete() {
     var ids = getSelectedIds();
     if (ids.length === 0) {
-        alert('Please select at least one item.');
+        showAlert('Please select at least one item.', 'No Selection', 'warning');
         return;
     }
     
-    if (confirm('Are you sure you want to delete ' + ids.length + ' selected item(s)?')) {
-        // Create and submit form
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '';
-        
-        var actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'batch_action';
-        actionInput.value = 'delete';
-        form.appendChild(actionInput);
-        
-        ids.forEach(function(id) {
-            var idInput = document.createElement('input');
-            idInput.type = 'hidden';
-            idInput.name = 'ids[]';
-            idInput.value = id;
-            form.appendChild(idInput);
-        });
-        
-        document.body.appendChild(form);
-        form.submit();
-    }
+    showConfirmation(
+        'Are you sure you want to delete ' + ids.length + ' selected item(s)? This action will move items to trash.',
+        'Confirm Bulk Delete',
+        'Delete Selected',
+        'danger'
+    ).then(function(confirmed) {
+        if (confirmed) {
+            showLoading('Deleting selected items...');
+            // Create and submit form
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+            
+            var actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'batch_action';
+            actionInput.value = 'delete';
+            form.appendChild(actionInput);
+            
+            ids.forEach(function(id) {
+                var idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'ids[]';
+                idInput.value = id;
+                form.appendChild(idInput);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
 // Add event listener for individual checkboxes
@@ -1486,7 +1535,7 @@ function exportFilteredCSV() {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning" onclick="return submitBatchStatus()">
+                    <button type="button" class="btn btn-warning" onclick="confirmBatchStatusUpdate()">
                         <i class="bi bi-check-lg"></i> Update Selected
                     </button>
                 </div>
@@ -1526,21 +1575,59 @@ function exportFilteredCSV() {
 </div>
 
 <script>
-function submitBatchStatus() {
+function confirmBatchStatusUpdate() {
     var batchIds = document.getElementById('batch_ids').value;
     var ids = JSON.parse(batchIds);
+    var statusType = document.getElementById('status_type').value;
+    var quantityChange = document.getElementById('quantity_change').value;
     
-    // Add ids as hidden inputs
-    var form = document.querySelector('#batchStatusModal form');
-    ids.forEach(function(id) {
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'ids[]';
-        input.value = id;
-        form.appendChild(input);
+    // Validate inputs
+    if (!statusType) {
+        showAlert('Please select a status type.', 'Missing Field', 'warning');
+        return;
+    }
+    if (!quantityChange || quantityChange == 0) {
+        showAlert('Please enter a quantity change value.', 'Missing Field', 'warning');
+        return;
+    }
+    
+    // Get readable status name
+    var statusNames = {
+        'unused_quantity': 'Available',
+        'in_use_quantity': 'In Use',
+        'damaged_quantity': 'Damaged',
+        'repair_quantity': 'In Repair'
+    };
+    var statusName = statusNames[statusType] || statusType;
+    
+    // Close the batch status modal first
+    var batchModal = bootstrap.Modal.getInstance(document.getElementById('batchStatusModal'));
+    batchModal.hide();
+    
+    // Show confirmation modal
+    showConfirmation(
+        'Are you sure you want to update ' + ids.length + ' item(s)? This will change "' + statusName + '" by ' + quantityChange + '.',
+        'Confirm Status Update',
+        'Update Selected',
+        'warning'
+    ).then(function(confirmed) {
+        if (confirmed) {
+            showLoading('Updating status...');
+            // Add ids as hidden inputs and submit form
+            var form = document.querySelector('#batchStatusModal form');
+            ids.forEach(function(id) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids[]';
+                input.value = id;
+                form.appendChild(input);
+            });
+            form.submit();
+        } else {
+            // Re-open the batch status modal if cancelled
+            batchModal.show();
+        }
     });
-    
-    return true;
 }
 </script>
 

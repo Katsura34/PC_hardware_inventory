@@ -26,8 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $backup_content .= "-- Created: " . date('Y-m-d H:i:s') . "\n";
         $backup_content .= "-- Created by: " . $_SESSION['full_name'] . "\n\n";
         
-        // Get all tables
-        $tables = ['categories', 'hardware', 'users', 'inventory_history'];
+        // Disable foreign key checks at the start of backup
+        $backup_content .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
+        
+        // Get all tables (order: tables with foreign keys should be dropped first)
+        $tables = ['inventory_history', 'hardware', 'users', 'categories'];
         
         foreach ($tables as $table) {
             // Get table structure
@@ -55,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $backup_content .= "\n";
             }
         }
+        
+        // Re-enable foreign key checks at the end of backup
+        $backup_content .= "\nSET FOREIGN_KEY_CHECKS = 1;\n";
         
         // Write backup file
         if (file_put_contents($backup_path, $backup_content)) {
@@ -133,6 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
             }
             
+            // Disable foreign key checks to allow dropping tables in any order
+            $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+            
             // Split SQL into individual statements and execute
             $conn->multi_query($sql);
             
@@ -143,8 +152,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
             } while ($conn->more_results() && $conn->next_result());
             
-            if ($conn->error) {
-                redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Restore failed: ' . $conn->error, 'error');
+            // Re-enable foreign key checks
+            // Need to close and reopen connection or use a new query after multi_query
+            $restore_error = $conn->error;
+            
+            // Get a fresh connection to re-enable foreign key checks
+            $conn = getDBConnection();
+            $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+            
+            if ($restore_error) {
+                redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Restore failed: ' . $restore_error, 'error');
             } else {
                 redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Database restored successfully from: ' . $filename, 'success');
             }
