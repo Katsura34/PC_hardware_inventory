@@ -261,28 +261,19 @@ include '../includes/header.php';
 </div>
 
 <script>
-// Edit user function - shows confirmation first
+// Edit user function - opens modal directly
 function editUser(user) {
-    showConfirmation(
-        'Do you want to edit user "' + user.username + '"?',
-        'Confirm Edit',
-        'Edit',
-        'warning'
-    ).then((confirmed) => {
-        if (confirmed) {
-            document.getElementById('edit_id').value = user.id;
-            document.getElementById('edit_username').value = user.username;
-            document.getElementById('edit_full_name').value = user.full_name;
-            document.getElementById('edit_role').value = user.role;
-            document.getElementById('edit_password').value = '';
-            
-            const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-            editModal.show();
-        }
-    });
+    document.getElementById('edit_id').value = user.id;
+    document.getElementById('edit_username').value = user.username;
+    document.getElementById('edit_full_name').value = user.full_name;
+    document.getElementById('edit_role').value = user.role;
+    document.getElementById('edit_password').value = '';
+    
+    const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    editModal.show();
 }
 
-// Form validation
+// Form validation with confirmation for edit form and loading screens
 (function() {
     'use strict';
     var forms = document.querySelectorAll('.needs-validation');
@@ -291,7 +282,34 @@ function editUser(user) {
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
+                form.classList.add('was-validated');
+                return;
             }
+            
+            // Check if this is the edit user form (has edit action)
+            var actionInput = form.querySelector('input[name="action"]');
+            if (actionInput && actionInput.value === 'edit') {
+                event.preventDefault();
+                var userName = document.getElementById('edit_username').value;
+                showConfirmation(
+                    'Are you sure you want to update user "' + userName + '"?',
+                    'Confirm Update',
+                    'Update',
+                    'warning'
+                ).then(function(confirmed) {
+                    if (confirmed) {
+                        showLoading('Updating user...');
+                        form.submit();
+                    }
+                });
+                return;
+            }
+            
+            // Show loading for add action
+            if (actionInput && actionInput.value === 'add') {
+                showLoading('Adding user...');
+            }
+            
             form.classList.add('was-validated');
         }, false);
     });

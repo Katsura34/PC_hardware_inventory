@@ -140,6 +140,58 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // Create loading overlay for login page
+        function createLoginLoadingOverlay() {
+            if (document.getElementById('loadingOverlay')) return;
+            
+            const overlayHTML = `
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="loading-content">
+                    <div class="spinner-border text-primary loading-spinner" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p id="loadingMessage" class="loading-text mt-3 mb-0">Signing in...</p>
+                </div>
+            </div>
+            <style>
+                .loading-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.6);
+                    z-index: 9999;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    backdrop-filter: blur(3px);
+                }
+                .loading-content {
+                    text-align: center;
+                    background: white;
+                    padding: 2rem 3rem;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                }
+                .loading-spinner {
+                    width: 3rem;
+                    height: 3rem;
+                }
+                .loading-text {
+                    color: #333;
+                    font-weight: 500;
+                }
+            </style>`;
+            
+            document.body.insertAdjacentHTML('beforeend', overlayHTML);
+        }
+        
+        function showLoginLoading() {
+            createLoginLoadingOverlay();
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+        
         // Form validation
         (function() {
             'use strict';
@@ -149,8 +201,11 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
                     if (!form.checkValidity()) {
                         event.preventDefault();
                         event.stopPropagation();
+                        form.classList.add('was-validated');
+                        return;
                     }
                     form.classList.add('was-validated');
+                    showLoginLoading();
                 }, false);
             });
         })();
