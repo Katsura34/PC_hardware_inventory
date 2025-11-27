@@ -22,6 +22,7 @@ $conn = getDBConnection();
 $file = $_FILES['csvFile']['tmp_name'];
 $imported = 0;
 $updated = 0;
+$categories_created = 0;
 $errors = [];
 
 // Get default location if provided
@@ -75,8 +76,28 @@ try {
                 if (isset($category_map[$category_key])) {
                     $category_id = $category_map[$category_key];
                 } else {
-                    $errors[] = "Line $line: Unknown category '$category_value'";
-                    continue;
+                    // Category not found - create it as a new category
+                    $new_category_name = sanitizeForDB($conn, trim($category_value));
+                    if (!empty($new_category_name)) {
+                        $insert_cat_stmt = $conn->prepare("INSERT INTO categories (name, description) VALUES (?, ?)");
+                        $category_description = "Auto-created from CSV import";
+                        $insert_cat_stmt->bind_param("ss", $new_category_name, $category_description);
+                        
+                        if ($insert_cat_stmt->execute()) {
+                            $category_id = $conn->insert_id;
+                            // Add to the category map so subsequent rows can use it
+                            $category_map[$category_key] = $category_id;
+                            $categories_created++;
+                        } else {
+                            $errors[] = "Line $line: Failed to create new category '$category_value'";
+                            $insert_cat_stmt->close();
+                            continue;
+                        }
+                        $insert_cat_stmt->close();
+                    } else {
+                        $errors[] = "Line $line: Category name is empty";
+                        continue;
+                    }
                 }
             }
             
@@ -214,6 +235,9 @@ try {
     if ($updated > 0) {
         $message .= ", updated $updated existing record(s) (duplicates had quantities added)";
     }
+    if ($categories_created > 0) {
+        $message .= ", created $categories_created new category(ies)";
+    }
     if (!empty($errors)) {
         $message .= ". Errors: " . implode("; ", array_slice($errors, 0, 5));
         if (count($errors) > 5) {
@@ -226,6 +250,7 @@ try {
         'message' => $message,
         'imported' => $imported,
         'updated' => $updated,
+        'categories_created' => $categories_created,
         'errors' => count($errors)
     ]);
     

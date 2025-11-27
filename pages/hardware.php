@@ -277,9 +277,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_action']) && $_
     }
 }
 
+// Handle AJAX category creation
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_category') {
+    header('Content-Type: application/json');
+    
+    $category_name = isset($_POST['name']) ? sanitizeForDB($conn, trim($_POST['name'])) : '';
+    $category_description = isset($_POST['description']) ? sanitizeForDB($conn, trim($_POST['description'])) : '';
+    
+    if (empty($category_name)) {
+        echo json_encode(['success' => false, 'message' => 'Category name is required']);
+        exit;
+    }
+    
+    // Check if category already exists
+    $check_stmt = $conn->prepare("SELECT id FROM categories WHERE LOWER(name) = LOWER(?)");
+    $check_stmt->bind_param("s", $category_name);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+    
+    if ($check_result->num_rows > 0) {
+        $existing = $check_result->fetch_assoc();
+        $check_stmt->close();
+        echo json_encode(['success' => false, 'message' => 'Category already exists', 'id' => $existing['id']]);
+        exit;
+    }
+    $check_stmt->close();
+    
+    // Insert new category
+    $insert_stmt = $conn->prepare("INSERT INTO categories (name, description) VALUES (?, ?)");
+    $insert_stmt->bind_param("ss", $category_name, $category_description);
+    
+    if ($insert_stmt->execute()) {
+        $new_id = $conn->insert_id;
+        $insert_stmt->close();
+        echo json_encode(['success' => true, 'id' => $new_id, 'name' => $category_name, 'message' => 'Category created successfully']);
+    } else {
+        $insert_stmt->close();
+        echo json_encode(['success' => false, 'message' => 'Failed to create category']);
+    }
+    exit;
+}
+
 // Handle add/edit
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
+    
+    // Skip if this is the add_category action (handled above)
+    if ($action === 'add_category') {
+        // Already handled
+        exit;
+    }
     
     $name = sanitizeForDB($conn, $_POST['name']);
     $category_id = (int)$_POST['category_id'];
@@ -395,6 +442,7 @@ $filter_category = isset($_GET['filter_category']) ? (int)$_GET['filter_category
 $filter_brand = isset($_GET['filter_brand']) ? sanitizeInput($_GET['filter_brand']) : '';
 $filter_model = isset($_GET['filter_model']) ? sanitizeInput($_GET['filter_model']) : '';
 $show_deleted = isset($_GET['show_deleted']) && $_GET['show_deleted'] === '1' && isAdmin();
+$deleted_only = isset($_GET['deleted_only']) && $_GET['deleted_only'] === '1' && isAdmin();
 
 // Pagination settings
 $records_per_page = 20;
@@ -402,7 +450,16 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $records_per_page;
 
 // Build count query for pagination - respect soft deletes
-$deleted_filter = $show_deleted ? "" : " AND h.deleted_at IS NULL";
+if ($deleted_only) {
+    // Show only deleted items
+    $deleted_filter = " AND h.deleted_at IS NOT NULL";
+} elseif ($show_deleted) {
+    // Show all items including deleted
+    $deleted_filter = "";
+} else {
+    // Show only non-deleted items (default)
+    $deleted_filter = " AND h.deleted_at IS NULL";
+}
 $count_query = "SELECT COUNT(*) as total FROM hardware h WHERE 1=1" . $deleted_filter;
 
 // Build query with filters
@@ -472,7 +529,8 @@ $pagination_params = array_filter([
     'filter_category' => $filter_category ?: null,
     'filter_brand' => $filter_brand ?: null,
     'filter_model' => $filter_model ?: null,
-    'show_deleted' => $show_deleted ? '1' : null
+    'show_deleted' => $show_deleted ? '1' : null,
+    'deleted_only' => $deleted_only ? '1' : null
 ]);
 
 // Get all categories for dropdown
@@ -549,18 +607,35 @@ include '../includes/header.php';
     <div class="card-header card-header-primary">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <h5 class="mb-0 d-flex align-items-center gap-2">
-                <i class="bi bi-table" aria-hidden="true"></i> <?php echo $show_deleted ? 'All Hardware (Including Deleted)' : 'All Hardware'; ?>
+                <i class="bi bi-table" aria-hidden="true"></i> <?php 
+                if ($deleted_only) {
+                    echo 'Deleted Hardware (Trash)';
+                } elseif ($show_deleted) {
+                    echo 'All Hardware (Including Deleted)';
+                } else {
+                    echo 'All Hardware';
+                }
+                ?>
                 <span class="badge bg-light text-primary ms-2"><?php echo $total_records; ?></span>
             </h5>
             <div class="d-flex gap-2 align-items-center">
                 <?php if (isAdmin()): ?>
-                <!-- Show Deleted Toggle (Admin Only) -->
-                <a href="?<?php echo http_build_query(array_merge($pagination_params, ['show_deleted' => $show_deleted ? null : '1', 'page' => 1])); ?>" 
-                   class="btn btn-sm <?php echo $show_deleted ? 'btn-warning' : 'btn-outline-secondary'; ?>"
-                   title="<?php echo $show_deleted ? 'Hide deleted items' : 'Show deleted items'; ?>">
-                    <i class="bi bi-trash<?php echo $show_deleted ? '-fill' : ''; ?>"></i>
-                    <span class="d-none d-sm-inline"><?php echo $show_deleted ? 'Hide Deleted' : 'Show Deleted'; ?></span>
+                <!-- Deleted Only Filter (Admin Only) - Show only trashed items -->
+                <a href="?<?php echo http_build_query(array_merge(array_diff_key($pagination_params, ['show_deleted' => '', 'deleted_only' => '']), ['deleted_only' => $deleted_only ? null : '1', 'page' => 1])); ?>" 
+                   class="btn btn-sm <?php echo $deleted_only ? 'btn-danger' : 'btn-outline-danger'; ?>"
+                   title="<?php echo $deleted_only ? 'Show all items' : 'Show deleted items only'; ?>">
+                    <i class="bi bi-trash<?php echo $deleted_only ? '-fill' : ''; ?>"></i>
+                    <span class="d-none d-sm-inline"><?php echo $deleted_only ? 'Exit Trash' : 'View Trash'; ?></span>
                 </a>
+                <!-- Show All Toggle (Admin Only) - Include deleted with active -->
+                <?php if (!$deleted_only): ?>
+                <a href="?<?php echo http_build_query(array_merge(array_diff_key($pagination_params, ['show_deleted' => '', 'deleted_only' => '']), ['show_deleted' => $show_deleted ? null : '1', 'page' => 1])); ?>" 
+                   class="btn btn-sm <?php echo $show_deleted ? 'btn-warning' : 'btn-outline-secondary'; ?>"
+                   title="<?php echo $show_deleted ? 'Hide deleted items' : 'Show all items including deleted'; ?>">
+                    <i class="bi bi-eye<?php echo $show_deleted ? '-fill' : ''; ?>"></i>
+                    <span class="d-none d-sm-inline"><?php echo $show_deleted ? 'Hide Deleted' : 'Show All'; ?></span>
+                </a>
+                <?php endif; ?>
                 <?php endif; ?>
                 <!-- Toggle Search Button -->
                 <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
@@ -855,11 +930,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="category_id" class="form-label">Category *</label>
-                            <select class="form-select" id="category_id" name="category_id" required>
+                            <select class="form-select category-select" id="category_id" name="category_id" required>
                                 <option value="">Select Category</option>
                                 <?php foreach ($categories as $cat): ?>
                                 <option value="<?php echo $cat['id']; ?>"><?php echo escapeOutput($cat['name']); ?></option>
                                 <?php endforeach; ?>
+                                <option value="__add_new__">+ Add New Category...</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -940,11 +1016,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="edit_category_id" class="form-label">Category *</label>
-                            <select class="form-select" id="edit_category_id" name="category_id" required>
+                            <select class="form-select category-select" id="edit_category_id" name="category_id" required>
                                 <option value="">Select Category</option>
                                 <?php foreach ($categories as $cat): ?>
                                 <option value="<?php echo $cat['id']; ?>"><?php echo escapeOutput($cat['name']); ?></option>
                                 <?php endforeach; ?>
+                                <option value="__add_new__">+ Add New Category...</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -1077,9 +1154,40 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Add New Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-tag-fill"></i> Add New Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newCategoryName" class="form-label">Category Name *</label>
+                    <input type="text" class="form-control" id="newCategoryName" placeholder="Enter category name" required>
+                    <div class="invalid-feedback">Please enter a category name.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="newCategoryDescription" class="form-label">Description (optional)</label>
+                    <input type="text" class="form-control" id="newCategoryDescription" placeholder="Enter description">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveNewCategoryBtn">
+                    <i class="bi bi-plus-circle"></i> Add Category
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // Track which dropdown triggered the add location modal
 var activeLocationDropdown = null;
+// Track which dropdown triggered the add category modal
+var activeCategoryDropdown = null;
 
 // Handle location dropdown change to detect "Add New Location" selection
 document.addEventListener('DOMContentLoaded', function() {
@@ -1144,6 +1252,109 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('addLocationModal').addEventListener('hidden.bs.modal', function() {
         document.getElementById('newLocationName').classList.remove('is-invalid');
         document.getElementById('newLocationName').value = '';
+    });
+    
+    // Handle category dropdown change to detect "Add New Category" selection
+    document.querySelectorAll('.category-select').forEach(function(select) {
+        select.addEventListener('change', function() {
+            if (this.value === '__add_new__') {
+                activeCategoryDropdown = this;
+                // Reset to empty/first option before showing modal
+                this.value = '';
+                // Show the add category modal
+                var addCategoryModal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+                addCategoryModal.show();
+            }
+        });
+    });
+    
+    // Handle save new category button
+    document.getElementById('saveNewCategoryBtn').addEventListener('click', function() {
+        var newCategoryInput = document.getElementById('newCategoryName');
+        var newCategoryDescInput = document.getElementById('newCategoryDescription');
+        var newCategoryName = newCategoryInput.value.trim();
+        var newCategoryDesc = newCategoryDescInput.value.trim();
+        
+        if (!newCategoryName) {
+            newCategoryInput.classList.add('is-invalid');
+            return;
+        }
+        
+        newCategoryInput.classList.remove('is-invalid');
+        
+        // Send AJAX request to create the category
+        var formData = new FormData();
+        formData.append('action', 'add_category');
+        formData.append('name', newCategoryName);
+        formData.append('description', newCategoryDesc);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add the new category to all category dropdowns
+                document.querySelectorAll('.category-select').forEach(function(select) {
+                    // Check if category already exists
+                    var exists = false;
+                    for (var i = 0; i < select.options.length; i++) {
+                        if (select.options[i].value == data.id) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!exists) {
+                        // Insert before the "Add New Category" option
+                        var addNewOption = select.querySelector('option[value="__add_new__"]');
+                        var newOption = document.createElement('option');
+                        newOption.value = data.id;
+                        newOption.textContent = newCategoryName;
+                        select.insertBefore(newOption, addNewOption);
+                    }
+                });
+                
+                // Select the new category in the dropdown that triggered the modal
+                if (activeCategoryDropdown) {
+                    activeCategoryDropdown.value = data.id;
+                }
+                
+                // Clear inputs and close modal
+                newCategoryInput.value = '';
+                newCategoryDescInput.value = '';
+                var addCategoryModal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+                addCategoryModal.hide();
+                
+                // Show success message
+                if (typeof showToast === 'function') {
+                    showToast('Category "' + newCategoryName + '" created successfully!', 'success');
+                }
+            } else {
+                // Show error
+                if (typeof showAlert === 'function') {
+                    showAlert(data.message || 'Failed to create category', 'Error', 'error');
+                } else {
+                    alert(data.message || 'Failed to create category');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (typeof showAlert === 'function') {
+                showAlert('Error creating category: ' + error.message, 'Error', 'error');
+            } else {
+                alert('Error creating category');
+            }
+        });
+    });
+    
+    // Clear validation state when category modal is hidden
+    document.getElementById('addCategoryModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('newCategoryName').classList.remove('is-invalid');
+        document.getElementById('newCategoryName').value = '';
+        document.getElementById('newCategoryDescription').value = '';
     });
 });
 
