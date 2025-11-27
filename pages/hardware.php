@@ -418,7 +418,7 @@ include '../includes/header.php';
                         <td class="d-none d-lg-table-cell"><span class="badge bg-secondary"><?php echo $item['repair_quantity']; ?></span></td>
                         <td class="d-none d-lg-table-cell"><small><?php echo escapeOutput($item['location'] ?: '-'); ?></small></td>
                         <td>
-                            <button class="btn btn-sm btn-info" onclick='editHardware(<?php echo json_encode($item); ?>)'>
+                            <button class="btn btn-sm btn-info" onclick='editHardware(<?php echo htmlspecialchars(json_encode($item), ENT_QUOTES, "UTF-8"); ?>)'>
                                 <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
                             </button>
                             <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" 

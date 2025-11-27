@@ -90,12 +90,6 @@ if (!isset($pageTitle)) {
                     <?php endif; ?>
                 </ul>
                 <ul class="navbar-nav align-items-lg-center">
-                    <!-- Keyboard shortcuts hint -->
-                    <li class="nav-item d-none d-lg-block me-2">
-                        <span class="text-white-50 small" title="Press Ctrl+/ for keyboard shortcuts">
-                            <i class="bi bi-keyboard"></i>
-                        </span>
-                    </li>
                     <!-- User Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" 

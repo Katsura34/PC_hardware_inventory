@@ -16,13 +16,6 @@
                     </small>
                 </div>
             </div>
-            <!-- Keyboard shortcuts hint -->
-            <div class="mt-2">
-                <small class="text-muted">
-                    <i class="bi bi-keyboard me-1" aria-hidden="true"></i>
-                    Press <kbd>Ctrl</kbd> + <kbd>/</kbd> for keyboard shortcuts
-                </small>
-            </div>
         </div>
     </footer>
     
