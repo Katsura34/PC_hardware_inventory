@@ -1,15 +1,16 @@
+        </div> <!-- Close container-fluid -->
     </main> <!-- Close main content area -->
     
     <!-- Footer - HCI Principle: Consistency -->
-    <footer class="bg-light text-center text-muted py-4 mt-auto" role="contentinfo">
-        <div class="container">
+    <footer class="app-footer" role="contentinfo">
+        <div class="container-fluid">
             <div class="row align-items-center">
-                <div class="col-md-6 text-md-start mb-2 mb-md-0">
+                <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
                     <small>
                         <strong>PC Hardware Inventory System</strong> <span class="badge bg-secondary">v2.0</span>
                     </small>
                 </div>
-                <div class="col-md-6 text-md-end">
+                <div class="col-md-6 text-center text-md-end">
                     <small>
                         <i class="bi bi-building me-1" aria-hidden="true"></i>ACLC College of Ormoc
                         &bull; &copy; <?php echo date('Y'); ?>
