@@ -588,3 +588,78 @@ function filterTableByLocation(location) {
         }
     });
 }
+
+// ============================================
+// Page Navigation Loading Animation
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Show loading animation when navigating to other pages via navbar links
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-link:not(.dropdown-toggle)');
+    navLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            // Don't show loading for dropdown toggles or active page links
+            if (this.classList.contains('active') || this.getAttribute('data-bs-toggle')) {
+                return;
+            }
+            showLoading('Loading page...');
+        });
+    });
+    
+    // Show loading animation for logout link
+    const logoutLinks = document.querySelectorAll('a[href*="logout.php"]');
+    logoutLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            showLoading('Signing out...');
+        });
+    });
+    
+    // Show loading animation for filter form submissions
+    const filterForms = document.querySelectorAll('form[method="GET"]');
+    filterForms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            // Only show loading for filter forms (those with filter buttons)
+            const hasFilterButton = form.querySelector('button[type="submit"] .bi-funnel');
+            if (hasFilterButton) {
+                showLoading('Applying filters...');
+            }
+        });
+    });
+    
+    // Show loading animation for "View All" and similar navigation links
+    const viewAllLinks = document.querySelectorAll('a.btn[href*=".php"]:not([onclick]):not([data-bs-toggle])');
+    viewAllLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            // Only show loading for actual page navigation (safe URLs only)
+            const href = this.getAttribute('href');
+            // Check for valid navigation URLs - must be a relative URL or http/https
+            // This excludes dangerous URL schemes like javascript:, data:, vbscript:, etc.
+            var isSafeUrl = false;
+            if (href) {
+                var hrefLower = href.toLowerCase();
+                // Only allow relative URLs (not starting with a scheme) or http/https URLs
+                var hasScheme = hrefLower.indexOf(':') !== -1;
+                if (!hasScheme || hrefLower.startsWith('http://') || hrefLower.startsWith('https://')) {
+                    // Also exclude fragment-only URLs
+                    if (!href.startsWith('#')) {
+                        isSafeUrl = true;
+                    }
+                }
+            }
+            
+            if (isSafeUrl) {
+                // Check if it's a "Clear filters" button
+                var hasClearIcon = link.querySelector('.bi-x-circle');
+                if (hasClearIcon) {
+                    showLoading('Clearing filters...');
+                } else {
+                    showLoading('Loading...');
+                }
+            }
+        });
+    });
+    
+    // Hide any lingering loading overlay from browser back/forward navigation cache
+    // This ensures users don't see a stuck loading screen when navigating back
+    hideLoading();
+});
