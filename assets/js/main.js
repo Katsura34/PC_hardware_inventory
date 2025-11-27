@@ -588,3 +588,66 @@ function filterTableByLocation(location) {
         }
     });
 }
+
+// ============================================
+// Page Navigation Loading Animation
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Show loading animation when navigating to other pages via navbar links
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-link:not(.dropdown-toggle)');
+    navLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            // Don't show loading for dropdown toggles or active page links
+            if (this.classList.contains('active') || this.getAttribute('data-bs-toggle')) {
+                return;
+            }
+            showLoading('Loading page...');
+        });
+    });
+    
+    // Show loading animation for logout link
+    const logoutLinks = document.querySelectorAll('a[href*="logout.php"]');
+    logoutLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            showLoading('Signing out...');
+        });
+    });
+    
+    // Show loading animation for filter form submissions
+    const filterForms = document.querySelectorAll('form[method="GET"]');
+    filterForms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            // Only show loading for filter forms (those with filter buttons)
+            const hasFilterButton = form.querySelector('button[type="submit"] .bi-funnel');
+            if (hasFilterButton) {
+                showLoading('Applying filters...');
+            }
+        });
+    });
+    
+    // Show loading animation for "View All" and similar navigation links
+    const viewAllLinks = document.querySelectorAll('a.btn[href*=".php"]:not([onclick])');
+    viewAllLinks.forEach(function(link) {
+        // Skip links that open modals or have other click handlers
+        if (link.getAttribute('data-bs-toggle') || link.getAttribute('onclick')) {
+            return;
+        }
+        link.addEventListener('click', function(e) {
+            // Only show loading for actual page navigation
+            const href = this.getAttribute('href');
+            if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+                // Check if it's a "Clear filters" button
+                const hasClearIcon = link.querySelector('.bi-x-circle');
+                if (hasClearIcon) {
+                    showLoading('Clearing filters...');
+                } else {
+                    showLoading('Loading...');
+                }
+            }
+        });
+    });
+    
+    // Hide loading when page is fully loaded (in case of back/forward navigation)
+    hideLoading();
+});
