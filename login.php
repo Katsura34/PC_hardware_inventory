@@ -103,7 +103,7 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
                 </div>
                 <?php endif; ?>
                 
-                <!-- HCI Principle: User-centered Design - Clear instructions -->
+              
                 <form method="POST" action="" class="needs-validation" novalidate aria-label="Login form">
                     <div class="mb-4">
                         <label for="username" class="form-label fw-semibold">
@@ -115,10 +115,7 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
                                autocomplete="username"
                                autofocus
                                required>
-                        <div class="invalid-feedback">
-                            <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
-                            Please enter your username.
-                        </div>
+
                     </div>
                     
                     <div class="mb-4">
@@ -135,10 +132,7 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
                                 <i class="bi bi-eye" id="toggleIcon" aria-hidden="true"></i>
                             </button>
                         </div>
-                        <div class="invalid-feedback">
-                            <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
-                            Please enter your password.
-                        </div>
+
                     </div>
                     
                     <div class="mb-4 form-check">
