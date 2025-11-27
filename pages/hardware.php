@@ -356,11 +356,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="location" class="form-label">Location</label>
-                            <select class="form-select" id="location" name="location">
+                            <select class="form-select location-select" id="location" name="location">
                                 <option value="">Select Location</option>
                                 <?php foreach ($locations as $loc): ?>
                                 <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
                                 <?php endforeach; ?>
+                                <option value="__add_new__">+ Add New Location...</option>
                             </select>
                         </div>
                         <div class="col-12"><hr></div>
@@ -440,11 +441,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="edit_location" class="form-label">Location</label>
-                            <select class="form-select" id="edit_location" name="location">
+                            <select class="form-select location-select" id="edit_location" name="location">
                                 <option value="">Select Location</option>
                                 <?php foreach ($locations as $loc): ?>
                                 <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
                                 <?php endforeach; ?>
+                                <option value="__add_new__">+ Add New Location...</option>
                             </select>
                         </div>
                         <div class="col-12"><hr></div>
@@ -496,11 +498,12 @@ include '../includes/header.php';
                     </div>
                     <div class="mb-3">
                         <label for="defaultLocation" class="form-label">Default Location (optional)</label>
-                        <select class="form-select" id="defaultLocation" name="defaultLocation">
+                        <select class="form-select location-select" id="defaultLocation" name="defaultLocation">
                             <option value="">-- Use location from CSV --</option>
                             <?php foreach ($locations as $loc): ?>
                             <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
                             <?php endforeach; ?>
+                            <option value="__add_new__">+ Add New Location...</option>
                         </select>
                         <small class="text-muted">If selected, this location will be used for all imported items (overrides CSV location column)</small>
                     </div>
@@ -525,7 +528,101 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Add New Location Modal -->
+<div class="modal fade" id="addLocationModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-geo-alt-fill"></i> Add New Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newLocationName" class="form-label">Location Name *</label>
+                    <input type="text" class="form-control" id="newLocationName" placeholder="Enter location name" required>
+                    <div class="invalid-feedback">Please enter a location name.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveNewLocationBtn">
+                    <i class="bi bi-plus-circle"></i> Add Location
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// Track which dropdown triggered the add location modal
+var activeLocationDropdown = null;
+
+// Handle location dropdown change to detect "Add New Location" selection
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.location-select').forEach(function(select) {
+        select.addEventListener('change', function() {
+            if (this.value === '__add_new__') {
+                activeLocationDropdown = this;
+                // Reset to empty/first option before showing modal
+                this.value = '';
+                // Show the add location modal
+                var addLocationModal = new bootstrap.Modal(document.getElementById('addLocationModal'));
+                addLocationModal.show();
+            }
+        });
+    });
+    
+    // Handle save new location button
+    document.getElementById('saveNewLocationBtn').addEventListener('click', function() {
+        var newLocationInput = document.getElementById('newLocationName');
+        var newLocation = newLocationInput.value.trim();
+        
+        if (!newLocation) {
+            newLocationInput.classList.add('is-invalid');
+            return;
+        }
+        
+        newLocationInput.classList.remove('is-invalid');
+        
+        // Add the new location to all location dropdowns
+        document.querySelectorAll('.location-select').forEach(function(select) {
+            // Check if location already exists
+            var exists = false;
+            for (var i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === newLocation) {
+                    exists = true;
+                    break;
+                }
+            }
+            
+            if (!exists) {
+                // Insert before the "Add New Location" option
+                var addNewOption = select.querySelector('option[value="__add_new__"]');
+                var newOption = document.createElement('option');
+                newOption.value = newLocation;
+                newOption.textContent = newLocation;
+                select.insertBefore(newOption, addNewOption);
+            }
+        });
+        
+        // Select the new location in the dropdown that triggered the modal
+        if (activeLocationDropdown) {
+            activeLocationDropdown.value = newLocation;
+        }
+        
+        // Clear input and close modal
+        newLocationInput.value = '';
+        var addLocationModal = bootstrap.Modal.getInstance(document.getElementById('addLocationModal'));
+        addLocationModal.hide();
+    });
+    
+    // Clear validation state when modal is hidden
+    document.getElementById('addLocationModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('newLocationName').classList.remove('is-invalid');
+        document.getElementById('newLocationName').value = '';
+    });
+});
+
 // Hardware data for CSV export (in the correct import format)
 var hardwareData = <?php echo json_encode($hardware); ?>;
 
