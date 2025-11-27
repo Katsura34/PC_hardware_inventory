@@ -176,11 +176,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Get all hardware
+// Get filter parameters
+$filter_category = isset($_GET['filter_category']) ? (int)$_GET['filter_category'] : 0;
+$filter_brand = isset($_GET['filter_brand']) ? sanitizeInput($_GET['filter_brand']) : '';
+$filter_model = isset($_GET['filter_model']) ? sanitizeInput($_GET['filter_model']) : '';
+
+// Build query with filters
+$query = "SELECT h.*, c.name as category_name FROM hardware h 
+          LEFT JOIN categories c ON h.category_id = c.id 
+          WHERE 1=1";
+
+$params = [];
+$types = "";
+
+if ($filter_category > 0) {
+    $query .= " AND h.category_id = ?";
+    $params[] = $filter_category;
+    $types .= "i";
+}
+
+if (!empty($filter_brand)) {
+    $query .= " AND h.brand LIKE ?";
+    $params[] = "%" . $filter_brand . "%";
+    $types .= "s";
+}
+
+if (!empty($filter_model)) {
+    $query .= " AND h.model LIKE ?";
+    $params[] = "%" . $filter_model . "%";
+    $types .= "s";
+}
+
+$query .= " ORDER BY h.date_added DESC";
+
+// Get all hardware with filters
 $hardware = [];
-$result = $conn->query("SELECT h.*, c.name as category_name FROM hardware h 
-                       LEFT JOIN categories c ON h.category_id = c.id 
-                       ORDER BY h.date_added DESC");
+if (!empty($params)) {
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $result = $conn->query($query);
+}
 while ($row = $result->fetch_assoc()) {
     $hardware[] = $row;
 }
@@ -190,6 +228,24 @@ $categories = [];
 $result = $conn->query("SELECT * FROM categories ORDER BY name");
 while ($row = $result->fetch_assoc()) {
     $categories[] = $row;
+}
+
+// Get distinct brands for filter dropdown
+$brands = [];
+$result = $conn->query("SELECT DISTINCT brand FROM hardware WHERE brand IS NOT NULL AND brand != '' ORDER BY brand");
+while ($row = $result->fetch_assoc()) {
+    if (!empty($row['brand'])) {
+        $brands[] = $row['brand'];
+    }
+}
+
+// Get distinct models for filter dropdown
+$models = [];
+$result = $conn->query("SELECT DISTINCT model FROM hardware WHERE model IS NOT NULL AND model != '' ORDER BY model");
+while ($row = $result->fetch_assoc()) {
+    if (!empty($row['model'])) {
+        $models[] = $row['model'];
+    }
 }
 
 // Get distinct locations for dropdown
@@ -238,15 +294,81 @@ include '../includes/header.php';
 
 <!-- Hardware Table -->
 <div class="card table-card">
-    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-        <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Hardware</h5>
-        <div class="d-flex gap-2 w-100 w-md-auto">
-            <input type="text" id="searchInput" class="form-control form-control-sm flex-grow-1" placeholder="Search..." 
-                   onkeyup="searchTable('searchInput', 'hardwareTable')">
-            <button class="btn btn-sm btn-success" onclick="exportHardwareToCSV()">
-                <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
-            </button>
+    <div class="card-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+            <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Hardware</h5>
+            <div class="d-flex gap-2 w-100 w-md-auto">
+                <input type="text" id="searchInput" class="form-control form-control-sm flex-grow-1" placeholder="Search..." 
+                       onkeyup="searchTable('searchInput', 'hardwareTable')">
+                <button class="btn btn-sm btn-success" onclick="exportHardwareToCSV()">
+                    <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
+                </button>
+            </div>
         </div>
+        <!-- Filters -->
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label for="filter_category" class="form-label small mb-1">Category</label>
+                <select class="form-select form-select-sm" id="filter_category" name="filter_category">
+                    <option value="">All Categories</option>
+                    <?php foreach ($categories as $cat): ?>
+                    <option value="<?php echo $cat['id']; ?>" <?php echo $filter_category == $cat['id'] ? 'selected' : ''; ?>><?php echo escapeOutput($cat['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label for="filter_brand" class="form-label small mb-1">Brand</label>
+                <select class="form-select form-select-sm" id="filter_brand" name="filter_brand">
+                    <option value="">All Brands</option>
+                    <?php foreach ($brands as $brand): ?>
+                    <option value="<?php echo escapeOutput($brand); ?>" <?php echo $filter_brand === $brand ? 'selected' : ''; ?>><?php echo escapeOutput($brand); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label for="filter_model" class="form-label small mb-1">Model</label>
+                <select class="form-select form-select-sm" id="filter_model" name="filter_model">
+                    <option value="">All Models</option>
+                    <?php foreach ($models as $model): ?>
+                    <option value="<?php echo escapeOutput($model); ?>" <?php echo $filter_model === $model ? 'selected' : ''; ?>><?php echo escapeOutput($model); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+        <?php if ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)): ?>
+        <div class="mt-2">
+            <small class="text-muted">
+                <i class="bi bi-funnel-fill"></i> Filters active: 
+                <?php 
+                $filters = [];
+                if ($filter_category > 0) {
+                    $cat_name = '';
+                    foreach ($categories as $cat) {
+                        if ($cat['id'] == $filter_category) {
+                            $cat_name = $cat['name'];
+                            break;
+                        }
+                    }
+                    $filters[] = "Category: " . escapeOutput($cat_name);
+                }
+                if (!empty($filter_brand)) $filters[] = "Brand: " . escapeOutput($filter_brand);
+                if (!empty($filter_model)) $filters[] = "Model: " . escapeOutput($filter_model);
+                echo implode(' | ', $filters);
+                ?>
+                (<?php echo count($hardware); ?> items)
+            </small>
+        </div>
+        <?php endif; ?>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

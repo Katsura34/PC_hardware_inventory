@@ -9,19 +9,59 @@ requireLogin();
 $pageTitle = 'Inventory History - PC Hardware Inventory';
 $conn = getDBConnection();
 
-// Get inventory history
+// Get filter parameters
+$action_filter = isset($_GET['action']) ? sanitizeInput($_GET['action']) : '';
+$date_from = isset($_GET['date_from']) ? sanitizeInput($_GET['date_from']) : '';
+$date_to = isset($_GET['date_to']) ? sanitizeInput($_GET['date_to']) : '';
+
+// Build query with filters
+$query = "SELECT ih.*, 
+                COALESCE(h.name, ih.hardware_name) as hardware_name, 
+                COALESCE(h.serial_number, ih.serial_number) as serial_number, 
+                COALESCE(u.full_name, ih.user_name) as user_name, 
+                COALESCE(c.name, ih.category_name) as category_name
+         FROM inventory_history ih
+         LEFT JOIN hardware h ON ih.hardware_id = h.id
+         LEFT JOIN users u ON ih.user_id = u.id
+         LEFT JOIN categories c ON h.category_id = c.id
+         WHERE 1=1";
+
+$params = [];
+$types = "";
+
+// Add action filter
+if (!empty($action_filter) && in_array($action_filter, ['Added', 'Updated', 'Deleted'])) {
+    $query .= " AND ih.action_type = ?";
+    $params[] = $action_filter;
+    $types .= "s";
+}
+
+// Add date range filters
+if (!empty($date_from)) {
+    $query .= " AND DATE(ih.action_date) >= ?";
+    $params[] = $date_from;
+    $types .= "s";
+}
+
+if (!empty($date_to)) {
+    $query .= " AND DATE(ih.action_date) <= ?";
+    $params[] = $date_to;
+    $types .= "s";
+}
+
+$query .= " ORDER BY ih.action_date DESC LIMIT 500";
+
+// Get inventory history with filters
 $history = [];
-$result = $conn->query("SELECT ih.*, 
-                              COALESCE(h.name, ih.hardware_name) as hardware_name, 
-                              COALESCE(h.serial_number, ih.serial_number) as serial_number, 
-                              COALESCE(u.full_name, ih.user_name) as user_name, 
-                              COALESCE(c.name, ih.category_name) as category_name
-                       FROM inventory_history ih
-                       LEFT JOIN hardware h ON ih.hardware_id = h.id
-                       LEFT JOIN users u ON ih.user_id = u.id
-                       LEFT JOIN categories c ON h.category_id = c.id
-                       ORDER BY ih.action_date DESC
-                       LIMIT 100");
+if (!empty($params)) {
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $result = $conn->query($query);
+}
+
 while ($row = $result->fetch_assoc()) {
     $history[] = $row;
 }
@@ -43,10 +83,57 @@ include '../includes/header.php';
 
 <!-- History Table -->
 <div class="card table-card">
-    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-        <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> Activity Log</h5>
-        <input type="text" id="searchInput" class="form-control form-control-sm w-100" style="max-width: 300px;" 
-               placeholder="Search history..." onkeyup="searchTable('searchInput', 'historyTable')">
+    <div class="card-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+            <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> Activity Log</h5>
+            <input type="text" id="searchInput" class="form-control form-control-sm w-100" style="max-width: 300px;" 
+                   placeholder="Search history..." onkeyup="searchTable('searchInput', 'historyTable')">
+        </div>
+        <!-- Filters -->
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label for="action" class="form-label small mb-1">Action Type</label>
+                <select class="form-select form-select-sm" id="action" name="action">
+                    <option value="">All Actions</option>
+                    <option value="Added" <?php echo $action_filter === 'Added' ? 'selected' : ''; ?>>Added</option>
+                    <option value="Updated" <?php echo $action_filter === 'Updated' ? 'selected' : ''; ?>>Updated</option>
+                    <option value="Deleted" <?php echo $action_filter === 'Deleted' ? 'selected' : ''; ?>>Deleted</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label for="date_from" class="form-label small mb-1">Date From</label>
+                <input type="date" class="form-control form-control-sm" id="date_from" name="date_from" value="<?php echo escapeOutput($date_from); ?>">
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label for="date_to" class="form-label small mb-1">Date To</label>
+                <input type="date" class="form-control form-control-sm" id="date_to" name="date_to" value="<?php echo escapeOutput($date_to); ?>">
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <a href="<?php echo BASE_PATH; ?>pages/history.php" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+        <?php if (!empty($action_filter) || !empty($date_from) || !empty($date_to)): ?>
+        <div class="mt-2">
+            <small class="text-muted">
+                <i class="bi bi-funnel-fill"></i> Filters active: 
+                <?php 
+                $filters = [];
+                if (!empty($action_filter)) $filters[] = "Action: " . escapeOutput($action_filter);
+                if (!empty($date_from)) $filters[] = "From: " . escapeOutput($date_from);
+                if (!empty($date_to)) $filters[] = "To: " . escapeOutput($date_to);
+                echo implode(' | ', $filters);
+                ?>
+                (<?php echo count($history); ?> records)
+            </small>
+        </div>
+        <?php endif; ?>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

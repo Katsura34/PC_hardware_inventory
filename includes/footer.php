@@ -3,7 +3,14 @@
     <!-- Footer -->
     <footer class="bg-light text-center text-muted py-3 mt-5">
         <div class="container">
-            <small>&copy; <?php echo date('Y'); ?> PC Hardware Inventory System. All rights reserved.</small>
+            <div class="row">
+                <div class="col-12">
+                    <small>
+                        <strong>PC Hardware Inventory System</strong> v1.0 | ACLC College of Ormoc<br>
+                        &copy; <?php echo date('Y'); ?> All rights reserved.
+                    </small>
+                </div>
+            </div>
         </div>
     </footer>
     
