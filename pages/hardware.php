@@ -422,7 +422,7 @@ include '../includes/header.php';
                                 <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
                             </button>
                             <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" 
-                               onclick="return confirmDelete('Are you sure you want to delete this hardware?')">
+                               onclick="return confirmDelete('Are you sure you want to delete this hardware?', this)">
                                 <i class="bi bi-trash"></i><span class="d-none d-sm-inline"> Delete</span>
                             </a>
                         </td>
@@ -782,23 +782,32 @@ function exportHardwareToCSV() {
     window.URL.revokeObjectURL(url);
 }
 
-// Edit hardware function
+// Edit hardware function - shows confirmation first
 function editHardware(item) {
-    document.getElementById('edit_id').value = item.id;
-    document.getElementById('edit_name').value = item.name;
-    document.getElementById('edit_category_id').value = item.category_id;
-    document.getElementById('edit_type').value = item.type || '';
-    document.getElementById('edit_brand').value = item.brand || '';
-    document.getElementById('edit_model').value = item.model || '';
-    document.getElementById('edit_serial_number').value = item.serial_number || '';
-    document.getElementById('edit_location').value = item.location || '';
-    document.getElementById('edit_unused_quantity').value = item.unused_quantity;
-    document.getElementById('edit_in_use_quantity').value = item.in_use_quantity;
-    document.getElementById('edit_damaged_quantity').value = item.damaged_quantity;
-    document.getElementById('edit_repair_quantity').value = item.repair_quantity;
-    
-    const editModal = new bootstrap.Modal(document.getElementById('editHardwareModal'));
-    editModal.show();
+    showConfirmation(
+        'Do you want to edit "' + item.name + '"?',
+        'Confirm Edit',
+        'Edit',
+        'warning'
+    ).then((confirmed) => {
+        if (confirmed) {
+            document.getElementById('edit_id').value = item.id;
+            document.getElementById('edit_name').value = item.name;
+            document.getElementById('edit_category_id').value = item.category_id;
+            document.getElementById('edit_type').value = item.type || '';
+            document.getElementById('edit_brand').value = item.brand || '';
+            document.getElementById('edit_model').value = item.model || '';
+            document.getElementById('edit_serial_number').value = item.serial_number || '';
+            document.getElementById('edit_location').value = item.location || '';
+            document.getElementById('edit_unused_quantity').value = item.unused_quantity;
+            document.getElementById('edit_in_use_quantity').value = item.in_use_quantity;
+            document.getElementById('edit_damaged_quantity').value = item.damaged_quantity;
+            document.getElementById('edit_repair_quantity').value = item.repair_quantity;
+            
+            const editModal = new bootstrap.Modal(document.getElementById('editHardwareModal'));
+            editModal.show();
+        }
+    });
 }
 
 // Form validation

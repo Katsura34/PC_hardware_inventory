@@ -163,7 +163,7 @@ include '../includes/header.php';
                             </button>
                             <?php if ($user['id'] !== $_SESSION['user_id']): ?>
                             <a href="?delete=<?php echo $user['id']; ?>" class="btn btn-sm btn-danger" 
-                               onclick="return confirmDelete('Are you sure you want to delete this user?')">
+                               onclick="return confirmDelete('Are you sure you want to delete this user?', this)">
                                 <i class="bi bi-trash"></i><span class="d-none d-sm-inline"> Delete</span>
                             </a>
                             <?php endif; ?>
@@ -261,16 +261,25 @@ include '../includes/header.php';
 </div>
 
 <script>
-// Edit user function
+// Edit user function - shows confirmation first
 function editUser(user) {
-    document.getElementById('edit_id').value = user.id;
-    document.getElementById('edit_username').value = user.username;
-    document.getElementById('edit_full_name').value = user.full_name;
-    document.getElementById('edit_role').value = user.role;
-    document.getElementById('edit_password').value = '';
-    
-    const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-    editModal.show();
+    showConfirmation(
+        'Do you want to edit user "' + user.username + '"?',
+        'Confirm Edit',
+        'Edit',
+        'warning'
+    ).then((confirmed) => {
+        if (confirmed) {
+            document.getElementById('edit_id').value = user.id;
+            document.getElementById('edit_username').value = user.username;
+            document.getElementById('edit_full_name').value = user.full_name;
+            document.getElementById('edit_role').value = user.role;
+            document.getElementById('edit_password').value = '';
+            
+            const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            editModal.show();
+        }
+    });
 }
 
 // Form validation
