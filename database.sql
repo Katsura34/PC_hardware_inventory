@@ -43,7 +43,9 @@ CREATE TABLE IF NOT EXISTS hardware (
     repair_quantity INT DEFAULT 0,
     location VARCHAR(100),
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id)
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    INDEX idx_hardware_deleted_at (deleted_at)
 );
 
 -- Sample Hardware

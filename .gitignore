@@ -18,6 +18,7 @@
 *.bak
 *.backup
 *.sql.gz
+backups/
 
 # OS generated files
 Thumbs.db

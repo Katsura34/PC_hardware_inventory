@@ -9,12 +9,12 @@ requireLogin();
 $pageTitle = 'Hardware Management - PC Hardware Inventory';
 $conn = getDBConnection();
 
-// Handle delete
+// Handle delete (soft delete)
 if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     
     // Get hardware details before deleting for history log
-    $old_stmt = $conn->prepare("SELECT name, total_quantity, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity FROM hardware WHERE id = ?");
+    $old_stmt = $conn->prepare("SELECT name, total_quantity, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity FROM hardware WHERE id = ? AND deleted_at IS NULL");
     $old_stmt->bind_param("i", $id);
     $old_stmt->execute();
     $old_result = $old_stmt->get_result();
@@ -51,16 +51,230 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
         $log_stmt->close();
     }
     
-    // Delete hardware
-    $stmt = $conn->prepare("DELETE FROM hardware WHERE id = ?");
+    // Soft delete hardware (set deleted_at timestamp)
+    $stmt = $conn->prepare("UPDATE hardware SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL");
     $stmt->bind_param("i", $id);
     
-    if ($stmt->execute()) {
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
         redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware deleted successfully.', 'success');
     } else {
         redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to delete hardware.', 'error');
     }
     $stmt->close();
+}
+
+// Handle restore (admin only)
+if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
+    $id = (int)$_GET['restore'];
+    
+    // Restore hardware
+    $stmt = $conn->prepare("UPDATE hardware SET deleted_at = NULL WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        // Log to history
+        $detail_stmt = $conn->prepare("SELECT h.name, h.serial_number, h.total_quantity, h.unused_quantity, h.in_use_quantity, h.damaged_quantity, h.repair_quantity, c.name as category_name 
+                                       FROM hardware h 
+                                       LEFT JOIN categories c ON h.category_id = c.id 
+                                       WHERE h.id = ?");
+        $detail_stmt->bind_param("i", $id);
+        $detail_stmt->execute();
+        $detail_result = $detail_stmt->get_result();
+        $detail_data = $detail_result->fetch_assoc();
+        $detail_stmt->close();
+        
+        if ($detail_data) {
+            $user_id = $_SESSION['user_id'];
+            $user_name = $_SESSION['full_name'];
+            $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                       user_id, user_name, action_type, quantity_change, 
+                                       old_unused, old_in_use, old_damaged, old_repair, 
+                                       new_unused, new_in_use, new_damaged, new_repair) 
+                                       VALUES (?, ?, ?, ?, ?, ?, 'Restored', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $log_stmt->bind_param("isssisiiiiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
+                                 $detail_data['serial_number'], $user_id, $user_name, $detail_data['total_quantity'], 
+                                 0, 0, 0, 0,
+                                 $detail_data['unused_quantity'], $detail_data['in_use_quantity'], 
+                                 $detail_data['damaged_quantity'], $detail_data['repair_quantity']);
+            $log_stmt->execute();
+            $log_stmt->close();
+        }
+        
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware restored successfully.', 'success');
+    } else {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to restore hardware.', 'error');
+    }
+    $stmt->close();
+}
+
+// Handle permanent delete (admin only)
+if (isset($_GET['permanent_delete']) && validateInt($_GET['permanent_delete']) && isAdmin()) {
+    $id = (int)$_GET['permanent_delete'];
+    
+    // Permanently delete hardware
+    $stmt = $conn->prepare("DELETE FROM hardware WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute()) {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware permanently deleted.', 'success');
+    } else {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to permanently delete hardware.', 'error');
+    }
+    $stmt->close();
+}
+
+// Handle batch delete
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_action']) && $_POST['batch_action'] === 'delete') {
+    $ids = isset($_POST['ids']) ? array_map('intval', $_POST['ids']) : [];
+    
+    if (!empty($ids)) {
+        $deleted_count = 0;
+        foreach ($ids as $id) {
+            // Get hardware details before deleting for history log
+            $old_stmt = $conn->prepare("SELECT h.name, h.serial_number, h.total_quantity, h.unused_quantity, h.in_use_quantity, h.damaged_quantity, h.repair_quantity, c.name as category_name 
+                                       FROM hardware h 
+                                       LEFT JOIN categories c ON h.category_id = c.id 
+                                       WHERE h.id = ? AND h.deleted_at IS NULL");
+            $old_stmt->bind_param("i", $id);
+            $old_stmt->execute();
+            $old_result = $old_stmt->get_result();
+            $old_data = $old_result->fetch_assoc();
+            $old_stmt->close();
+            
+            if ($old_data) {
+                // Log to history
+                $user_id = $_SESSION['user_id'];
+                $user_name = $_SESSION['full_name'];
+                $quantity_change = -$old_data['total_quantity'];
+                
+                $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                           user_id, user_name, action_type, quantity_change, 
+                                           old_unused, old_in_use, old_damaged, old_repair, 
+                                           new_unused, new_in_use, new_damaged, new_repair) 
+                                           VALUES (?, ?, ?, ?, ?, ?, 'Deleted', ?, ?, ?, ?, ?, 0, 0, 0, 0)");
+                $log_stmt->bind_param("isssisiiiii", $id, $old_data['name'], $old_data['category_name'], 
+                                     $old_data['serial_number'], $user_id, $user_name, $quantity_change, 
+                                     $old_data['unused_quantity'], $old_data['in_use_quantity'], 
+                                     $old_data['damaged_quantity'], $old_data['repair_quantity']);
+                $log_stmt->execute();
+                $log_stmt->close();
+                
+                // Soft delete
+                $del_stmt = $conn->prepare("UPDATE hardware SET deleted_at = NOW() WHERE id = ?");
+                $del_stmt->bind_param("i", $id);
+                if ($del_stmt->execute() && $del_stmt->affected_rows > 0) {
+                    $deleted_count++;
+                }
+                $del_stmt->close();
+            }
+        }
+        
+        if ($deleted_count > 0) {
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', "$deleted_count item(s) deleted successfully.", 'success');
+        } else {
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'No items were deleted.', 'error');
+        }
+    } else {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'No items selected.', 'error');
+    }
+}
+
+// Handle batch status update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_action']) && $_POST['batch_action'] === 'update_status') {
+    $ids = isset($_POST['ids']) ? array_map('intval', $_POST['ids']) : [];
+    $status_type = isset($_POST['status_type']) ? sanitizeInput($_POST['status_type']) : '';
+    $quantity_change = isset($_POST['quantity_change']) ? (int)$_POST['quantity_change'] : 0;
+    
+    if (!empty($ids) && !empty($status_type) && $quantity_change != 0) {
+        $updated_count = 0;
+        // Use a strict whitelist to prevent SQL injection
+        $valid_statuses = [
+            'unused_quantity' => 'unused_quantity',
+            'in_use_quantity' => 'in_use_quantity', 
+            'damaged_quantity' => 'damaged_quantity',
+            'repair_quantity' => 'repair_quantity'
+        ];
+        
+        if (isset($valid_statuses[$status_type])) {
+            // Get the safe column name from our whitelist
+            $safe_column = $valid_statuses[$status_type];
+            
+            foreach ($ids as $id) {
+                // Get current values
+                $old_stmt = $conn->prepare("SELECT h.*, c.name as category_name FROM hardware h LEFT JOIN categories c ON h.category_id = c.id WHERE h.id = ? AND h.deleted_at IS NULL");
+                $old_stmt->bind_param("i", $id);
+                $old_stmt->execute();
+                $old_result = $old_stmt->get_result();
+                $old_data = $old_result->fetch_assoc();
+                $old_stmt->close();
+                
+                if ($old_data) {
+                    // Calculate new values
+                    $new_value = max(0, $old_data[$safe_column] + $quantity_change);
+                    
+                    // Update the status - using safe column name from whitelist
+                    // Build query based on which column to update
+                    switch ($safe_column) {
+                        case 'unused_quantity':
+                            $update_stmt = $conn->prepare("UPDATE hardware SET unused_quantity = ?, total_quantity = ? + in_use_quantity + damaged_quantity + repair_quantity WHERE id = ?");
+                            break;
+                        case 'in_use_quantity':
+                            $update_stmt = $conn->prepare("UPDATE hardware SET in_use_quantity = ?, total_quantity = unused_quantity + ? + damaged_quantity + repair_quantity WHERE id = ?");
+                            break;
+                        case 'damaged_quantity':
+                            $update_stmt = $conn->prepare("UPDATE hardware SET damaged_quantity = ?, total_quantity = unused_quantity + in_use_quantity + ? + repair_quantity WHERE id = ?");
+                            break;
+                        case 'repair_quantity':
+                            $update_stmt = $conn->prepare("UPDATE hardware SET repair_quantity = ?, total_quantity = unused_quantity + in_use_quantity + damaged_quantity + ? WHERE id = ?");
+                            break;
+                    }
+                    $update_stmt->bind_param("iii", $new_value, $new_value, $id);
+                    
+                    if ($update_stmt->execute() && $update_stmt->affected_rows > 0) {
+                        // Get updated values for history
+                        $new_stmt = $conn->prepare("SELECT unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, total_quantity FROM hardware WHERE id = ?");
+                        $new_stmt->bind_param("i", $id);
+                        $new_stmt->execute();
+                        $new_result = $new_stmt->get_result();
+                        $new_data = $new_result->fetch_assoc();
+                        $new_stmt->close();
+                        
+                        // Log to history
+                        $user_id = $_SESSION['user_id'];
+                        $user_name = $_SESSION['full_name'];
+                        $total_change = $new_data['total_quantity'] - ($old_data['unused_quantity'] + $old_data['in_use_quantity'] + $old_data['damaged_quantity'] + $old_data['repair_quantity']);
+                        
+                        $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                                   user_id, user_name, action_type, quantity_change, 
+                                                   old_unused, old_in_use, old_damaged, old_repair, 
+                                                   new_unused, new_in_use, new_damaged, new_repair) 
+                                                   VALUES (?, ?, ?, ?, ?, ?, 'Updated', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                        $log_stmt->bind_param("isssisiiiiiiiii", $id, $old_data['name'], $old_data['category_name'], 
+                                             $old_data['serial_number'], $user_id, $user_name, $total_change, 
+                                             $old_data['unused_quantity'], $old_data['in_use_quantity'], 
+                                             $old_data['damaged_quantity'], $old_data['repair_quantity'],
+                                             $new_data['unused_quantity'], $new_data['in_use_quantity'], 
+                                             $new_data['damaged_quantity'], $new_data['repair_quantity']);
+                        $log_stmt->execute();
+                        $log_stmt->close();
+                        
+                        $updated_count++;
+                    }
+                    $update_stmt->close();
+                }
+            }
+            
+            if ($updated_count > 0) {
+                redirectWithMessage(BASE_PATH . 'pages/hardware.php', "$updated_count item(s) updated successfully.", 'success');
+            } else {
+                redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'No items were updated.', 'error');
+            }
+        } else {
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Invalid status type.', 'error');
+        }
+    } else {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Missing required fields.', 'error');
+    }
 }
 
 // Handle add/edit
@@ -180,19 +394,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $filter_category = isset($_GET['filter_category']) ? (int)$_GET['filter_category'] : 0;
 $filter_brand = isset($_GET['filter_brand']) ? sanitizeInput($_GET['filter_brand']) : '';
 $filter_model = isset($_GET['filter_model']) ? sanitizeInput($_GET['filter_model']) : '';
+$show_deleted = isset($_GET['show_deleted']) && $_GET['show_deleted'] === '1' && isAdmin();
 
 // Pagination settings
 $records_per_page = 20;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $records_per_page;
 
-// Build count query for pagination
-$count_query = "SELECT COUNT(*) as total FROM hardware h WHERE 1=1";
+// Build count query for pagination - respect soft deletes
+$deleted_filter = $show_deleted ? "" : " AND h.deleted_at IS NULL";
+$count_query = "SELECT COUNT(*) as total FROM hardware h WHERE 1=1" . $deleted_filter;
 
 // Build query with filters
 $query = "SELECT h.*, c.name as category_name FROM hardware h 
           LEFT JOIN categories c ON h.category_id = c.id 
-          WHERE 1=1";
+          WHERE 1=1" . $deleted_filter;
 
 $params = [];
 $types = "";
@@ -255,7 +471,8 @@ $stmt->close();
 $pagination_params = array_filter([
     'filter_category' => $filter_category ?: null,
     'filter_brand' => $filter_brand ?: null,
-    'filter_model' => $filter_model ?: null
+    'filter_model' => $filter_model ?: null,
+    'show_deleted' => $show_deleted ? '1' : null
 ]);
 
 // Get all categories for dropdown
@@ -265,27 +482,27 @@ while ($row = $result->fetch_assoc()) {
     $categories[] = $row;
 }
 
-// Get distinct brands for filter dropdown
+// Get distinct brands for filter dropdown (exclude soft-deleted items)
 $brands = [];
-$result = $conn->query("SELECT DISTINCT brand FROM hardware WHERE brand IS NOT NULL AND brand != '' ORDER BY brand");
+$result = $conn->query("SELECT DISTINCT brand FROM hardware WHERE brand IS NOT NULL AND brand != '' AND deleted_at IS NULL ORDER BY brand");
 while ($row = $result->fetch_assoc()) {
     if (!empty($row['brand'])) {
         $brands[] = $row['brand'];
     }
 }
 
-// Get distinct models for filter dropdown
+// Get distinct models for filter dropdown (exclude soft-deleted items)
 $models = [];
-$result = $conn->query("SELECT DISTINCT model FROM hardware WHERE model IS NOT NULL AND model != '' ORDER BY model");
+$result = $conn->query("SELECT DISTINCT model FROM hardware WHERE model IS NOT NULL AND model != '' AND deleted_at IS NULL ORDER BY model");
 while ($row = $result->fetch_assoc()) {
     if (!empty($row['model'])) {
         $models[] = $row['model'];
     }
 }
 
-// Get distinct locations for dropdown
+// Get distinct locations for dropdown (exclude soft-deleted items)
 $locations = [];
-$result = $conn->query("SELECT DISTINCT location FROM hardware WHERE location IS NOT NULL AND location != '' ORDER BY location");
+$result = $conn->query("SELECT DISTINCT location FROM hardware WHERE location IS NOT NULL AND location != '' AND deleted_at IS NULL ORDER BY location");
 while ($row = $result->fetch_assoc()) {
     if (!empty($row['location'])) {
         $locations[] = $row['location'];
@@ -332,10 +549,19 @@ include '../includes/header.php';
     <div class="card-header card-header-primary">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <h5 class="mb-0 d-flex align-items-center gap-2">
-                <i class="bi bi-table" aria-hidden="true"></i> All Hardware
+                <i class="bi bi-table" aria-hidden="true"></i> <?php echo $show_deleted ? 'All Hardware (Including Deleted)' : 'All Hardware'; ?>
                 <span class="badge bg-light text-primary ms-2"><?php echo $total_records; ?></span>
             </h5>
             <div class="d-flex gap-2 align-items-center">
+                <?php if (isAdmin()): ?>
+                <!-- Show Deleted Toggle (Admin Only) -->
+                <a href="?<?php echo http_build_query(array_merge($pagination_params, ['show_deleted' => $show_deleted ? null : '1', 'page' => 1])); ?>" 
+                   class="btn btn-sm <?php echo $show_deleted ? 'btn-warning' : 'btn-outline-secondary'; ?>"
+                   title="<?php echo $show_deleted ? 'Hide deleted items' : 'Show deleted items'; ?>">
+                    <i class="bi bi-trash<?php echo $show_deleted ? '-fill' : ''; ?>"></i>
+                    <span class="d-none d-sm-inline"><?php echo $show_deleted ? 'Hide Deleted' : 'Show Deleted'; ?></span>
+                </a>
+                <?php endif; ?>
                 <!-- Toggle Search Button -->
                 <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
                         aria-expanded="false" aria-controls="searchFilterPanel"
@@ -354,6 +580,9 @@ include '../includes/header.php';
                     </button>
                     <div class="dropdown-menu dropdown-menu-end filter-dropdown p-3 shadow-lg" aria-labelledby="filterDropdown" style="min-width: 300px;">
                         <form method="GET" id="filterForm">
+                            <?php if ($show_deleted): ?>
+                            <input type="hidden" name="show_deleted" value="1">
+                            <?php endif; ?>
                             <h6 class="dropdown-header px-0 mb-2"><i class="bi bi-funnel me-1"></i> Filter Hardware</h6>
                             <div class="mb-3">
                                 <label for="filter_category" class="form-label small mb-1">Category</label>
@@ -386,14 +615,14 @@ include '../includes/header.php';
                                 <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
                                     <i class="bi bi-check-lg"></i> Apply
                                 </button>
-                                <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-outline-secondary btn-sm">
+                                <a href="<?php echo BASE_PATH; ?>pages/hardware.php<?php echo $show_deleted ? '?show_deleted=1' : ''; ?>" class="btn btn-outline-secondary btn-sm">
                                     <i class="bi bi-x-lg"></i> Clear
                                 </a>
                             </div>
                         </form>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-light" onclick="exportHardwareToCSV()">
+                <button class="btn btn-sm btn-light" onclick="showExportModal()">
                     <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
                 </button>
             </div>
@@ -446,11 +675,30 @@ include '../includes/header.php';
         </div>
         <?php endif; ?>
     </div>
+    <!-- Batch Operations Toolbar -->
+    <div class="card-body bg-light border-bottom py-2 d-none" id="batchToolbar">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="text-muted"><strong id="selectedCount">0</strong> items selected</span>
+            <div class="vr d-none d-sm-block"></div>
+            <button type="button" class="btn btn-sm btn-warning" onclick="showBatchStatusModal()">
+                <i class="bi bi-pencil-square"></i> Update Status
+            </button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="batchDelete()">
+                <i class="bi bi-trash"></i> Delete Selected
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                <i class="bi bi-x-lg"></i> Clear Selection
+            </button>
+        </div>
+    </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover table-hci mb-0" id="hardwareTable">
                 <thead>
                     <tr>
+                        <th scope="col" style="width: 40px;">
+                            <input type="checkbox" class="form-check-input" id="selectAllCheckbox" aria-label="Select all items" onclick="toggleSelectAll(this)">
+                        </th>
                         <th scope="col">Name</th>
                         <th scope="col" class="d-none d-md-table-cell">Category</th>
                         <th scope="col" class="d-none d-lg-table-cell">Brand/Model</th>
@@ -467,13 +715,22 @@ include '../includes/header.php';
                 <tbody>
                     <?php if (empty($hardware)): ?>
                     <tr>
-                        <td colspan="11" class="text-center text-muted py-4">No hardware found</td>
+                        <td colspan="12" class="text-center text-muted py-4">No hardware found</td>
                     </tr>
                     <?php else: ?>
                     <?php foreach ($hardware as $item): ?>
-                    <tr>
+                    <?php $isDeleted = !empty($item['deleted_at']); ?>
+                    <tr class="<?php echo $isDeleted ? 'table-secondary opacity-75' : ''; ?>" data-item-id="<?php echo $item['id']; ?>">
+                        <td class="text-center">
+                            <?php if (!$isDeleted): ?>
+                            <input type="checkbox" class="form-check-input item-checkbox" value="<?php echo $item['id']; ?>" aria-label="Select <?php echo escapeOutput($item['name']); ?>">
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <strong><?php echo escapeOutput($item['name']); ?></strong>
+                            <?php if ($isDeleted): ?>
+                            <span class="badge bg-danger ms-1">Deleted</span>
+                            <?php endif; ?>
                             <!-- Show category on mobile -->
                             <div class="d-md-none">
                                 <small><span class="badge bg-primary"><?php echo escapeOutput($item['category_name']); ?></span></small>
@@ -494,6 +751,18 @@ include '../includes/header.php';
                         <td class="d-none d-lg-table-cell"><span class="badge bg-secondary"><?php echo $item['repair_quantity']; ?></span></td>
                         <td class="d-none d-lg-table-cell"><small><?php echo escapeOutput($item['location'] ?: '-'); ?></small></td>
                         <td>
+                            <?php if ($isDeleted): ?>
+                                <?php if (isAdmin()): ?>
+                                <a href="?restore=<?php echo $item['id']; ?>&<?php echo http_build_query($pagination_params); ?>" class="btn btn-sm btn-success" 
+                                   onclick="return confirm('Are you sure you want to restore this hardware?')">
+                                    <i class="bi bi-arrow-counterclockwise"></i><span class="d-none d-sm-inline"> Restore</span>
+                                </a>
+                                <a href="?permanent_delete=<?php echo $item['id']; ?>&<?php echo http_build_query($pagination_params); ?>" class="btn btn-sm btn-danger" 
+                                   onclick="return confirmDelete('Are you sure you want to PERMANENTLY delete this hardware? This cannot be undone.', this)">
+                                    <i class="bi bi-x-circle"></i><span class="d-none d-sm-inline"> Permanent</span>
+                                </a>
+                                <?php endif; ?>
+                            <?php else: ?>
                             <button class="btn btn-sm btn-info" onclick='editHardware(<?php echo htmlspecialchars(json_encode($item), ENT_QUOTES, "UTF-8"); ?>)'>
                                 <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
                             </button>
@@ -501,6 +770,7 @@ include '../includes/header.php';
                                onclick="return confirmDelete('Are you sure you want to delete this hardware?', this)">
                                 <i class="bi bi-trash"></i><span class="d-none d-sm-inline"> Delete</span>
                             </a>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -1027,6 +1297,250 @@ if (!window.hardwarePageKeyboardHandlerAdded) {
             }
         }
     });
+}
+
+// ============ Batch Operations ============
+function toggleSelectAll(checkbox) {
+    var checkboxes = document.querySelectorAll('.item-checkbox');
+    checkboxes.forEach(function(cb) {
+        cb.checked = checkbox.checked;
+    });
+    updateBatchToolbar();
+}
+
+function updateBatchToolbar() {
+    var selected = document.querySelectorAll('.item-checkbox:checked');
+    var toolbar = document.getElementById('batchToolbar');
+    var countEl = document.getElementById('selectedCount');
+    
+    if (selected.length > 0) {
+        toolbar.classList.remove('d-none');
+        countEl.textContent = selected.length;
+    } else {
+        toolbar.classList.add('d-none');
+    }
+    
+    // Update select all checkbox state
+    var allCheckboxes = document.querySelectorAll('.item-checkbox');
+    var selectAll = document.getElementById('selectAllCheckbox');
+    if (allCheckboxes.length > 0 && selected.length === allCheckboxes.length) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+    } else if (selected.length > 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+    } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.item-checkbox').forEach(function(cb) {
+        cb.checked = false;
+    });
+    document.getElementById('selectAllCheckbox').checked = false;
+    updateBatchToolbar();
+}
+
+function getSelectedIds() {
+    var selected = document.querySelectorAll('.item-checkbox:checked');
+    return Array.from(selected).map(function(cb) { return cb.value; });
+}
+
+function showBatchStatusModal() {
+    var ids = getSelectedIds();
+    if (ids.length === 0) {
+        alert('Please select at least one item.');
+        return;
+    }
+    document.getElementById('batch_ids').value = JSON.stringify(ids);
+    var modal = new bootstrap.Modal(document.getElementById('batchStatusModal'));
+    modal.show();
+}
+
+function batchDelete() {
+    var ids = getSelectedIds();
+    if (ids.length === 0) {
+        alert('Please select at least one item.');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to delete ' + ids.length + ' selected item(s)?')) {
+        // Create and submit form
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '';
+        
+        var actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'batch_action';
+        actionInput.value = 'delete';
+        form.appendChild(actionInput);
+        
+        ids.forEach(function(id) {
+            var idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'ids[]';
+            idInput.value = id;
+            form.appendChild(idInput);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Add event listener for individual checkboxes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.item-checkbox').forEach(function(cb) {
+        cb.addEventListener('change', updateBatchToolbar);
+    });
+});
+
+// ============ Export Modal ============
+function showExportModal() {
+    var modal = new bootstrap.Modal(document.getElementById('exportModal'));
+    modal.show();
+}
+
+function exportFilteredCSV() {
+    var exportCategory = document.getElementById('export_category').value;
+    var headers = ['name', 'category', 'type', 'brand', 'model', 'serial_number', 
+                   'unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity', 'location'];
+    
+    var csv = [headers.join(',')];
+    
+    hardwareData.forEach(function(item) {
+        // Filter by category if selected
+        if (exportCategory && item.category_name !== exportCategory) {
+            return;
+        }
+        
+        var row = [
+            '"' + (item.name || '').replace(/"/g, '""') + '"',
+            '"' + (item.category_name || '').replace(/"/g, '""') + '"',
+            '"' + (item.type || '').replace(/"/g, '""') + '"',
+            '"' + (item.brand || '').replace(/"/g, '""') + '"',
+            '"' + (item.model || '').replace(/"/g, '""') + '"',
+            '"' + (item.serial_number || '').replace(/"/g, '""') + '"',
+            item.unused_quantity || 0,
+            item.in_use_quantity || 0,
+            item.damaged_quantity || 0,
+            item.repair_quantity || 0,
+            '"' + (item.location || '').replace(/"/g, '""') + '"'
+        ];
+        csv.push(row.join(','));
+    });
+    
+    var csvContent = csv.join('\n');
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    var filename = 'hardware_inventory';
+    if (exportCategory) {
+        filename += '_' + exportCategory.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    }
+    filename += '_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    // Close modal
+    var modal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+    modal.hide();
+}
+</script>
+
+<!-- Batch Status Update Modal -->
+<div class="modal fade" id="batchStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Batch Status Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="batch_action" value="update_status">
+                    <input type="hidden" name="batch_ids" id="batch_ids">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> This will update the selected items' status quantities.
+                    </div>
+                    <div class="mb-3">
+                        <label for="status_type" class="form-label">Status Type *</label>
+                        <select class="form-select" id="status_type" name="status_type" required>
+                            <option value="">Select Status</option>
+                            <option value="unused_quantity">Available</option>
+                            <option value="in_use_quantity">In Use</option>
+                            <option value="damaged_quantity">Damaged</option>
+                            <option value="repair_quantity">In Repair</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity_change" class="form-label">Quantity Change *</label>
+                        <input type="number" class="form-control" id="quantity_change" name="quantity_change" required>
+                        <small class="text-muted">Use positive numbers to add, negative to subtract (e.g., -1 to decrease by 1)</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning" onclick="return submitBatchStatus()">
+                        <i class="bi bi-check-lg"></i> Update Selected
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-download"></i> Export Hardware to CSV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="export_category" class="form-label">Filter by Category (optional)</label>
+                    <select class="form-select" id="export_category">
+                        <option value="">All Categories</option>
+                        <?php foreach ($categories as $cat): ?>
+                        <option value="<?php echo escapeOutput($cat['name']); ?>"><?php echo escapeOutput($cat['name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="text-muted">Select a category to export only items from that category</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="exportFilteredCSV()">
+                    <i class="bi bi-download"></i> Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function submitBatchStatus() {
+    var batchIds = document.getElementById('batch_ids').value;
+    var ids = JSON.parse(batchIds);
+    
+    // Add ids as hidden inputs
+    var form = document.querySelector('#batchStatusModal form');
+    ids.forEach(function(id) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids[]';
+        input.value = id;
+        form.appendChild(input);
+    });
+    
+    return true;
 }
 </script>
 

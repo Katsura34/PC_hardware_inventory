@@ -6,7 +6,7 @@ require_once '../config/security.php';
 // Require login
 requireLogin();
 
-$pageTitle = 'Inventory History - PC Hardware Inventory';
+$pageTitle = 'Audit Trail - PC Hardware Inventory';
 $conn = getDBConnection();
 
 // Pagination settings
@@ -38,7 +38,7 @@ $params = [];
 $types = "";
 
 // Add action filter
-if (!empty($action_filter) && in_array($action_filter, ['Added', 'Updated', 'Deleted'])) {
+if (!empty($action_filter) && in_array($action_filter, ['Added', 'Updated', 'Deleted', 'Restored'])) {
     $query .= " AND ih.action_type = ?";
     $count_query .= " AND ih.action_type = ?";
     $params[] = $action_filter;
@@ -110,7 +110,7 @@ include '../includes/header.php';
             <h6><i class="bi bi-building"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
         </div>
         <h1 class="text-gradient mb-1">
-            <i class="bi bi-clock-history"></i> Inventory History
+            <i class="bi bi-clock-history"></i> Audit Trail
         </h1>
         <p class="text-muted">Complete audit trail of all hardware inventory changes</p>
     </div>
@@ -174,6 +174,7 @@ include '../includes/header.php';
                     <option value="Added" <?php echo $action_filter === 'Added' ? 'selected' : ''; ?>>Added</option>
                     <option value="Updated" <?php echo $action_filter === 'Updated' ? 'selected' : ''; ?>>Updated</option>
                     <option value="Deleted" <?php echo $action_filter === 'Deleted' ? 'selected' : ''; ?>>Deleted</option>
+                    <option value="Restored" <?php echo $action_filter === 'Restored' ? 'selected' : ''; ?>>Restored</option>
                 </select>
             </div>
             <div class="col-md-3 col-sm-6">
@@ -274,6 +275,7 @@ include '../includes/header.php';
                             if ($item['action_type'] === 'Added') $badge_class = 'bg-success';
                             if ($item['action_type'] === 'Updated') $badge_class = 'bg-warning';
                             if ($item['action_type'] === 'Deleted') $badge_class = 'bg-danger';
+                            if ($item['action_type'] === 'Restored') $badge_class = 'bg-primary';
                             ?>
                             <span class="badge <?php echo $badge_class; ?>"><?php echo escapeOutput($item['action_type']); ?></span>
                             <!-- Show quantity change on mobile (inline) -->
@@ -414,7 +416,7 @@ include '../includes/header.php';
 <div class="mt-4">
     <div class="card border-0 bg-light">
         <div class="card-body">
-            <h6 class="mb-3"><i class="bi bi-info-circle"></i> Understanding the History Log</h6>
+            <h6 class="mb-3"><i class="bi bi-info-circle"></i> Understanding the Audit Trail</h6>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <strong>Action Types:</strong>
@@ -422,6 +424,7 @@ include '../includes/header.php';
                         <li><span class="badge bg-success">Added</span> - New hardware item was added to inventory</li>
                         <li><span class="badge bg-warning">Updated</span> - Hardware quantities or details were modified</li>
                         <li><span class="badge bg-danger">Deleted</span> - Hardware item was deleted from inventory</li>
+                        <li><span class="badge bg-primary">Restored</span> - Deleted hardware item was restored</li>
                     </ul>
                 </div>
                 <div class="col-md-6 mb-3">

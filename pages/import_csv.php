@@ -21,6 +21,7 @@ if (!isset($_FILES['csvFile']) || $_FILES['csvFile']['error'] !== UPLOAD_ERR_OK)
 $conn = getDBConnection();
 $file = $_FILES['csvFile']['tmp_name'];
 $imported = 0;
+$updated = 0;
 $errors = [];
 
 // Get default location if provided
@@ -108,50 +109,111 @@ try {
                 continue;
             }
             
-            // Insert into database
-            $stmt = $conn->prepare("INSERT INTO hardware (name, category_id, type, brand, model, serial_number, 
-                                   total_quantity, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location) 
-                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("sissssiiiiis", $name, $category_id, $type, $brand, $model, $serial_number, 
-                             $total_quantity, $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity, $location);
+            // Check for duplicate: same name, serial_number, brand, and category
+            $check_stmt = $conn->prepare("SELECT id, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, total_quantity 
+                                          FROM hardware 
+                                          WHERE name = ? AND serial_number = ? AND brand = ? AND category_id = ? AND deleted_at IS NULL");
+            $check_stmt->bind_param("sssi", $name, $serial_number, $brand, $category_id);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            $existing = $check_result->fetch_assoc();
+            $check_stmt->close();
             
-            if ($stmt->execute()) {
-                $hardware_id = $conn->insert_id;
+            if ($existing) {
+                // Duplicate found - add quantities to existing hardware
+                $new_unused = $existing['unused_quantity'] + $unused_quantity;
+                $new_in_use = $existing['in_use_quantity'] + $in_use_quantity;
+                $new_damaged = $existing['damaged_quantity'] + $damaged_quantity;
+                $new_repair = $existing['repair_quantity'] + $repair_quantity;
+                $new_total = $new_unused + $new_in_use + $new_damaged + $new_repair;
                 
-                // Get category name for history logging (denormalized)
-                $cat_stmt = $conn->prepare("SELECT name FROM categories WHERE id = ?");
-                $cat_stmt->bind_param("i", $category_id);
-                $cat_stmt->execute();
-                $cat_result = $cat_stmt->get_result();
-                $cat_data = $cat_result->fetch_assoc();
-                $category_name = $cat_data ? $cat_data['name'] : 'Unknown';
-                $cat_stmt->close();
+                $update_stmt = $conn->prepare("UPDATE hardware SET 
+                                              unused_quantity = ?, in_use_quantity = ?, damaged_quantity = ?, repair_quantity = ?, total_quantity = ?
+                                              WHERE id = ?");
+                $update_stmt->bind_param("iiiiii", $new_unused, $new_in_use, $new_damaged, $new_repair, $new_total, $existing['id']);
                 
-                // Log to history with denormalized data
-                $user_id = $_SESSION['user_id'];
-                $user_name = $_SESSION['full_name'];
-                $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
-                                           user_id, user_name, action_type, quantity_change, 
-                                           old_unused, old_in_use, old_damaged, old_repair, 
-                                           new_unused, new_in_use, new_damaged, new_repair) 
-                                           VALUES (?, ?, ?, ?, ?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
-                $log_stmt->bind_param("isssisiiiii", $hardware_id, $name, $category_name, $serial_number, 
-                                     $user_id, $user_name, $total_quantity, 
-                                     $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
-                $log_stmt->execute();
-                $log_stmt->close();
-                
-                $imported++;
+                if ($update_stmt->execute()) {
+                    // Get category name for history logging
+                    $cat_stmt = $conn->prepare("SELECT name FROM categories WHERE id = ?");
+                    $cat_stmt->bind_param("i", $category_id);
+                    $cat_stmt->execute();
+                    $cat_result = $cat_stmt->get_result();
+                    $cat_data = $cat_result->fetch_assoc();
+                    $category_name = $cat_data ? $cat_data['name'] : 'Unknown';
+                    $cat_stmt->close();
+                    
+                    // Log to history
+                    $user_id = $_SESSION['user_id'];
+                    $user_name = $_SESSION['full_name'];
+                    $quantity_change = $total_quantity; // Added quantity
+                    
+                    $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                               user_id, user_name, action_type, quantity_change, 
+                                               old_unused, old_in_use, old_damaged, old_repair, 
+                                               new_unused, new_in_use, new_damaged, new_repair) 
+                                               VALUES (?, ?, ?, ?, ?, ?, 'Updated', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $log_stmt->bind_param("isssisiiiiiiiii", $existing['id'], $name, $category_name, $serial_number, 
+                                         $user_id, $user_name, $quantity_change, 
+                                         $existing['unused_quantity'], $existing['in_use_quantity'], 
+                                         $existing['damaged_quantity'], $existing['repair_quantity'],
+                                         $new_unused, $new_in_use, $new_damaged, $new_repair);
+                    $log_stmt->execute();
+                    $log_stmt->close();
+                    
+                    $updated++;
+                } else {
+                    $errors[] = "Line $line: Failed to update existing item - " . $update_stmt->error;
+                }
+                $update_stmt->close();
             } else {
-                $errors[] = "Line $line: Failed to insert - " . $stmt->error;
+                // No duplicate - insert new hardware
+                $stmt = $conn->prepare("INSERT INTO hardware (name, category_id, type, brand, model, serial_number, 
+                                       total_quantity, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location) 
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("sissssiiiiis", $name, $category_id, $type, $brand, $model, $serial_number, 
+                                 $total_quantity, $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity, $location);
+                
+                if ($stmt->execute()) {
+                    $hardware_id = $conn->insert_id;
+                    
+                    // Get category name for history logging (denormalized)
+                    $cat_stmt = $conn->prepare("SELECT name FROM categories WHERE id = ?");
+                    $cat_stmt->bind_param("i", $category_id);
+                    $cat_stmt->execute();
+                    $cat_result = $cat_stmt->get_result();
+                    $cat_data = $cat_result->fetch_assoc();
+                    $category_name = $cat_data ? $cat_data['name'] : 'Unknown';
+                    $cat_stmt->close();
+                    
+                    // Log to history with denormalized data
+                    $user_id = $_SESSION['user_id'];
+                    $user_name = $_SESSION['full_name'];
+                    $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                               user_id, user_name, action_type, quantity_change, 
+                                               old_unused, old_in_use, old_damaged, old_repair, 
+                                               new_unused, new_in_use, new_damaged, new_repair) 
+                                               VALUES (?, ?, ?, ?, ?, ?, 'Added', ?, 0, 0, 0, 0, ?, ?, ?, ?)");
+                    $log_stmt->bind_param("isssisiiiii", $hardware_id, $name, $category_name, $serial_number, 
+                                         $user_id, $user_name, $total_quantity, 
+                                         $unused_quantity, $in_use_quantity, $damaged_quantity, $repair_quantity);
+                    $log_stmt->execute();
+                    $log_stmt->close();
+                    
+                    $imported++;
+                } else {
+                    $errors[] = "Line $line: Failed to insert - " . $stmt->error;
+                }
+                $stmt->close();
             }
-            $stmt->close();
         }
         
         fclose($handle);
     }
     
-    $message = "Successfully imported $imported record(s)";
+    $message = "Successfully imported $imported new record(s)";
+    if ($updated > 0) {
+        $message .= ", updated $updated existing record(s) (duplicates had quantities added)";
+    }
     if (!empty($errors)) {
         $message .= ". Errors: " . implode("; ", array_slice($errors, 0, 5));
         if (count($errors) > 5) {
@@ -163,6 +225,7 @@ try {
         'success' => true,
         'message' => $message,
         'imported' => $imported,
+        'updated' => $updated,
         'errors' => count($errors)
     ]);
     
