@@ -1,0 +1,979 @@
+/* ============================================
+   HCI-Focused Theme Enhancement
+   ============================================
+   
+   This file extends the main stylesheet with additional
+   HCI (Human-Computer Interaction) principles:
+   
+   1. Visibility of system status
+   2. Match between system and real world
+   3. Consistency and standards
+   4. Error prevention and recovery
+   5. Recognition over recall
+   6. Aesthetic and minimalist design
+   7. Accessibility (WCAG AA compliance)
+   8. Flexibility and efficiency
+   
+   Color Tokens (matching system branding):
+   --primary: System blue for main CTAs and links
+   --primary-contrast: White text on primary
+   --muted: Neutral text for secondary content
+   --bg-page: Light neutral page background
+   --card-bg: White cards
+   --border: Soft borders
+   --danger: Destructive actions
+   --success: Success states
+   --accent: Hover/active states
+   ============================================ */
+
+/* ============================================
+   Simple Color Tokens (Override main stylesheet)
+   Use these to quickly customize the palette
+   ============================================ */
+:root {
+    /* Primary Blue - matches logo/header */
+    --primary: #1e6fb8;
+    --primary-hover: #1a5f9e;
+    --primary-contrast: #ffffff;
+    
+    /* Neutral Grays */
+    --muted: #6b7280;
+    --bg-page: #f5f7f9;
+    --card-bg: #ffffff;
+    --border: #e6e8eb;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    
+    /* Semantic Colors */
+    --danger: #e04646;
+    --danger-hover: #c53030;
+    --success: #2ea44f;
+    --success-hover: #269c45;
+    --warning: #d97706;
+    --accent: #0b74d1;
+    
+    /* Component Tokens */
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-lg: 16px;
+    --shadow: 0 6px 20px rgba(16,24,40,0.06);
+    --shadow-hover: 0 8px 30px rgba(16,24,40,0.1);
+    
+    /* Spacing */
+    --gap-xs: 4px;
+    --gap-sm: 8px;
+    --gap-md: 16px;
+    --gap-lg: 24px;
+    --gap-xl: 32px;
+    
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    
+    /* Topbar Height */
+    --topbar-height: 64px;
+}
+
+/* ============================================
+   Topbar Navigation Layout
+   ============================================ */
+body.has-topbar {
+    background-color: var(--bg-page);
+    padding-top: 0;
+}
+
+/* Main Topbar Navigation */
+.topbar-nav {
+    background: linear-gradient(135deg, var(--primary-dark, #1e293b) 0%, var(--secondary-gray, #475569) 100%) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 0;
+    min-height: var(--topbar-height);
+    z-index: 1030;
+}
+
+.topbar-nav .navbar-brand {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary-contrast) !important;
+    padding: 0.5rem 0;
+}
+
+.topbar-nav .navbar-brand img {
+    border-radius: var(--radius-sm);
+    transition: transform var(--transition-fast);
+}
+
+.topbar-nav .navbar-brand:hover img {
+    transform: scale(1.05);
+}
+
+/* Navigation Links */
+.topbar-nav .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 500;
+    padding: 0.75rem 1rem !important;
+    border-radius: var(--radius-sm);
+    margin: 0 0.125rem;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.topbar-nav .navbar-nav .nav-link:hover {
+    color: var(--primary-contrast) !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.topbar-nav .navbar-nav .nav-link.active {
+    color: var(--primary-contrast) !important;
+    background-color: rgba(255, 255, 255, 0.15);
+    font-weight: 600;
+}
+
+.topbar-nav .navbar-nav .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: var(--primary-contrast);
+    border-radius: var(--radius-sm);
+}
+
+.topbar-nav .navbar-nav .nav-item {
+    position: relative;
+}
+
+/* User Avatar in Navbar */
+.user-avatar-nav {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-contrast);
+    font-size: 1rem;
+}
+
+/* Role Badge in Navbar */
+.badge-role-nav {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-role-nav.badge-admin {
+    background: rgba(224, 70, 70, 0.2);
+    color: #fecaca;
+}
+
+.badge-role-nav.badge-staff {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Dropdown Menu */
+.topbar-nav .dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.topbar-nav .dropdown-item {
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+.topbar-nav .dropdown-item:hover {
+    background-color: var(--bg-page);
+}
+
+.topbar-nav .dropdown-header {
+    padding: 0.75rem 1rem;
+}
+
+/* Mobile Navbar Collapse */
+@media (max-width: 991.98px) {
+    .topbar-nav .navbar-collapse {
+        background: linear-gradient(180deg, var(--primary-dark, #1e293b) 0%, rgba(30, 41, 59, 0.98) 100%);
+        margin: 0.5rem -0.75rem -0.5rem;
+        padding: 1rem;
+        border-radius: 0 0 var(--radius) var(--radius);
+    }
+    
+    .topbar-nav .navbar-nav .nav-link {
+        padding: 0.75rem 1rem !important;
+        margin: 0.125rem 0;
+    }
+    
+    .topbar-nav .navbar-nav .nav-link.active::after {
+        display: none;
+    }
+}
+
+/* Main Content with Topbar */
+.main-content-topbar {
+    min-height: calc(100vh - var(--topbar-height) - 60px);
+    background-color: var(--bg-page);
+}
+
+/* ============================================
+   Enhanced Page Layout
+   ============================================ */
+body.has-topbar {
+    background-color: var(--bg-page);
+}
+
+/* ============================================
+   Card Enhancements
+   HCI: Consistent visual hierarchy
+   ============================================ */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+/* Card header with primary color strip */
+.card-header.card-header-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: var(--primary-contrast);
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom: none;
+}
+
+/* ============================================
+   Button Enhancements
+   HCI: Clear affordance, visible feedback
+   ============================================ */
+
+/* Primary CTA */
+.btn-primary-cta {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: var(--primary-contrast);
+    border: none;
+    padding: var(--gap-sm) var(--gap-lg);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 14px rgba(30, 111, 184, 0.25);
+}
+
+.btn-primary-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 111, 184, 0.35);
+    color: var(--primary-contrast);
+}
+
+.btn-primary-cta:active {
+    transform: translateY(0);
+}
+
+.btn-primary-cta:focus-visible {
+    outline: 3px solid rgba(30, 111, 184, 0.5);
+    outline-offset: 2px;
+}
+
+/* Compact action buttons for tables */
+.btn-action {
+    padding: var(--gap-xs) var(--gap-sm);
+    font-size: 13px;
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-xs);
+    transition: all var(--transition-fast);
+}
+
+.btn-action i {
+    font-size: 14px;
+}
+
+/* Icon-only button for mobile */
+.btn-icon-only {
+    padding: var(--gap-sm);
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================
+   Role Badges
+   HCI: Visual distinction without heavy styling
+   ============================================ */
+.badge-role {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-xs);
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-role-admin {
+    background: rgba(224, 70, 70, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(224, 70, 70, 0.2);
+}
+
+.badge-role-admin::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--danger);
+}
+
+.badge-role-staff {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--text-secondary);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.badge-role-staff::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+}
+
+/* ============================================
+   Search Box Enhancements
+   HCI: Always visible, clear purpose
+   ============================================ */
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box input {
+    padding-left: 40px;
+    padding-right: 45px;
+    border-radius: var(--radius);
+    border: 2px solid var(--border);
+    transition: all var(--transition-fast);
+    min-width: 200px;
+    width: 100%;
+}
+
+.search-box input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(30, 111, 184, 0.15);
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--muted);
+    font-size: 16px;
+    pointer-events: none;
+}
+
+.search-box input::placeholder {
+    color: var(--muted);
+}
+
+/* Search shortcut hint */
+.search-hint {
+    position: absolute;
+    right: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 2px 6px;
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+}
+
+/* ============================================
+   Collapsible Search Filter Panel
+   HCI: Hide/Show search functionality
+   ============================================ */
+.search-filter-panel {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    padding: var(--gap-md);
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.search-filter-panel.show {
+    max-height: 200px;
+    opacity: 1;
+}
+
+/* For primary header background */
+.card-header-primary .search-filter-panel {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.card-header-primary .search-filter-panel .search-box input {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.card-header-primary .search-filter-panel .search-box input:focus {
+    background: #fff;
+    border-color: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.25);
+}
+
+.card-header-primary .search-filter-panel .search-box .search-icon {
+    color: var(--muted);
+}
+
+/* Toggle Search Button Style */
+#toggleSearchBtn {
+    transition: all var(--transition-fast);
+}
+
+#toggleSearchBtn:hover {
+    transform: scale(1.05);
+}
+
+#toggleSearchBtn[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: transparent;
+}
+
+/* ============================================
+   Table Enhancements
+   HCI: Readable, proper alignment
+   ============================================ */
+.table-hci {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-hci thead th {
+    background: var(--bg-page);
+    border-bottom: 2px solid var(--border);
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: var(--gap-md) var(--gap-sm);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table-hci tbody td {
+    padding: var(--gap-md) var(--gap-sm);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border);
+}
+
+.table-hci tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table-hci tbody tr:hover {
+    background-color: rgba(30, 111, 184, 0.04);
+}
+
+/* Row selection highlight */
+.table-hci tbody tr.row-selected {
+    background-color: rgba(30, 111, 184, 0.08);
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+/* ============================================
+   Modal Enhancements
+   HCI: Accessible, focus trapped
+   ============================================ */
+.modal-hci .modal-content {
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modal-hci .modal-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: var(--primary-contrast);
+    border: none;
+    padding: var(--gap-lg);
+}
+
+.modal-hci .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--success));
+}
+
+.modal-hci .modal-title {
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+}
+
+.modal-hci .modal-body {
+    padding: var(--gap-lg);
+}
+
+.modal-hci .modal-footer {
+    padding: var(--gap-md) var(--gap-lg);
+    border-top: 1px solid var(--border);
+    gap: var(--gap-sm);
+}
+
+/* ============================================
+   Toast Notifications
+   HCI: Non-intrusive feedback
+   ============================================ */
+.toast-hci {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: none;
+    overflow: hidden;
+}
+
+.toast-hci .toast-body {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+    padding: var(--gap-md) var(--gap-lg);
+}
+
+.toast-hci .toast-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.toast-hci.toast-success .toast-icon {
+    background: rgba(46, 164, 79, 0.1);
+    color: var(--success);
+}
+
+.toast-hci.toast-error .toast-icon {
+    background: rgba(224, 70, 70, 0.1);
+    color: var(--danger);
+}
+
+.toast-hci.toast-warning .toast-icon {
+    background: rgba(217, 119, 6, 0.1);
+    color: var(--warning);
+}
+
+.toast-hci.toast-info .toast-icon {
+    background: rgba(30, 111, 184, 0.1);
+    color: var(--primary);
+}
+
+/* Toast progress bar */
+.toast-hci .toast-progress {
+    height: 3px;
+    background: var(--border);
+}
+
+.toast-hci .toast-progress-bar {
+    height: 100%;
+    transition: width linear;
+}
+
+.toast-hci.toast-success .toast-progress-bar { background: var(--success); }
+.toast-hci.toast-error .toast-progress-bar { background: var(--danger); }
+.toast-hci.toast-warning .toast-progress-bar { background: var(--warning); }
+.toast-hci.toast-info .toast-progress-bar { background: var(--primary); }
+
+/* ============================================
+   Confirmation Dialog
+   HCI: Error prevention with clear messaging
+   ============================================ */
+.confirm-dialog-hci {
+    text-align: center;
+    padding: var(--gap-lg);
+}
+
+.confirm-dialog-hci .confirm-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--gap-md);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+}
+
+.confirm-dialog-hci .confirm-icon.danger {
+    background: rgba(224, 70, 70, 0.1);
+    color: var(--danger);
+}
+
+.confirm-dialog-hci .confirm-icon.warning {
+    background: rgba(217, 119, 6, 0.1);
+    color: var(--warning);
+}
+
+.confirm-dialog-hci h5 {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: var(--gap-sm);
+}
+
+.confirm-dialog-hci p {
+    color: var(--text-secondary);
+    margin-bottom: var(--gap-lg);
+}
+
+/* ============================================
+   Page Header with Toolbar
+   HCI: Clear hierarchy, visible CTA
+   ============================================ */
+.page-header-hci {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+    margin-bottom: var(--gap-lg);
+}
+
+.page-header-hci h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    margin: 0;
+}
+
+.page-header-hci h1 i {
+    color: var(--primary);
+}
+
+.page-header-hci .subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+}
+
+.page-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-md);
+}
+
+@media (max-width: 768px) {
+    .page-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .page-toolbar .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   Responsive Table Cards (Mobile)
+   HCI: Stackable content for small screens
+   ============================================ */
+@media (max-width: 767.98px) {
+    .table-card-mobile tbody tr {
+        display: block;
+        margin-bottom: var(--gap-md);
+        padding: var(--gap-md);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--card-bg);
+        box-shadow: var(--shadow);
+    }
+    
+    .table-card-mobile tbody tr td {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--gap-sm) 0;
+        border: none;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .table-card-mobile tbody tr td:last-child {
+        border-bottom: none;
+        padding-top: var(--gap-md);
+        justify-content: flex-end;
+        gap: var(--gap-sm);
+    }
+    
+    .table-card-mobile tbody tr td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+    
+    .table-card-mobile thead {
+        display: none;
+    }
+}
+
+/* ============================================
+   Accessibility Enhancements
+   HCI: Keyboard focus, screen reader support
+   ============================================ */
+
+/* Skip link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    padding: var(--gap-sm) var(--gap-md);
+    z-index: 9999;
+    transition: top var(--transition-fast);
+    border-radius: 0 0 var(--radius-sm) 0;
+}
+
+.skip-link:focus {
+    top: 0;
+    outline: none;
+}
+
+/* Focus styles */
+.focus-visible-outline:focus-visible {
+    outline: 3px solid rgba(30, 111, 184, 0.5);
+    outline-offset: 2px;
+}
+
+/* ARIA live region */
+.sr-only-focusable:not(:focus) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* High contrast text */
+.text-high-contrast {
+    color: var(--text-primary) !important;
+}
+
+/* ============================================
+   Loading States
+   HCI: Visibility of system status
+   ============================================ */
+.loading-skeleton {
+    background: linear-gradient(90deg, 
+        var(--border) 25%, 
+        var(--bg-page) 50%, 
+        var(--border) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.loading-skeleton-text {
+    height: 16px;
+    margin-bottom: var(--gap-sm);
+}
+
+.loading-skeleton-title {
+    height: 24px;
+    width: 60%;
+    margin-bottom: var(--gap-md);
+}
+
+.loading-skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* Button loading state */
+.btn.is-loading {
+    position: relative;
+    pointer-events: none;
+    color: transparent !important;
+}
+
+.btn.is-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Empty States
+   HCI: Clear guidance when no content
+   ============================================ */
+.empty-state-hci {
+    text-align: center;
+    padding: var(--gap-xl) var(--gap-lg);
+}
+
+.empty-state-hci .empty-icon {
+    font-size: 64px;
+    color: var(--border);
+    margin-bottom: var(--gap-md);
+}
+
+.empty-state-hci h5 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: var(--gap-sm);
+}
+
+.empty-state-hci p {
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin: 0 auto var(--gap-lg);
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.gap-xs { gap: var(--gap-xs); }
+.gap-sm { gap: var(--gap-sm); }
+.gap-md { gap: var(--gap-md); }
+.gap-lg { gap: var(--gap-lg); }
+.gap-xl { gap: var(--gap-xl); }
+
+.radius { border-radius: var(--radius); }
+.radius-sm { border-radius: var(--radius-sm); }
+.radius-lg { border-radius: var(--radius-lg); }
+
+.shadow { box-shadow: var(--shadow); }
+.shadow-hover { box-shadow: var(--shadow-hover); }
+
+.bg-page { background-color: var(--bg-page); }
+.bg-card { background-color: var(--card-bg); }
+
+.text-primary-color { color: var(--primary); }
+.text-muted-color { color: var(--muted); }
+
+/* ============================================
+   Print Styles
+   HCI: Flexibility for different outputs
+   ============================================ */
+@media print {
+    .topbar-nav,
+    .btn,
+    .no-print {
+        display: none !important;
+    }
+    
+    .main-content-topbar {
+        padding-top: 0 !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    body {
+        background: #fff !important;
+    }
+}
+
+/* ============================================
+   Reduced Motion Support
+   HCI: Accessibility for motion sensitivity
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .loading-skeleton {
+        animation: none;
+        background: var(--border);
+    }
+}
+
+/* ============================================
+   High Contrast Mode
+   HCI: Accessibility for visual impairments
+   ============================================ */
+@media (prefers-contrast: high) {
+    :root {
+        --border: #000;
+        --text-secondary: #333;
+    }
+    
+    .btn {
+        border-width: 2px;
+    }
+    
+    .form-control,
+    .form-select {
+        border-width: 2px;
+    }
+    
+    .badge {
+        border: 1px solid currentColor;
+    }
+}

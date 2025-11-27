@@ -96,77 +96,144 @@ while ($row = $result->fetch_assoc()) {
 include '../includes/header.php';
 ?>
 
+<!-- Skip to main content link for accessibility -->
+<a href="#usersTable" class="visually-hidden-focusable">Skip to users table</a>
+
 <div class="row mb-4">
     <div class="col-12">
         <div class="system-branding">
-            <h6><i class="bi bi-building"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
+            <h6><i class="bi bi-building" aria-hidden="true"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
         </div>
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-            <div class="mb-3 mb-md-0">
-                <h1 class="text-gradient mb-1">
-                    <i class="bi bi-people"></i> User Management
-                </h1>
-                <p class="text-muted">Manage system users and permissions</p>
+        <!-- Page Header with Toolbar - HCI: Clear hierarchy -->
+        <div class="page-header-hci">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h1>
+                        <i class="bi bi-people" aria-hidden="true"></i> User Management
+                    </h1>
+                    <p class="subtitle">Manage system users and permissions</p>
+                </div>
+                <!-- Primary CTA - HCI: Visible and prominent -->
+                <button class="btn btn-primary-cta" data-bs-toggle="modal" data-bs-target="#addUserModal" aria-label="Add new user">
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> Add User
+                </button>
             </div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                <i class="bi bi-plus-circle"></i> Add User
-            </button>
         </div>
     </div>
 </div>
 
-<!-- Users Table -->
-<div class="card table-card">
-    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-        <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Users</h5>
-        <input type="text" id="searchInput" class="form-control form-control-sm w-100" style="max-width: 300px;" 
-               placeholder="Search..." onkeyup="searchTable('searchInput', 'usersTable')">
+<!-- Users Table - HCI: Semantic markup, keyboard accessible -->
+<div class="card table-card" role="region" aria-label="Users list">
+    <div class="card-header card-header-primary">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <h5 class="mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-table" aria-hidden="true"></i> All Users
+                <span class="badge bg-light text-primary ms-2"><?php echo count($users); ?></span>
+            </h5>
+            <!-- Toggle Search Button - HCI: Show/Hide filter -->
+            <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
+                    aria-expanded="false" aria-controls="searchFilterPanel"
+                    onclick="toggleSearchFilter()">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <span class="d-none d-sm-inline">Search</span>
+            </button>
+        </div>
+        <!-- Collapsible Search Panel -->
+        <div class="search-filter-panel collapse mt-3" id="searchFilterPanel">
+            <div class="search-box">
+                <i class="bi bi-search search-icon" aria-hidden="true"></i>
+                <input type="text" id="searchInput" class="form-control" 
+                       placeholder="Search users by name, username, or role..." 
+                       aria-label="Search users"
+                       onkeyup="searchTable('searchInput', 'usersTable')">
+                <button class="btn btn-sm btn-outline-secondary position-absolute end-0 me-2" 
+                        type="button" onclick="clearSearch()" 
+                        style="top: 50%; transform: translateY(-50%);"
+                        aria-label="Clear search">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0" id="usersTable">
+            <table class="table table-hover table-hci mb-0" id="usersTable" role="grid">
                 <thead>
                     <tr>
-                        <th>Username</th>
-                        <th>Full Name</th>
-                        <th>Role</th>
-                        <th class="d-none d-md-table-cell">Date Created</th>
-                        <th>Actions</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Full Name</th>
+                        <th scope="col">Role</th>
+                        <th scope="col" class="d-none d-md-table-cell">Date Created</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($users)): ?>
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">No users found</td>
+                        <td colspan="5">
+                            <!-- Empty State - HCI: Clear guidance -->
+                            <div class="empty-state-hci">
+                                <i class="bi bi-people empty-icon" aria-hidden="true"></i>
+                                <h5>No users found</h5>
+                                <p>Get started by adding your first user to the system.</p>
+                                <button class="btn btn-primary-cta" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                    <i class="bi bi-plus-circle" aria-hidden="true"></i> Add First User
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                     <?php else: ?>
                     <?php foreach ($users as $user): ?>
-                    <tr>
-                        <td>
-                            <strong><?php echo escapeOutput($user['username']); ?></strong>
-                            <?php if ($user['id'] === $_SESSION['user_id']): ?>
-                            <span class="badge bg-info">You</span>
-                            <?php endif; ?>
+                    <tr tabindex="0" role="row">
+                        <td data-label="Username">
+                            <div class="d-flex align-items-center gap-2">
+                                <!-- User Avatar -->
+                                <div class="user-avatar-sm" style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-page, #f5f7f9); display: flex; align-items: center; justify-content: center; color: var(--primary, #1e6fb8);">
+                                    <i class="bi bi-person-fill" aria-hidden="true"></i>
+                                </div>
+                                <div>
+                                    <strong><?php echo escapeOutput($user['username']); ?></strong>
+                                    <?php if ($user['id'] === $_SESSION['user_id']): ?>
+                                    <span class="badge bg-info badge-sm ms-1">You</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
                         </td>
-                        <td><?php echo escapeOutput($user['full_name']); ?></td>
-                        <td>
+                        <td data-label="Full Name"><?php echo escapeOutput($user['full_name']); ?></td>
+                        <td data-label="Role">
+                            <!-- Role Badges - HCI: Visual distinction with muted styling -->
                             <?php if ($user['role'] === 'admin'): ?>
-                            <span class="badge bg-danger">Admin</span>
+                            <span class="badge-role badge-role-admin" title="Administrator">Admin</span>
                             <?php else: ?>
-                            <span class="badge bg-secondary">Staff</span>
+                            <span class="badge-role badge-role-staff" title="Staff member">Staff</span>
                             <?php endif; ?>
                         </td>
-                        <td class="d-none d-md-table-cell"><small><?php echo date('M d, Y', strtotime($user['date_created'])); ?></small></td>
-                        <td>
-                            <button class="btn btn-sm btn-info" onclick='editUser(<?php echo htmlspecialchars(json_encode($user), ENT_QUOTES, "UTF-8"); ?>)'>
-                                <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
-                            </button>
-                            <?php if ($user['id'] !== $_SESSION['user_id']): ?>
-                            <a href="?delete=<?php echo $user['id']; ?>" class="btn btn-sm btn-danger" 
-                               onclick="return confirmDelete('Are you sure you want to delete this user?', this)">
-                                <i class="bi bi-trash"></i><span class="d-none d-sm-inline"> Delete</span>
-                            </a>
-                            <?php endif; ?>
+                        <td data-label="Date Created" class="d-none d-md-table-cell">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>
+                                <?php echo date('M d, Y', strtotime($user['date_created'])); ?>
+                            </small>
+                        </td>
+                        <td data-label="Actions">
+                            <div class="d-flex gap-1 flex-wrap">
+                                <!-- Edit Button - HCI: Icon + label -->
+                                <button class="btn btn-action btn-info" 
+                                        onclick='editUser(<?php echo htmlspecialchars(json_encode($user), ENT_QUOTES, "UTF-8"); ?>)'
+                                        aria-label="Edit user <?php echo escapeOutput($user['username']); ?>">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                                    <span class="d-none d-sm-inline">Edit</span>
+                                </button>
+                                <?php if ($user['id'] !== $_SESSION['user_id']): ?>
+                                <!-- Delete Button - HCI: Confirmation required -->
+                                <a href="?delete=<?php echo $user['id']; ?>" 
+                                   class="btn btn-action btn-danger" 
+                                   onclick="return confirmDelete('Are you sure you want to delete user &quot;<?php echo escapeOutput($user['username']); ?>&quot;? This action cannot be undone.', this)"
+                                   aria-label="Delete user <?php echo escapeOutput($user['username']); ?>">
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                    <span class="d-none d-sm-inline">Delete</span>
+                                </a>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -176,6 +243,60 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+// Toggle Search Filter Panel
+function toggleSearchFilter() {
+    var panel = document.getElementById('searchFilterPanel');
+    var btn = document.getElementById('toggleSearchBtn');
+    var isExpanded = panel.classList.contains('show');
+    
+    if (isExpanded) {
+        panel.classList.remove('show');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.innerHTML = '<i class="bi bi-search" aria-hidden="true"></i><span class="d-none d-sm-inline"> Search</span>';
+        // Clear search when hiding
+        clearSearch();
+    } else {
+        panel.classList.add('show');
+        btn.setAttribute('aria-expanded', 'true');
+        btn.innerHTML = '<i class="bi bi-x-lg" aria-hidden="true"></i><span class="d-none d-sm-inline"> Close</span>';
+        // Focus on search input
+        setTimeout(function() {
+            document.getElementById('searchInput').focus();
+        }, 100);
+    }
+}
+
+// Clear Search Input
+function clearSearch() {
+    var input = document.getElementById('searchInput');
+    if (input) {
+        input.value = '';
+        searchTable('searchInput', 'usersTable');
+    }
+}
+
+// Keyboard shortcut for search (/ key)
+document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !e.target.matches('input, textarea')) {
+        e.preventDefault();
+        var panel = document.getElementById('searchFilterPanel');
+        if (!panel.classList.contains('show')) {
+            toggleSearchFilter();
+        } else {
+            document.getElementById('searchInput').focus();
+        }
+    }
+    // Escape to close search
+    if (e.key === 'Escape') {
+        var panel = document.getElementById('searchFilterPanel');
+        if (panel.classList.contains('show')) {
+            toggleSearchFilter();
+        }
+    }
+});
+</script>
 
 <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
