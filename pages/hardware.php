@@ -915,25 +915,28 @@ function clearHardwareSearch() {
     }
 }
 
-// Keyboard shortcut for search (/ key)
-document.addEventListener('keydown', function(e) {
-    if (e.key === '/' && !e.target.matches('input, textarea, select')) {
-        e.preventDefault();
-        var panel = document.getElementById('searchFilterPanel');
-        if (!panel.classList.contains('show')) {
-            toggleHardwareSearch();
-        } else {
-            document.getElementById('searchInput').focus();
+// Keyboard shortcut for search (/ key) - only add if not already added
+if (!window.hardwarePageKeyboardHandlerAdded) {
+    window.hardwarePageKeyboardHandlerAdded = true;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !e.target.matches('input, textarea, select')) {
+            e.preventDefault();
+            var panel = document.getElementById('searchFilterPanel');
+            if (panel && !panel.classList.contains('show')) {
+                toggleHardwareSearch();
+            } else if (panel) {
+                document.getElementById('searchInput').focus();
+            }
         }
-    }
-    // Escape to close search
-    if (e.key === 'Escape') {
-        var panel = document.getElementById('searchFilterPanel');
-        if (panel && panel.classList.contains('show')) {
-            toggleHardwareSearch();
+        // Escape to close search
+        if (e.key === 'Escape') {
+            var panel = document.getElementById('searchFilterPanel');
+            if (panel && panel.classList.contains('show')) {
+                toggleHardwareSearch();
+            }
         }
-    }
-});
+    });
+}
 </script>
 
 <?php include '../includes/footer.php'; ?>

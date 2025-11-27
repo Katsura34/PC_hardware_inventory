@@ -277,25 +277,28 @@ function clearSearch() {
     }
 }
 
-// Keyboard shortcut for search (/ key)
-document.addEventListener('keydown', function(e) {
-    if (e.key === '/' && !e.target.matches('input, textarea')) {
-        e.preventDefault();
-        var panel = document.getElementById('searchFilterPanel');
-        if (!panel.classList.contains('show')) {
-            toggleSearchFilter();
-        } else {
-            document.getElementById('searchInput').focus();
+// Keyboard shortcut for search (/ key) - only add if not already added
+if (!window.usersPageKeyboardHandlerAdded) {
+    window.usersPageKeyboardHandlerAdded = true;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !e.target.matches('input, textarea')) {
+            e.preventDefault();
+            var panel = document.getElementById('searchFilterPanel');
+            if (panel && !panel.classList.contains('show')) {
+                toggleSearchFilter();
+            } else if (panel) {
+                document.getElementById('searchInput').focus();
+            }
         }
-    }
-    // Escape to close search
-    if (e.key === 'Escape') {
-        var panel = document.getElementById('searchFilterPanel');
-        if (panel.classList.contains('show')) {
-            toggleSearchFilter();
+        // Escape to close search
+        if (e.key === 'Escape') {
+            var panel = document.getElementById('searchFilterPanel');
+            if (panel && panel.classList.contains('show')) {
+                toggleSearchFilter();
+            }
         }
-    }
-});
+    });
+}
 </script>
 
 <!-- Add User Modal -->

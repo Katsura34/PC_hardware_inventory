@@ -35,11 +35,10 @@
      */
     function debounce(func, wait) {
         let timeout;
-        return function executedFunction() {
-            const args = arguments;
+        return function executedFunction(...args) {
             const later = function() {
                 clearTimeout(timeout);
-                func.apply(this, args);
+                func(...args);
             };
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
@@ -79,8 +78,7 @@
      * @param {string} message - Message to announce
      * @param {string} priority - 'polite' or 'assertive'
      */
-    function announce(message, priority) {
-        if (priority === void 0) { priority = 'polite'; }
+    function announce(message, priority = 'polite') {
         let announcer = document.getElementById('sr-announcer');
         
         if (!announcer) {
@@ -252,10 +250,7 @@
             this.container = container;
         },
         
-        show: function(message, type, duration) {
-            if (type === void 0) { type = 'info'; }
-            if (duration === void 0) { duration = CONFIG.toastDuration; }
-            
+        show: function(message, type = 'info', duration = CONFIG.toastDuration) {
             if (!this.container) this.createContainer();
             
             var icons = {
@@ -333,9 +328,7 @@
     // Undo Toast for Delete Actions
     // ============================================
     const UndoToast = {
-        show: function(message, undoCallback, duration) {
-            if (duration === void 0) { duration = 5000; }
-            
+        show: function(message, undoCallback, duration = 5000) {
             if (!Toast.container) Toast.createContainer();
             
             var toastId = 'undo-toast-' + Date.now();
