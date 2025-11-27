@@ -101,12 +101,12 @@ include '../includes/header.php';
                 </select>
             </div>
             <div class="col-md-3 col-sm-6">
-                <label for="date_from" class="form-label small mb-1">Date From</label>
-                <input type="date" class="form-control form-control-sm" id="date_from" name="date_from" value="<?php echo escapeOutput($date_from); ?>">
+                <label for="date_from" class="form-label small mb-1"><i class="bi bi-calendar-event me-1"></i>Start Date</label>
+                <input type="date" class="form-control form-control-sm" id="date_from" name="date_from" value="<?php echo escapeOutput($date_from); ?>" title="Filter records from this date">
             </div>
             <div class="col-md-3 col-sm-6">
-                <label for="date_to" class="form-label small mb-1">Date To</label>
-                <input type="date" class="form-control form-control-sm" id="date_to" name="date_to" value="<?php echo escapeOutput($date_to); ?>">
+                <label for="date_to" class="form-label small mb-1"><i class="bi bi-calendar-event me-1"></i>End Date</label>
+                <input type="date" class="form-control form-control-sm" id="date_to" name="date_to" value="<?php echo escapeOutput($date_to); ?>" title="Filter records up to this date">
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="d-flex gap-2">

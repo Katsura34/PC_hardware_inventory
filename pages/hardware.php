@@ -297,76 +297,94 @@ include '../includes/header.php';
     <div class="card-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
             <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Hardware</h5>
-            <div class="d-flex gap-2 w-100 w-md-auto">
-                <input type="text" id="searchInput" class="form-control form-control-sm flex-grow-1" placeholder="Search..." 
+            <div class="d-flex gap-2 align-items-center">
+                <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search..." style="min-width: 150px;"
                        onkeyup="searchTable('searchInput', 'hardwareTable')">
+                <!-- Filter Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-sm <?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)) ? 'btn-primary' : 'btn-outline-primary'; ?>" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        <i class="bi bi-funnel<?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)) ? '-fill' : ''; ?>"></i>
+                        <span class="d-none d-sm-inline"> Filters</span>
+                        <?php if ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)): ?>
+                        <span class="badge bg-white text-primary ms-1"><?php echo count(array_filter([$filter_category > 0, !empty($filter_brand), !empty($filter_model)])); ?></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end filter-dropdown p-3 shadow-lg" aria-labelledby="filterDropdown" style="min-width: 300px;">
+                        <form method="GET" id="filterForm">
+                            <h6 class="dropdown-header px-0 mb-2"><i class="bi bi-funnel me-1"></i> Filter Hardware</h6>
+                            <div class="mb-3">
+                                <label for="filter_category" class="form-label small mb-1">Category</label>
+                                <select class="form-select form-select-sm" id="filter_category" name="filter_category">
+                                    <option value="">All Categories</option>
+                                    <?php foreach ($categories as $cat): ?>
+                                    <option value="<?php echo $cat['id']; ?>" <?php echo $filter_category == $cat['id'] ? 'selected' : ''; ?>><?php echo escapeOutput($cat['name']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="filter_brand" class="form-label small mb-1">Brand</label>
+                                <select class="form-select form-select-sm" id="filter_brand" name="filter_brand">
+                                    <option value="">All Brands</option>
+                                    <?php foreach ($brands as $brand): ?>
+                                    <option value="<?php echo escapeOutput($brand); ?>" <?php echo $filter_brand === $brand ? 'selected' : ''; ?>><?php echo escapeOutput($brand); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="filter_model" class="form-label small mb-1">Model</label>
+                                <select class="form-select form-select-sm" id="filter_model" name="filter_model">
+                                    <option value="">All Models</option>
+                                    <?php foreach ($models as $model): ?>
+                                    <option value="<?php echo escapeOutput($model); ?>" <?php echo $filter_model === $model ? 'selected' : ''; ?>><?php echo escapeOutput($model); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                                    <i class="bi bi-check-lg"></i> Apply
+                                </button>
+                                <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-x-lg"></i> Clear
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 <button class="btn btn-sm btn-success" onclick="exportHardwareToCSV()">
                     <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
                 </button>
             </div>
         </div>
-        <!-- Filters -->
-        <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-3 col-sm-6">
-                <label for="filter_category" class="form-label small mb-1">Category</label>
-                <select class="form-select form-select-sm" id="filter_category" name="filter_category">
-                    <option value="">All Categories</option>
-                    <?php foreach ($categories as $cat): ?>
-                    <option value="<?php echo $cat['id']; ?>" <?php echo $filter_category == $cat['id'] ? 'selected' : ''; ?>><?php echo escapeOutput($cat['name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <label for="filter_brand" class="form-label small mb-1">Brand</label>
-                <select class="form-select form-select-sm" id="filter_brand" name="filter_brand">
-                    <option value="">All Brands</option>
-                    <?php foreach ($brands as $brand): ?>
-                    <option value="<?php echo escapeOutput($brand); ?>" <?php echo $filter_brand === $brand ? 'selected' : ''; ?>><?php echo escapeOutput($brand); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <label for="filter_model" class="form-label small mb-1">Model</label>
-                <select class="form-select form-select-sm" id="filter_model" name="filter_model">
-                    <option value="">All Models</option>
-                    <?php foreach ($models as $model): ?>
-                    <option value="<?php echo escapeOutput($model); ?>" <?php echo $filter_model === $model ? 'selected' : ''; ?>><?php echo escapeOutput($model); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
-                        <i class="bi bi-funnel"></i> Filter
-                    </button>
-                    <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-x-circle"></i> Clear
-                    </a>
-                </div>
-            </div>
-        </form>
         <?php if ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)): ?>
-        <div class="mt-2">
-            <small class="text-muted">
-                <i class="bi bi-funnel-fill"></i> Filters active: 
-                <?php 
-                $filters = [];
-                if ($filter_category > 0) {
-                    $cat_name = '';
-                    foreach ($categories as $cat) {
-                        if ($cat['id'] == $filter_category) {
-                            $cat_name = $cat['name'];
-                            break;
-                        }
+        <div class="filter-tags d-flex flex-wrap gap-2 align-items-center">
+            <small class="text-muted me-1"><i class="bi bi-funnel-fill"></i> Active filters:</small>
+            <?php if ($filter_category > 0): 
+                $cat_name = '';
+                foreach ($categories as $cat) {
+                    if ($cat['id'] == $filter_category) {
+                        $cat_name = $cat['name'];
+                        break;
                     }
-                    $filters[] = "Category: " . escapeOutput($cat_name);
                 }
-                if (!empty($filter_brand)) $filters[] = "Brand: " . escapeOutput($filter_brand);
-                if (!empty($filter_model)) $filters[] = "Model: " . escapeOutput($filter_model);
-                echo implode(' | ', $filters);
-                ?>
-                (<?php echo count($hardware); ?> items)
-            </small>
+            ?>
+            <span class="badge bg-primary d-flex align-items-center gap-1">
+                Category: <?php echo escapeOutput($cat_name); ?>
+                <a href="?<?php echo http_build_query(array_filter(['filter_brand' => $filter_brand ?: null, 'filter_model' => $filter_model ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+            </span>
+            <?php endif; ?>
+            <?php if (!empty($filter_brand)): ?>
+            <span class="badge bg-primary d-flex align-items-center gap-1">
+                Brand: <?php echo escapeOutput($filter_brand); ?>
+                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_model' => $filter_model ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+            </span>
+            <?php endif; ?>
+            <?php if (!empty($filter_model)): ?>
+            <span class="badge bg-primary d-flex align-items-center gap-1">
+                Model: <?php echo escapeOutput($filter_model); ?>
+                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_brand' => $filter_brand ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+            </span>
+            <?php endif; ?>
+            <small class="text-muted ms-2">(<?php echo count($hardware); ?> items)</small>
         </div>
         <?php endif; ?>
     </div>
@@ -418,7 +436,7 @@ include '../includes/header.php';
                         <td class="d-none d-lg-table-cell"><span class="badge bg-secondary"><?php echo $item['repair_quantity']; ?></span></td>
                         <td class="d-none d-lg-table-cell"><small><?php echo escapeOutput($item['location'] ?: '-'); ?></small></td>
                         <td>
-                            <button class="btn btn-sm btn-info" onclick='editHardware(<?php echo json_encode($item); ?>)'>
+                            <button class="btn btn-sm btn-info" onclick='editHardware(<?php echo htmlspecialchars(json_encode($item), ENT_QUOTES, "UTF-8"); ?>)'>
                                 <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
                             </button>
                             <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" 

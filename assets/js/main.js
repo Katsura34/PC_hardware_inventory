@@ -844,58 +844,6 @@ function showToast(message, type = 'info', duration = 4000) {
 }
 
 // ============================================
-// HCI Enhancement: Keyboard Shortcuts
-// Principle: Flexibility - Multiple ways to accomplish tasks
-// ============================================
-
-document.addEventListener('keydown', function(e) {
-    // Only process shortcuts when not typing in an input
-    if (e.target.matches('input, textarea, select, [contenteditable]')) return;
-    
-    // Ctrl/Cmd + / to show keyboard shortcuts help
-    if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-        e.preventDefault();
-        showKeyboardShortcutsHelp();
-    }
-    
-    // Escape to close modals
-    if (e.key === 'Escape') {
-        const openModal = document.querySelector('.modal.show');
-        if (openModal) {
-            const bsModal = bootstrap.Modal.getInstance(openModal);
-            if (bsModal) bsModal.hide();
-        }
-    }
-    
-    // Ctrl/Cmd + K for search focus
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.focus();
-            searchInput.select();
-        }
-    }
-});
-
-function showKeyboardShortcutsHelp() {
-    const shortcuts = [
-        { keys: 'Ctrl + /', desc: 'Show this help' },
-        { keys: 'Ctrl + K', desc: 'Focus search' },
-        { keys: 'Escape', desc: 'Close modal/dialog' }
-    ];
-    
-    let shortcutsHTML = shortcuts.map(s => 
-        `<div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-            <span class="text-muted">${s.desc}</span>
-            <kbd class="ms-3">${s.keys}</kbd>
-        </div>`
-    ).join('');
-    
-    showAlert(`<div class="text-start">${shortcutsHTML}</div>`, 'Keyboard Shortcuts', 'info');
-}
-
-// ============================================
 // HCI Enhancement: Form Auto-save Indicator
 // Principle: Feedback - User knows data is being saved
 // ============================================
