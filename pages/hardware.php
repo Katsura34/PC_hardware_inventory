@@ -56,9 +56,9 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     $stmt->bind_param("i", $id);
     
     if ($stmt->execute()) {
-        redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Hardware deleted successfully.', 'success');
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware deleted successfully.', 'success');
     } else {
-        redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Failed to delete hardware.', 'error');
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to delete hardware.', 'error');
     }
     $stmt->close();
 }
@@ -113,9 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $log_stmt->execute();
             $log_stmt->close();
             
-            redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Hardware added successfully.', 'success');
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware added successfully.', 'success');
         } else {
-            redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Failed to add hardware.', 'error');
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to add hardware.', 'error');
         }
         $stmt->close();
         
@@ -168,19 +168,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $log_stmt->execute();
             $log_stmt->close();
             
-            redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Hardware updated successfully.', 'success');
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware updated successfully.', 'success');
         } else {
-            redirectWithMessage('/PC_hardware_inventory/pages/hardware.php', 'Failed to update hardware.', 'error');
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to update hardware.', 'error');
         }
         $stmt->close();
     }
 }
 
-// Get all hardware
+// Get filter parameters
+$filter_category = isset($_GET['filter_category']) ? (int)$_GET['filter_category'] : 0;
+$filter_brand = isset($_GET['filter_brand']) ? sanitizeInput($_GET['filter_brand']) : '';
+$filter_model = isset($_GET['filter_model']) ? sanitizeInput($_GET['filter_model']) : '';
+
+// Build query with filters
+$query = "SELECT h.*, c.name as category_name FROM hardware h 
+          LEFT JOIN categories c ON h.category_id = c.id 
+          WHERE 1=1";
+
+$params = [];
+$types = "";
+
+if ($filter_category > 0) {
+    $query .= " AND h.category_id = ?";
+    $params[] = $filter_category;
+    $types .= "i";
+}
+
+if (!empty($filter_brand)) {
+    $query .= " AND h.brand LIKE ?";
+    $params[] = "%" . $filter_brand . "%";
+    $types .= "s";
+}
+
+if (!empty($filter_model)) {
+    $query .= " AND h.model LIKE ?";
+    $params[] = "%" . $filter_model . "%";
+    $types .= "s";
+}
+
+$query .= " ORDER BY h.date_added DESC";
+
+// Get all hardware with filters
 $hardware = [];
-$result = $conn->query("SELECT h.*, c.name as category_name FROM hardware h 
-                       LEFT JOIN categories c ON h.category_id = c.id 
-                       ORDER BY h.date_added DESC");
+if (!empty($params)) {
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $result = $conn->query($query);
+}
 while ($row = $result->fetch_assoc()) {
     $hardware[] = $row;
 }
@@ -190,6 +228,24 @@ $categories = [];
 $result = $conn->query("SELECT * FROM categories ORDER BY name");
 while ($row = $result->fetch_assoc()) {
     $categories[] = $row;
+}
+
+// Get distinct brands for filter dropdown
+$brands = [];
+$result = $conn->query("SELECT DISTINCT brand FROM hardware WHERE brand IS NOT NULL AND brand != '' ORDER BY brand");
+while ($row = $result->fetch_assoc()) {
+    if (!empty($row['brand'])) {
+        $brands[] = $row['brand'];
+    }
+}
+
+// Get distinct models for filter dropdown
+$models = [];
+$result = $conn->query("SELECT DISTINCT model FROM hardware WHERE model IS NOT NULL AND model != '' ORDER BY model");
+while ($row = $result->fetch_assoc()) {
+    if (!empty($row['model'])) {
+        $models[] = $row['model'];
+    }
 }
 
 // Get distinct locations for dropdown
@@ -238,15 +294,81 @@ include '../includes/header.php';
 
 <!-- Hardware Table -->
 <div class="card table-card">
-    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-        <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Hardware</h5>
-        <div class="d-flex gap-2 w-100 w-md-auto">
-            <input type="text" id="searchInput" class="form-control form-control-sm flex-grow-1" placeholder="Search..." 
-                   onkeyup="searchTable('searchInput', 'hardwareTable')">
-            <button class="btn btn-sm btn-success" onclick="exportTableToCSV('hardwareTable', 'hardware_inventory.csv')">
-                <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
-            </button>
+    <div class="card-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+            <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Hardware</h5>
+            <div class="d-flex gap-2 w-100 w-md-auto">
+                <input type="text" id="searchInput" class="form-control form-control-sm flex-grow-1" placeholder="Search..." 
+                       onkeyup="searchTable('searchInput', 'hardwareTable')">
+                <button class="btn btn-sm btn-success" onclick="exportHardwareToCSV()">
+                    <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
+                </button>
+            </div>
         </div>
+        <!-- Filters -->
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label for="filter_category" class="form-label small mb-1">Category</label>
+                <select class="form-select form-select-sm" id="filter_category" name="filter_category">
+                    <option value="">All Categories</option>
+                    <?php foreach ($categories as $cat): ?>
+                    <option value="<?php echo $cat['id']; ?>" <?php echo $filter_category == $cat['id'] ? 'selected' : ''; ?>><?php echo escapeOutput($cat['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label for="filter_brand" class="form-label small mb-1">Brand</label>
+                <select class="form-select form-select-sm" id="filter_brand" name="filter_brand">
+                    <option value="">All Brands</option>
+                    <?php foreach ($brands as $brand): ?>
+                    <option value="<?php echo escapeOutput($brand); ?>" <?php echo $filter_brand === $brand ? 'selected' : ''; ?>><?php echo escapeOutput($brand); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label for="filter_model" class="form-label small mb-1">Model</label>
+                <select class="form-select form-select-sm" id="filter_model" name="filter_model">
+                    <option value="">All Models</option>
+                    <?php foreach ($models as $model): ?>
+                    <option value="<?php echo escapeOutput($model); ?>" <?php echo $filter_model === $model ? 'selected' : ''; ?>><?php echo escapeOutput($model); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+        <?php if ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)): ?>
+        <div class="mt-2">
+            <small class="text-muted">
+                <i class="bi bi-funnel-fill"></i> Filters active: 
+                <?php 
+                $filters = [];
+                if ($filter_category > 0) {
+                    $cat_name = '';
+                    foreach ($categories as $cat) {
+                        if ($cat['id'] == $filter_category) {
+                            $cat_name = $cat['name'];
+                            break;
+                        }
+                    }
+                    $filters[] = "Category: " . escapeOutput($cat_name);
+                }
+                if (!empty($filter_brand)) $filters[] = "Brand: " . escapeOutput($filter_brand);
+                if (!empty($filter_model)) $filters[] = "Model: " . escapeOutput($filter_model);
+                echo implode(' | ', $filters);
+                ?>
+                (<?php echo count($hardware); ?> items)
+            </small>
+        </div>
+        <?php endif; ?>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -356,11 +478,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="location" class="form-label">Location</label>
-                            <select class="form-select" id="location" name="location">
+                            <select class="form-select location-select" id="location" name="location">
                                 <option value="">Select Location</option>
                                 <?php foreach ($locations as $loc): ?>
                                 <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
                                 <?php endforeach; ?>
+                                <option value="__add_new__">+ Add New Location...</option>
                             </select>
                         </div>
                         <div class="col-12"><hr></div>
@@ -440,11 +563,12 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="edit_location" class="form-label">Location</label>
-                            <select class="form-select" id="edit_location" name="location">
+                            <select class="form-select location-select" id="edit_location" name="location">
                                 <option value="">Select Location</option>
                                 <?php foreach ($locations as $loc): ?>
                                 <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
                                 <?php endforeach; ?>
+                                <option value="__add_new__">+ Add New Location...</option>
                             </select>
                         </div>
                         <div class="col-12"><hr></div>
@@ -488,11 +612,22 @@ include '../includes/header.php';
                     <div class="alert alert-info">
                         <strong><i class="bi bi-info-circle"></i> CSV Format:</strong>
                         <br>name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
-                        <br><small class="text-muted">First row should be the header</small>
+                        <br><small class="text-muted">First row should be the header. The location column (11th) is optional if you select a default location below.</small>
                     </div>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Select CSV File</label>
                         <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="defaultLocation" class="form-label">Default Location (optional)</label>
+                        <select class="form-select location-select" id="defaultLocation" name="defaultLocation">
+                            <option value="">-- Use location from CSV --</option>
+                            <?php foreach ($locations as $loc): ?>
+                            <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
+                            <?php endforeach; ?>
+                            <option value="__add_new__">+ Add New Location...</option>
+                        </select>
+                        <small class="text-muted">If selected, this location will be used for all imported items (overrides CSV location column)</small>
                     </div>
                     <div id="importPreview" class="d-none">
                         <h6>Preview (First 5 rows):</h6>
@@ -515,7 +650,138 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Add New Location Modal -->
+<div class="modal fade" id="addLocationModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-geo-alt-fill"></i> Add New Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newLocationName" class="form-label">Location Name *</label>
+                    <input type="text" class="form-control" id="newLocationName" placeholder="Enter location name" required>
+                    <div class="invalid-feedback">Please enter a location name.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveNewLocationBtn">
+                    <i class="bi bi-plus-circle"></i> Add Location
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// Track which dropdown triggered the add location modal
+var activeLocationDropdown = null;
+
+// Handle location dropdown change to detect "Add New Location" selection
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.location-select').forEach(function(select) {
+        select.addEventListener('change', function() {
+            if (this.value === '__add_new__') {
+                activeLocationDropdown = this;
+                // Reset to empty/first option before showing modal
+                this.value = '';
+                // Show the add location modal
+                var addLocationModal = new bootstrap.Modal(document.getElementById('addLocationModal'));
+                addLocationModal.show();
+            }
+        });
+    });
+    
+    // Handle save new location button
+    document.getElementById('saveNewLocationBtn').addEventListener('click', function() {
+        var newLocationInput = document.getElementById('newLocationName');
+        var newLocation = newLocationInput.value.trim();
+        
+        if (!newLocation) {
+            newLocationInput.classList.add('is-invalid');
+            return;
+        }
+        
+        newLocationInput.classList.remove('is-invalid');
+        
+        // Add the new location to all location dropdowns
+        document.querySelectorAll('.location-select').forEach(function(select) {
+            // Check if location already exists
+            var exists = false;
+            for (var i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === newLocation) {
+                    exists = true;
+                    break;
+                }
+            }
+            
+            if (!exists) {
+                // Insert before the "Add New Location" option
+                var addNewOption = select.querySelector('option[value="__add_new__"]');
+                var newOption = document.createElement('option');
+                newOption.value = newLocation;
+                newOption.textContent = newLocation;
+                select.insertBefore(newOption, addNewOption);
+            }
+        });
+        
+        // Select the new location in the dropdown that triggered the modal
+        if (activeLocationDropdown) {
+            activeLocationDropdown.value = newLocation;
+        }
+        
+        // Clear input and close modal
+        newLocationInput.value = '';
+        var addLocationModal = bootstrap.Modal.getInstance(document.getElementById('addLocationModal'));
+        addLocationModal.hide();
+    });
+    
+    // Clear validation state when modal is hidden
+    document.getElementById('addLocationModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('newLocationName').classList.remove('is-invalid');
+        document.getElementById('newLocationName').value = '';
+    });
+});
+
+// Hardware data for CSV export (in the correct import format)
+var hardwareData = <?php echo json_encode($hardware); ?>;
+
+// Export hardware to CSV in the correct import format
+function exportHardwareToCSV() {
+    const headers = ['name', 'category_id', 'type', 'brand', 'model', 'serial_number', 
+                     'unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity', 'location'];
+    
+    let csv = [headers.join(',')];
+    
+    hardwareData.forEach(function(item) {
+        let row = [
+            '"' + (item.name || '').replace(/"/g, '""') + '"',
+            item.category_id || '',
+            '"' + (item.type || '').replace(/"/g, '""') + '"',
+            '"' + (item.brand || '').replace(/"/g, '""') + '"',
+            '"' + (item.model || '').replace(/"/g, '""') + '"',
+            '"' + (item.serial_number || '').replace(/"/g, '""') + '"',
+            item.unused_quantity || 0,
+            item.in_use_quantity || 0,
+            item.damaged_quantity || 0,
+            item.repair_quantity || 0,
+            '"' + (item.location || '').replace(/"/g, '""') + '"'
+        ];
+        csv.push(row.join(','));
+    });
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hardware_inventory.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
 // Edit hardware function
 function editHardware(item) {
     document.getElementById('edit_id').value = item.id;

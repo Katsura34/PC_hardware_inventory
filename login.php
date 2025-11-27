@@ -132,15 +132,6 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
                         <i class="bi bi-box-arrow-in-right"></i> Sign In
                     </button>
                 </form>
-                
-                <div class="text-center">
-                    <hr>
-                    <p class="text-muted mb-2">Demo Credentials:</p>
-                    <small class="text-muted">
-                        <strong>Admin:</strong> admin / password123<br>
-                        <strong>Staff:</strong> staff01 / password123
-                    </small>
-                </div>
             </div>
         </div>
     </div>

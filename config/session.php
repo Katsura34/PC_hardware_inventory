@@ -1,4 +1,7 @@
 <?php
+// Include base path configuration
+require_once __DIR__ . '/base.php';
+
 // Start secure session
 if (session_status() === PHP_SESSION_NONE) {
     // Secure session configuration
@@ -32,7 +35,7 @@ function isAdmin() {
 // Require login
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: /PC_hardware_inventory/login.php');
+        header('Location: ' . BASE_PATH . 'login.php');
         exit();
     }
 }
@@ -41,7 +44,7 @@ function requireLogin() {
 function requireAdmin() {
     requireLogin();
     if (!isAdmin()) {
-        header('Location: /PC_hardware_inventory/dashboard.php');
+        header('Location: ' . BASE_PATH . 'dashboard.php');
         exit();
     }
 }

@@ -17,7 +17,10 @@ if (!isset($pageTitle)) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/style.css">
+    
+    <!-- Base path for JavaScript -->
+    <script>window.BASE_PATH = '<?php echo BASE_PATH; ?>';</script>
 </head>
 <body>
     <?php if (isLoggedIn()): ?>
@@ -29,8 +32,8 @@ if (!isset($pageTitle)) {
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="/dashboard.php">
-                <img src="/assets/images/logo.svg" alt="Logo" height="32" class="me-2">
+            <a class="navbar-brand d-flex align-items-center" href="<?php echo BASE_PATH; ?>dashboard.php">
+                <img src="<?php echo BASE_PATH; ?>assets/images/logo.svg" alt="Logo" height="32" class="me-2">
                 <span>PC Inventory - ACLC Ormoc</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -39,23 +42,23 @@ if (!isset($pageTitle)) {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'dashboard.php') ? 'active' : ''; ?>" href="/dashboard.php">
+                        <a class="nav-link <?php echo ($current_page === 'dashboard.php') ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>dashboard.php">
                             <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'hardware.php') ? 'active' : ''; ?>" href="/pages/hardware.php">
+                        <a class="nav-link <?php echo ($current_page === 'hardware.php') ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>pages/hardware.php">
                             <i class="bi bi-cpu"></i> Hardware
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'history.php') ? 'active' : ''; ?>" href="/pages/history.php">
+                        <a class="nav-link <?php echo ($current_page === 'history.php') ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>pages/history.php">
                             <i class="bi bi-clock-history"></i> History
                         </a>
                     </li>
                     <?php if (isAdmin()): ?>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'users.php') ? 'active' : ''; ?>" href="/pages/users.php">
+                        <a class="nav-link <?php echo ($current_page === 'users.php') ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>pages/users.php">
                             <i class="bi bi-people"></i> Users
                         </a>
                     </li>
@@ -70,7 +73,7 @@ if (!isset($pageTitle)) {
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><span class="dropdown-item-text"><small class="text-muted">Role: <?php echo escapeOutput(ucfirst($_SESSION['role'])); ?></small></span></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                            <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>

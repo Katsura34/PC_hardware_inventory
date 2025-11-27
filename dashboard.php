@@ -146,7 +146,7 @@ include 'includes/header.php';
         <div class="card table-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Hardware</h5>
-                <a href="pages/hardware.php" class="btn btn-sm btn-light">View All</a>
+                <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-sm btn-light">View All</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

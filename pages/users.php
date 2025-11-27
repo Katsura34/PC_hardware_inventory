@@ -15,7 +15,7 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     
     // Prevent deleting yourself
     if ($id === $_SESSION['user_id']) {
-        redirectWithMessage('/PC_hardware_inventory/pages/users.php', 'You cannot delete your own account.', 'error');
+        redirectWithMessage(BASE_PATH . 'pages/users.php', 'You cannot delete your own account.', 'error');
     }
     
     // Delete user
@@ -23,9 +23,9 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     $stmt->bind_param("i", $id);
     
     if ($stmt->execute()) {
-        redirectWithMessage('/PC_hardware_inventory/pages/users.php', 'User deleted successfully.', 'success');
+        redirectWithMessage(BASE_PATH . 'pages/users.php', 'User deleted successfully.', 'success');
     } else {
-        redirectWithMessage('/PC_hardware_inventory/pages/users.php', 'Failed to delete user.', 'error');
+        redirectWithMessage(BASE_PATH . 'pages/users.php', 'Failed to delete user.', 'error');
     }
     $stmt->close();
 }
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $check_result = $check_stmt->get_result();
         
         if ($check_result->num_rows > 0) {
-            redirectWithMessage('/PC_hardware_inventory/pages/users.php', 'Username already exists.', 'error');
+            redirectWithMessage(BASE_PATH . 'pages/users.php', 'Username already exists.', 'error');
         }
         $check_stmt->close();
         
@@ -58,9 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->bind_param("ssss", $username, $hashed_password, $full_name, $role);
         
         if ($stmt->execute()) {
-            redirectWithMessage('/PC_hardware_inventory/pages/users.php', 'User added successfully.', 'success');
+            redirectWithMessage(BASE_PATH . 'pages/users.php', 'User added successfully.', 'success');
         } else {
-            redirectWithMessage('/PC_hardware_inventory/pages/users.php', 'Failed to add user.', 'error');
+            redirectWithMessage(BASE_PATH . 'pages/users.php', 'Failed to add user.', 'error');
         }
         $stmt->close();
         
@@ -78,9 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         
         if ($stmt->execute()) {
-            redirectWithMessage('/PC_hardware_inventory/pages/users.php', 'User updated successfully.', 'success');
+            redirectWithMessage(BASE_PATH . 'pages/users.php', 'User updated successfully.', 'success');
         } else {
-            redirectWithMessage('/PC_hardware_inventory/pages/users.php', 'Failed to update user.', 'error');
+            redirectWithMessage(BASE_PATH . 'pages/users.php', 'Failed to update user.', 'error');
         }
         $stmt->close();
     }
