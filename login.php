@@ -63,7 +63,12 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - PC Hardware Inventory</title>
+    <meta name="description" content="Login to PC Hardware Inventory System - ACLC College of Ormoc">
+    <meta name="theme-color" content="#1e293b">
+    <title>Sign In - PC Hardware Inventory</title>
+    
+    <!-- Preconnect to CDN for better performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -71,66 +76,90 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
+    <!-- Inter Font for better readability -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
     <div class="login-container">
-        <div class="login-card">
+        <div class="login-card" role="main">
             <div class="login-header">
-                <img src="<?php echo BASE_PATH; ?>assets/images/logo.png" alt="Logo" height="128" class="me-2">
-                <h2>PC Hardware Inventory</h2>
-                <p class="mb-0" style="font-size: 1.1rem; font-weight: 500;">ACLC College of Ormoc</p>
-                <p class="mb-0" style="font-size: 0.9rem; opacity: 0.9;">Sign in to your account</p>
+                <img src="<?php echo BASE_PATH; ?>assets/images/logo.png" alt="ACLC College Logo" height="100" class="mb-3">
+                <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">PC Hardware Inventory</h1>
+                <p class="mb-0" style="font-size: 1rem; font-weight: 500;">ACLC College of Ormoc</p>
+                <p class="mb-0 mt-2" style="font-size: 0.875rem; opacity: 0.85;">
+                    <i class="bi bi-shield-lock me-1" aria-hidden="true"></i>
+                    Sign in to access your account
+                </p>
             </div>
             <div class="login-body">
                 <?php if (!empty($error)): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle"></i> <?php echo escapeOutput($error); ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+                    <div><?php echo escapeOutput($error); ?></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
                 <?php endif; ?>
                 
-                <form method="POST" action="" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <label for="username" class="form-label">
-                            <i class="bi bi-person"></i> Username
+                <!-- HCI Principle: User-centered Design - Clear instructions -->
+                <form method="POST" action="" class="needs-validation" novalidate aria-label="Login form">
+                    <div class="mb-4">
+                        <label for="username" class="form-label fw-semibold">
+                            <i class="bi bi-person me-1" aria-hidden="true"></i> Username
                         </label>
-                        <input type="text" class="form-control" id="username" name="username" 
+                        <input type="text" class="form-control form-control-lg" id="username" name="username" 
                                value="<?php echo escapeOutput($rememberedUser); ?>" 
-                               placeholder="Enter your username" required>
+                               placeholder="Enter your username" 
+                               autocomplete="username"
+                               autofocus
+                               required>
                         <div class="invalid-feedback">
+                            <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
                             Please enter your username.
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="password" class="form-label">
-                            <i class="bi bi-lock"></i> Password
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-semibold">
+                            <i class="bi bi-lock me-1" aria-hidden="true"></i> Password
                         </label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="password" name="password" 
-                                   placeholder="Enter your password" required>
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            <input type="password" class="form-control form-control-lg" id="password" name="password" 
+                                   placeholder="Enter your password" 
+                                   autocomplete="current-password"
+                                   required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" 
+                                    aria-label="Toggle password visibility" title="Show/Hide password">
+                                <i class="bi bi-eye" id="toggleIcon" aria-hidden="true"></i>
                             </button>
                         </div>
                         <div class="invalid-feedback">
+                            <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
                             Please enter your password.
                         </div>
                     </div>
                     
-                    <div class="mb-3 form-check">
+                    <div class="mb-4 form-check">
                         <input type="checkbox" class="form-check-input" id="remember" name="remember" 
                                <?php echo !empty($rememberedUser) ? 'checked' : ''; ?>>
                         <label class="form-check-label" for="remember">
-                            Remember me
+                            <i class="bi bi-clock-history me-1" aria-hidden="true"></i>
+                            Remember me on this device
                         </label>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100 mb-3">
-                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                        <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i> 
+                        Sign In
                     </button>
+                    
+                    <!-- HCI Principle: Visibility - Help text -->
+                    <p class="text-center text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+                        Contact your administrator if you need help signing in.
+                    </p>
                 </form>
             </div>
         </div>

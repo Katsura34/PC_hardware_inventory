@@ -1,7 +1,15 @@
-// Main JavaScript for PC Hardware Inventory
+// Main JavaScript for PC Hardware Inventory - V2 HCI-Enhanced
+// 
+// HCI Principles Applied:
+// - Feedback: Loading states, success/error notifications, visual confirmations
+// - Affordance: Clear button states, hover effects
+// - Error Prevention: Confirmation dialogs, validation feedback
+// - Flexibility: Keyboard shortcuts, multiple interaction methods
+// - Visibility: Status indicators, progress feedback
 
 // ============================================
 // Loading Overlay (shows during all actions)
+// HCI Principle: Feedback - Users always know what's happening
 // ============================================
 
 // Create the loading overlay HTML and add it to the page
@@ -12,12 +20,18 @@ function createLoadingOverlay() {
     }
     
     const overlayHTML = `
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;" role="status" aria-live="polite">
         <div class="loading-content">
-            <div class="spinner-border text-primary loading-spinner" role="status">
-                <span class="visually-hidden">Loading...</span>
+            <div class="loading-spinner-container">
+                <div class="spinner-border text-primary loading-spinner" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="loading-progress" id="loadingProgress" style="display: none;">
+                    <div class="loading-progress-bar"></div>
+                </div>
             </div>
             <p id="loadingMessage" class="loading-text mt-3 mb-0">Processing...</p>
+            <p id="loadingSubtext" class="loading-subtext text-muted small mt-1 mb-0" style="display: none;"></p>
         </div>
     </div>
     <style>
@@ -27,27 +41,62 @@ function createLoadingOverlay() {
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(15, 23, 42, 0.7);
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(3px);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .loading-content {
             text-align: center;
             background: white;
-            padding: 2rem 3rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 2.5rem 3.5rem;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            animation: scaleIn 0.3s ease-out;
+            max-width: 90%;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .loading-spinner-container {
+            position: relative;
         }
         .loading-spinner {
-            width: 3rem;
-            height: 3rem;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-width: 4px;
+        }
+        .loading-progress {
+            width: 200px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #059669);
+            border-radius: 999px;
+            width: 0%;
+            transition: width 0.3s ease;
         }
         .loading-text {
-            color: #333;
-            font-weight: 500;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .loading-subtext {
+            font-size: 13px;
+            color: #64748b;
         }
     </style>`;
     
@@ -55,15 +104,39 @@ function createLoadingOverlay() {
 }
 
 // Show loading overlay with optional custom message
-function showLoading(message = 'Processing...') {
+function showLoading(message = 'Processing...', subtext = '') {
     createLoadingOverlay();
     const overlay = document.getElementById('loadingOverlay');
     const messageEl = document.getElementById('loadingMessage');
+    const subtextEl = document.getElementById('loadingSubtext');
+    
     if (messageEl) {
         messageEl.textContent = message;
     }
+    if (subtextEl) {
+        if (subtext) {
+            subtextEl.textContent = subtext;
+            subtextEl.style.display = 'block';
+        } else {
+            subtextEl.style.display = 'none';
+        }
+    }
     if (overlay) {
         overlay.style.display = 'flex';
+        // Trap focus for accessibility
+        overlay.focus();
+    }
+}
+
+// Update loading progress (0-100)
+function updateLoadingProgress(percent) {
+    const progressEl = document.getElementById('loadingProgress');
+    if (progressEl) {
+        progressEl.style.display = 'block';
+        const bar = progressEl.querySelector('.loading-progress-bar');
+        if (bar) {
+            bar.style.width = Math.min(100, Math.max(0, percent)) + '%';
+        }
     }
 }
 
@@ -72,11 +145,19 @@ function hideLoading() {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
         overlay.style.display = 'none';
+        // Reset progress
+        const progressEl = document.getElementById('loadingProgress');
+        if (progressEl) {
+            progressEl.style.display = 'none';
+            const bar = progressEl.querySelector('.loading-progress-bar');
+            if (bar) bar.style.width = '0%';
+        }
     }
 }
 
 // ============================================
 // Custom Confirmation Modal (replaces browser confirm)
+// HCI Principle: Error Prevention - Clear confirmation before destructive actions
 // ============================================
 
 // Create the confirmation modal HTML and add it to the page
@@ -89,28 +170,52 @@ function createConfirmationModal() {
     const modalHTML = `
     <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header" id="confirmModalHeader">
-                    <h5 class="modal-title" id="confirmationModalLabel">
-                        <i class="bi bi-exclamation-triangle-fill me-2" id="confirmModalIcon"></i>
+            <div class="modal-content" style="border: none; border-radius: 16px; overflow: hidden;">
+                <div class="modal-header" id="confirmModalHeader" style="border: none; padding: 1.5rem;">
+                    <h5 class="modal-title d-flex align-items-center gap-2" id="confirmationModalLabel">
+                        <span class="confirm-icon-wrapper" id="confirmIconWrapper">
+                            <i class="bi bi-exclamation-triangle-fill" id="confirmModalIcon"></i>
+                        </span>
                         <span id="confirmModalTitle">Confirm Action</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p id="confirmModalMessage" class="mb-0">Are you sure you want to proceed?</p>
+                <div class="modal-body" style="padding: 1.5rem;">
+                    <p id="confirmModalMessage" class="mb-0" style="font-size: 15px; line-height: 1.6;">Are you sure you want to proceed?</p>
+                    <p id="confirmModalSubtext" class="text-muted small mt-2 mb-0" style="display: none;"></p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer" style="border-top: 1px solid #e2e8f0; padding: 1rem 1.5rem; gap: 0.5rem;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="min-width: 100px;">
                         <i class="bi bi-x-circle me-1"></i> Cancel
                     </button>
-                    <button type="button" class="btn" id="confirmModalBtn">
+                    <button type="button" class="btn" id="confirmModalBtn" style="min-width: 100px;">
                         <i class="bi bi-check-circle me-1"></i> Confirm
                     </button>
                 </div>
             </div>
         </div>
-    </div>`;
+    </div>
+    <style>
+        .confirm-icon-wrapper {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        #confirmationModal .modal-header.bg-danger .confirm-icon-wrapper {
+            background: rgba(255,255,255,0.2);
+        }
+        #confirmationModal .modal-header.bg-warning .confirm-icon-wrapper {
+            background: rgba(0,0,0,0.1);
+        }
+        #confirmationModal .modal-header.bg-info .confirm-icon-wrapper,
+        #confirmationModal .modal-header.bg-primary .confirm-icon-wrapper {
+            background: rgba(255,255,255,0.2);
+        }
+    </style>`;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
@@ -662,4 +767,318 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hide any lingering loading overlay from browser back/forward navigation cache
     // This ensures users don't see a stuck loading screen when navigating back
     hideLoading();
+});
+
+// ============================================
+// HCI Enhancement: Toast Notifications
+// Principle: Feedback - Non-intrusive status updates
+// ============================================
+
+function createToastContainer() {
+    if (document.getElementById('toastContainer')) return;
+    
+    const containerHTML = `
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9998;">
+    </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', containerHTML);
+}
+
+function showToast(message, type = 'info', duration = 4000) {
+    createToastContainer();
+    const container = document.getElementById('toastContainer');
+    
+    const icons = {
+        success: 'bi-check-circle-fill',
+        error: 'bi-x-circle-fill',
+        warning: 'bi-exclamation-triangle-fill',
+        info: 'bi-info-circle-fill'
+    };
+    
+    const colors = {
+        success: '#059669',
+        error: '#dc2626',
+        warning: '#d97706',
+        info: '#2563eb'
+    };
+    
+    const toastId = 'toast-' + Date.now();
+    const toastHTML = `
+    <div id="${toastId}" class="toast show align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" 
+         style="background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); min-width: 300px; animation: slideInRight 0.3s ease-out;">
+        <div class="d-flex align-items-center p-3">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: ${colors[type]}15; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                <i class="bi ${icons[type]}" style="font-size: 18px; color: ${colors[type]};"></i>
+            </div>
+            <div class="flex-grow-1" style="font-size: 14px; color: #1e293b; font-weight: 500;">
+                ${message}
+            </div>
+            <button type="button" class="btn-close ms-2" data-bs-dismiss="toast" aria-label="Close" style="font-size: 10px; opacity: 0.5;"></button>
+        </div>
+        <div style="height: 4px; background: #e2e8f0; border-radius: 0 0 12px 12px; overflow: hidden;">
+            <div class="toast-progress" style="height: 100%; background: ${colors[type]}; width: 100%; transition: width ${duration}ms linear;"></div>
+        </div>
+    </div>`;
+    
+    container.insertAdjacentHTML('beforeend', toastHTML);
+    
+    const toast = document.getElementById(toastId);
+    const progressBar = toast.querySelector('.toast-progress');
+    
+    // Animate progress bar
+    setTimeout(() => {
+        progressBar.style.width = '0%';
+    }, 50);
+    
+    // Auto-dismiss
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease-out forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+    
+    // Manual dismiss
+    toast.querySelector('.btn-close').addEventListener('click', () => {
+        toast.style.animation = 'fadeOut 0.3s ease-out forwards';
+        setTimeout(() => toast.remove(), 300);
+    });
+}
+
+// ============================================
+// HCI Enhancement: Keyboard Shortcuts
+// Principle: Flexibility - Multiple ways to accomplish tasks
+// ============================================
+
+document.addEventListener('keydown', function(e) {
+    // Only process shortcuts when not typing in an input
+    if (e.target.matches('input, textarea, select')) return;
+    
+    // Ctrl/Cmd + / to show keyboard shortcuts help
+    if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        showKeyboardShortcutsHelp();
+    }
+    
+    // Escape to close modals
+    if (e.key === 'Escape') {
+        const openModal = document.querySelector('.modal.show');
+        if (openModal) {
+            const bsModal = bootstrap.Modal.getInstance(openModal);
+            if (bsModal) bsModal.hide();
+        }
+    }
+    
+    // Ctrl/Cmd + K for search focus
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+        }
+    }
+});
+
+function showKeyboardShortcutsHelp() {
+    const shortcuts = [
+        { keys: 'Ctrl + /', desc: 'Show this help' },
+        { keys: 'Ctrl + K', desc: 'Focus search' },
+        { keys: 'Escape', desc: 'Close modal/dialog' }
+    ];
+    
+    let shortcutsHTML = shortcuts.map(s => 
+        `<div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+            <span class="text-muted">${s.desc}</span>
+            <kbd class="ms-3">${s.keys}</kbd>
+        </div>`
+    ).join('');
+    
+    showAlert(`<div class="text-start">${shortcutsHTML}</div>`, 'Keyboard Shortcuts', 'info');
+}
+
+// ============================================
+// HCI Enhancement: Form Auto-save Indicator
+// Principle: Feedback - User knows data is being saved
+// ============================================
+
+function showAutoSaveIndicator(status = 'saving') {
+    let indicator = document.getElementById('autoSaveIndicator');
+    
+    if (!indicator) {
+        const indicatorHTML = `
+        <div id="autoSaveIndicator" class="position-fixed" style="bottom: 20px; right: 20px; z-index: 1050; display: none;">
+            <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-pill shadow-sm" style="background: white; font-size: 13px;">
+                <span class="auto-save-icon"></span>
+                <span class="auto-save-text"></span>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', indicatorHTML);
+        indicator = document.getElementById('autoSaveIndicator');
+    }
+    
+    const iconEl = indicator.querySelector('.auto-save-icon');
+    const textEl = indicator.querySelector('.auto-save-text');
+    
+    switch (status) {
+        case 'saving':
+            iconEl.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"></div>';
+            textEl.textContent = 'Saving...';
+            break;
+        case 'saved':
+            iconEl.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
+            textEl.textContent = 'Saved';
+            setTimeout(() => { indicator.style.display = 'none'; }, 2000);
+            break;
+        case 'error':
+            iconEl.innerHTML = '<i class="bi bi-exclamation-circle-fill text-danger"></i>';
+            textEl.textContent = 'Save failed';
+            break;
+    }
+    
+    indicator.style.display = 'block';
+}
+
+// ============================================
+// HCI Enhancement: Scroll to Top Button
+// Principle: Flexibility - Easy navigation
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Create scroll to top button
+    const scrollBtnHTML = `
+    <button id="scrollToTopBtn" class="btn btn-primary rounded-circle shadow" 
+            style="position: fixed; bottom: 30px; right: 30px; width: 48px; height: 48px; display: none; z-index: 1000; opacity: 0; transition: opacity 0.3s;"
+            title="Scroll to top" aria-label="Scroll to top">
+        <i class="bi bi-arrow-up"></i>
+    </button>`;
+    document.body.insertAdjacentHTML('beforeend', scrollBtnHTML);
+    
+    const scrollBtn = document.getElementById('scrollToTopBtn');
+    
+    // Show/hide based on scroll position
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            scrollBtn.style.display = 'flex';
+            scrollBtn.style.alignItems = 'center';
+            scrollBtn.style.justifyContent = 'center';
+            setTimeout(() => { scrollBtn.style.opacity = '1'; }, 10);
+        } else {
+            scrollBtn.style.opacity = '0';
+            setTimeout(() => { scrollBtn.style.display = 'none'; }, 300);
+        }
+    });
+    
+    // Scroll to top on click
+    scrollBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+});
+
+// ============================================
+// HCI Enhancement: Table Row Highlighting
+// Principle: Visibility - Clear feedback on interactions
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click feedback on table rows
+    document.querySelectorAll('.table tbody tr').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+            // Don't highlight if clicking buttons/links
+            if (e.target.closest('button, a, .btn')) return;
+            
+            // Remove previous selection
+            document.querySelectorAll('.table tbody tr.selected-row').forEach(r => {
+                r.classList.remove('selected-row');
+            });
+            
+            // Add selection to clicked row
+            this.classList.add('selected-row');
+        });
+    });
+});
+
+// Add CSS for selected row
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .table tbody tr.selected-row {
+            background-color: #dbeafe !important;
+            box-shadow: inset 3px 0 0 #2563eb;
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(20px); }
+        }
+        kbd {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-shadow: 0 1px 0 #cbd5e1;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+// ============================================
+// HCI Enhancement: Real-time Form Validation
+// Principle: Error Prevention - Immediate feedback
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add real-time validation to required inputs
+    document.querySelectorAll('input[required], select[required]').forEach(function(input) {
+        input.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.value.trim() !== '') {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+});
+
+// ============================================
+// HCI Enhancement: Accessible Focus Management
+// Principle: Flexibility & Visibility
+// ============================================
+
+// Trap focus in modals for accessibility
+function trapFocusInModal(modalElement) {
+    const focusableElements = modalElement.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    
+    modalElement.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            if (e.shiftKey && document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            } else if (!e.shiftKey && document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
+            }
+        }
+    });
+}
+
+// Apply to all modals
+document.addEventListener('shown.bs.modal', function(e) {
+    trapFocusInModal(e.target);
+    // Focus first input or button in modal
+    const firstFocusable = e.target.querySelector('input:not([type="hidden"]), button:not(.btn-close)');
+    if (firstFocusable) firstFocusable.focus();
 });
