@@ -782,45 +782,62 @@ function exportHardwareToCSV() {
     window.URL.revokeObjectURL(url);
 }
 
-// Edit hardware function - shows confirmation first
+// Edit hardware function - opens modal directly
 function editHardware(item) {
-    showConfirmation(
-        'Do you want to edit "' + item.name + '"?',
-        'Confirm Edit',
-        'Edit',
-        'warning'
-    ).then((confirmed) => {
-        if (confirmed) {
-            document.getElementById('edit_id').value = item.id;
-            document.getElementById('edit_name').value = item.name;
-            document.getElementById('edit_category_id').value = item.category_id;
-            document.getElementById('edit_type').value = item.type || '';
-            document.getElementById('edit_brand').value = item.brand || '';
-            document.getElementById('edit_model').value = item.model || '';
-            document.getElementById('edit_serial_number').value = item.serial_number || '';
-            document.getElementById('edit_location').value = item.location || '';
-            document.getElementById('edit_unused_quantity').value = item.unused_quantity;
-            document.getElementById('edit_in_use_quantity').value = item.in_use_quantity;
-            document.getElementById('edit_damaged_quantity').value = item.damaged_quantity;
-            document.getElementById('edit_repair_quantity').value = item.repair_quantity;
-            
-            const editModal = new bootstrap.Modal(document.getElementById('editHardwareModal'));
-            editModal.show();
-        }
-    });
+    document.getElementById('edit_id').value = item.id;
+    document.getElementById('edit_name').value = item.name;
+    document.getElementById('edit_category_id').value = item.category_id;
+    document.getElementById('edit_type').value = item.type || '';
+    document.getElementById('edit_brand').value = item.brand || '';
+    document.getElementById('edit_model').value = item.model || '';
+    document.getElementById('edit_serial_number').value = item.serial_number || '';
+    document.getElementById('edit_location').value = item.location || '';
+    document.getElementById('edit_unused_quantity').value = item.unused_quantity;
+    document.getElementById('edit_in_use_quantity').value = item.in_use_quantity;
+    document.getElementById('edit_damaged_quantity').value = item.damaged_quantity;
+    document.getElementById('edit_repair_quantity').value = item.repair_quantity;
+    
+    const editModal = new bootstrap.Modal(document.getElementById('editHardwareModal'));
+    editModal.show();
 }
 
-// Form validation
+// Form validation with confirmation for edit form
 (function() {
     'use strict';
     var forms = document.querySelectorAll('.needs-validation');
     Array.prototype.slice.call(forms).forEach(function(form) {
         form.addEventListener('submit', function(event) {
+            form.classList.add('was-validated');
+            
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
+                return;
             }
-            form.classList.add('was-validated');
+            
+            // Check if this is the edit hardware form (has edit action)
+            var actionInput = form.querySelector('input[name="action"]');
+            if (actionInput && actionInput.value === 'edit') {
+                event.preventDefault();
+                var itemName = document.getElementById('edit_name').value;
+                showConfirmation(
+                    'Are you sure you want to update "' + itemName + '"?',
+                    'Confirm Update',
+                    'Update',
+                    'warning'
+                ).then(function(confirmed) {
+                    if (confirmed) {
+                        showLoading('Updating hardware...');
+                        form.submit();
+                    }
+                });
+                return;
+            }
+            
+            // Show loading for add action
+            if (actionInput && actionInput.value === 'add') {
+                showLoading('Adding hardware...');
+            }
         }, false);
     });
 })();

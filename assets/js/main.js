@@ -1,6 +1,81 @@
 // Main JavaScript for PC Hardware Inventory
 
 // ============================================
+// Loading Overlay (shows during all actions)
+// ============================================
+
+// Create the loading overlay HTML and add it to the page
+function createLoadingOverlay() {
+    // Check if overlay already exists
+    if (document.getElementById('loadingOverlay')) {
+        return;
+    }
+    
+    const overlayHTML = `
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-primary loading-spinner" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p id="loadingMessage" class="loading-text mt-3 mb-0">Processing...</p>
+        </div>
+    </div>
+    <style>
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .loading-content {
+            text-align: center;
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+        .loading-text {
+            color: #333;
+            font-weight: 500;
+        }
+    </style>`;
+    
+    document.body.insertAdjacentHTML('beforeend', overlayHTML);
+}
+
+// Show loading overlay with optional custom message
+function showLoading(message = 'Processing...') {
+    createLoadingOverlay();
+    const overlay = document.getElementById('loadingOverlay');
+    const messageEl = document.getElementById('loadingMessage');
+    if (messageEl) {
+        messageEl.textContent = message;
+    }
+    if (overlay) {
+        overlay.style.display = 'flex';
+    }
+}
+
+// Hide loading overlay
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+}
+
+// ============================================
 // Custom Confirmation Modal (replaces browser confirm)
 // ============================================
 
@@ -127,6 +202,7 @@ function showConfirmation(message, title = 'Confirm Action', buttonText = 'Confi
 
 // Handle delete confirmation with custom modal
 // Use this for links that trigger delete actions
+// IMPORTANT: Always pass the element (this) when calling from onclick handlers
 function confirmDelete(message = 'Are you sure you want to delete this item?', element = null) {
     // If called from onclick, prevent default and show modal
     if (element) {
@@ -139,14 +215,17 @@ function confirmDelete(message = 'Are you sure you want to delete this item?', e
         
         showConfirmation(message, 'Confirm Delete', 'Delete', 'danger').then((confirmed) => {
             if (confirmed) {
+                showLoading('Deleting...');
                 window.location.href = href;
             }
         });
         return false;
     }
     
-    // Fallback for legacy usage (will still use browser confirm as fallback)
-    return confirm(message);
+    // Fallback for legacy usage without element - shows modal but caller must handle async
+    // Note: All current usages pass element, so this path is defensive only
+    showConfirmation(message, 'Confirm Delete', 'Delete', 'danger');
+    return false;
 }
 
 // ============================================
@@ -387,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const lines = text.split('\n').filter(line => line.trim());
                 
                 if (lines.length < 2) {
-                    alert('CSV file is empty or invalid');
+                    showAlert('CSV file is empty or invalid', 'Invalid File', 'error');
                     return;
                 }
                 
@@ -429,6 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             importBtn.disabled = true;
             importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+            showLoading('Importing CSV data...');
             
             fetch(window.BASE_PATH + 'pages/import_csv.php', {
                 method: 'POST',
@@ -436,23 +516,27 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                hideLoading();
                 importBtn.disabled = false;
                 importBtn.innerHTML = originalText;
                 
                 if (data.success) {
-                    alert(data.message);
-                    // Close modal and reload page
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
-                    modal.hide();
-                    window.location.reload();
+                    showAlert(data.message, 'Import Successful', 'success').then(function() {
+                        // Close modal and reload page after alert is dismissed
+                        showLoading('Refreshing page...');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
+                        modal.hide();
+                        window.location.reload();
+                    });
                 } else {
-                    alert('Import failed: ' + data.message);
+                    showAlert('Import failed: ' + data.message, 'Import Failed', 'error');
                 }
             })
             .catch(error => {
+                hideLoading();
                 importBtn.disabled = false;
                 importBtn.innerHTML = originalText;
-                alert('Error importing CSV: ' + error.message);
+                showAlert('Error importing CSV: ' + error.message, 'Error', 'error');
             });
         });
     }
