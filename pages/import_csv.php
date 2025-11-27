@@ -23,13 +23,16 @@ $file = $_FILES['csvFile']['tmp_name'];
 $imported = 0;
 $errors = [];
 
+// Get default location if provided
+$defaultLocation = isset($_POST['defaultLocation']) ? sanitizeForDB($conn, trim($_POST['defaultLocation'])) : '';
+
 try {
     // Open the CSV file
     if (($handle = fopen($file, 'r')) !== false) {
         // Skip header row
         $header = fgetcsv($handle);
         
-        // Validate header
+        // Validate header - minimum 10 columns required (location is optional if default is set)
         $expected_headers = ['name', 'category_id', 'type', 'brand', 'model', 'serial_number', 
                            'unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity', 'location'];
         
@@ -42,9 +45,9 @@ try {
                 continue;
             }
             
-            // Validate minimum required fields
-            if (count($data) < 11) {
-                $errors[] = "Line $line: Insufficient columns";
+            // Validate minimum required fields (10 columns, location can be in column 11 or use default)
+            if (count($data) < 10) {
+                $errors[] = "Line $line: Insufficient columns (minimum 10 required)";
                 continue;
             }
             
@@ -59,7 +62,14 @@ try {
             $in_use_quantity = (int)$data[7];
             $damaged_quantity = (int)$data[8];
             $repair_quantity = (int)$data[9];
-            $location = sanitizeForDB($conn, trim($data[10]));
+            
+            // Use default location if set, otherwise use CSV column 11 if available
+            if (!empty($defaultLocation)) {
+                $location = $defaultLocation;
+            } else {
+                $location = isset($data[10]) ? sanitizeForDB($conn, trim($data[10])) : '';
+            }
+            
             $total_quantity = $unused_quantity + $in_use_quantity + $damaged_quantity + $repair_quantity;
             
             // Validate required fields

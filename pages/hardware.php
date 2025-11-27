@@ -243,7 +243,7 @@ include '../includes/header.php';
         <div class="d-flex gap-2 w-100 w-md-auto">
             <input type="text" id="searchInput" class="form-control form-control-sm flex-grow-1" placeholder="Search..." 
                    onkeyup="searchTable('searchInput', 'hardwareTable')">
-            <button class="btn btn-sm btn-success" onclick="exportTableToCSV('hardwareTable', 'hardware_inventory.csv')">
+            <button class="btn btn-sm btn-success" onclick="exportHardwareToCSV()">
                 <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
             </button>
         </div>
@@ -488,11 +488,21 @@ include '../includes/header.php';
                     <div class="alert alert-info">
                         <strong><i class="bi bi-info-circle"></i> CSV Format:</strong>
                         <br>name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
-                        <br><small class="text-muted">First row should be the header</small>
+                        <br><small class="text-muted">First row should be the header. Location column is optional if default location is selected below.</small>
                     </div>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Select CSV File</label>
                         <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="defaultLocation" class="form-label">Default Location (optional)</label>
+                        <select class="form-select" id="defaultLocation" name="defaultLocation">
+                            <option value="">-- Use location from CSV --</option>
+                            <?php foreach ($locations as $loc): ?>
+                            <option value="<?php echo escapeOutput($loc); ?>"><?php echo escapeOutput($loc); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="text-muted">If selected, this location will be used for all imported items (overrides CSV location column)</small>
                     </div>
                     <div id="importPreview" class="d-none">
                         <h6>Preview (First 5 rows):</h6>
@@ -516,6 +526,43 @@ include '../includes/header.php';
 </div>
 
 <script>
+// Hardware data for CSV export (in the correct import format)
+var hardwareData = <?php echo json_encode($hardware); ?>;
+
+// Export hardware to CSV in the correct import format
+function exportHardwareToCSV() {
+    const headers = ['name', 'category_id', 'type', 'brand', 'model', 'serial_number', 
+                     'unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity', 'location'];
+    
+    let csv = [headers.join(',')];
+    
+    hardwareData.forEach(function(item) {
+        let row = [
+            '"' + (item.name || '').replace(/"/g, '""') + '"',
+            item.category_id || '',
+            '"' + (item.type || '').replace(/"/g, '""') + '"',
+            '"' + (item.brand || '').replace(/"/g, '""') + '"',
+            '"' + (item.model || '').replace(/"/g, '""') + '"',
+            '"' + (item.serial_number || '').replace(/"/g, '""') + '"',
+            item.unused_quantity || 0,
+            item.in_use_quantity || 0,
+            item.damaged_quantity || 0,
+            item.repair_quantity || 0,
+            '"' + (item.location || '').replace(/"/g, '""') + '"'
+        ];
+        csv.push(row.join(','));
+    });
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hardware_inventory.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
 // Edit hardware function
 function editHardware(item) {
     document.getElementById('edit_id').value = item.id;
