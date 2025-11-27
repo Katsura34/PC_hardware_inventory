@@ -108,7 +108,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         try {
             $sql = file_get_contents($filepath);
             
-            // Split SQL into individual statements
+            // Validate this is a backup file created by our system
+            if (strpos($sql, '-- PC Hardware Inventory Backup') !== 0) {
+                redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Invalid backup file format. Only backups created by this system can be restored.', 'error');
+                exit;
+            }
+            
+            // Additional validation: check that only expected tables are referenced
+            $allowed_tables = ['categories', 'hardware', 'users', 'inventory_history'];
+            $sql_lower = strtolower($sql);
+            
+            // Check for potentially dangerous SQL patterns
+            $dangerous_patterns = [
+                'drop database', 'create database', 'grant ', 'revoke ', 
+                'create user', 'alter user', 'drop user', 'load_file', 
+                'into outfile', 'into dumpfile', 'information_schema',
+                'mysql.user', 'sleep(', 'benchmark('
+            ];
+            
+            foreach ($dangerous_patterns as $pattern) {
+                if (stripos($sql_lower, $pattern) !== false) {
+                    redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Backup file contains potentially dangerous SQL. Restore aborted.', 'error');
+                    exit;
+                }
+            }
+            
+            // Split SQL into individual statements and execute
             $conn->multi_query($sql);
             
             // Process all result sets

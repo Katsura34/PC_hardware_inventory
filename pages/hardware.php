@@ -187,9 +187,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_action']) && $_
     
     if (!empty($ids) && !empty($status_type) && $quantity_change != 0) {
         $updated_count = 0;
-        $valid_statuses = ['unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity'];
+        // Use a strict whitelist to prevent SQL injection
+        $valid_statuses = [
+            'unused_quantity' => 'unused_quantity',
+            'in_use_quantity' => 'in_use_quantity', 
+            'damaged_quantity' => 'damaged_quantity',
+            'repair_quantity' => 'repair_quantity'
+        ];
         
-        if (in_array($status_type, $valid_statuses)) {
+        if (isset($valid_statuses[$status_type])) {
+            // Get the safe column name from our whitelist
+            $safe_column = $valid_statuses[$status_type];
+            
             foreach ($ids as $id) {
                 // Get current values
                 $old_stmt = $conn->prepare("SELECT h.*, c.name as category_name FROM hardware h LEFT JOIN categories c ON h.category_id = c.id WHERE h.id = ? AND h.deleted_at IS NULL");
@@ -201,12 +210,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_action']) && $_
                 
                 if ($old_data) {
                     // Calculate new values
-                    $new_value = max(0, $old_data[$status_type] + $quantity_change);
+                    $new_value = max(0, $old_data[$safe_column] + $quantity_change);
                     
-                    // Update the status
-                    $update_stmt = $conn->prepare("UPDATE hardware SET $status_type = ?, total_quantity = unused_quantity + in_use_quantity + damaged_quantity + repair_quantity + ? WHERE id = ?");
-                    $diff = $new_value - $old_data[$status_type];
-                    $update_stmt->bind_param("iii", $new_value, $diff, $id);
+                    // Update the status - using safe column name from whitelist
+                    // Build query based on which column to update
+                    switch ($safe_column) {
+                        case 'unused_quantity':
+                            $update_stmt = $conn->prepare("UPDATE hardware SET unused_quantity = ?, total_quantity = ? + in_use_quantity + damaged_quantity + repair_quantity WHERE id = ?");
+                            break;
+                        case 'in_use_quantity':
+                            $update_stmt = $conn->prepare("UPDATE hardware SET in_use_quantity = ?, total_quantity = unused_quantity + ? + damaged_quantity + repair_quantity WHERE id = ?");
+                            break;
+                        case 'damaged_quantity':
+                            $update_stmt = $conn->prepare("UPDATE hardware SET damaged_quantity = ?, total_quantity = unused_quantity + in_use_quantity + ? + repair_quantity WHERE id = ?");
+                            break;
+                        case 'repair_quantity':
+                            $update_stmt = $conn->prepare("UPDATE hardware SET repair_quantity = ?, total_quantity = unused_quantity + in_use_quantity + damaged_quantity + ? WHERE id = ?");
+                            break;
+                    }
+                    $update_stmt->bind_param("iii", $new_value, $new_value, $id);
                     
                     if ($update_stmt->execute() && $update_stmt->affected_rows > 0) {
                         // Get updated values for history
