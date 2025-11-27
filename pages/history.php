@@ -6,7 +6,7 @@ require_once '../config/security.php';
 // Require login
 requireLogin();
 
-$pageTitle = 'Inventory History - PC Hardware Inventory';
+$pageTitle = 'Audit Trail - PC Hardware Inventory';
 $conn = getDBConnection();
 
 // Pagination settings
@@ -110,7 +110,7 @@ include '../includes/header.php';
             <h6><i class="bi bi-building"></i> ACLC COLLEGE OF ORMOC - PC HARDWARE INVENTORY SYSTEM</h6>
         </div>
         <h1 class="text-gradient mb-1">
-            <i class="bi bi-clock-history"></i> Inventory History
+            <i class="bi bi-clock-history"></i> Audit Trail
         </h1>
         <p class="text-muted">Complete audit trail of all hardware inventory changes</p>
     </div>

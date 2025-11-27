@@ -9,12 +9,12 @@ requireLogin();
 $pageTitle = 'Hardware Management - PC Hardware Inventory';
 $conn = getDBConnection();
 
-// Handle delete
+// Handle delete (soft delete)
 if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     
     // Get hardware details before deleting for history log
-    $old_stmt = $conn->prepare("SELECT name, total_quantity, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity FROM hardware WHERE id = ?");
+    $old_stmt = $conn->prepare("SELECT name, total_quantity, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity FROM hardware WHERE id = ? AND deleted_at IS NULL");
     $old_stmt->bind_param("i", $id);
     $old_stmt->execute();
     $old_result = $old_stmt->get_result();
@@ -51,14 +51,74 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
         $log_stmt->close();
     }
     
-    // Delete hardware
+    // Soft delete hardware (set deleted_at timestamp)
+    $stmt = $conn->prepare("UPDATE hardware SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware deleted successfully.', 'success');
+    } else {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to delete hardware.', 'error');
+    }
+    $stmt->close();
+}
+
+// Handle restore (admin only)
+if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
+    $id = (int)$_GET['restore'];
+    
+    // Restore hardware
+    $stmt = $conn->prepare("UPDATE hardware SET deleted_at = NULL WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        // Log to history
+        $detail_stmt = $conn->prepare("SELECT h.name, h.serial_number, h.total_quantity, h.unused_quantity, h.in_use_quantity, h.damaged_quantity, h.repair_quantity, c.name as category_name 
+                                       FROM hardware h 
+                                       LEFT JOIN categories c ON h.category_id = c.id 
+                                       WHERE h.id = ?");
+        $detail_stmt->bind_param("i", $id);
+        $detail_stmt->execute();
+        $detail_result = $detail_stmt->get_result();
+        $detail_data = $detail_result->fetch_assoc();
+        $detail_stmt->close();
+        
+        if ($detail_data) {
+            $user_id = $_SESSION['user_id'];
+            $user_name = $_SESSION['full_name'];
+            $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                       user_id, user_name, action_type, quantity_change, 
+                                       old_unused, old_in_use, old_damaged, old_repair, 
+                                       new_unused, new_in_use, new_damaged, new_repair) 
+                                       VALUES (?, ?, ?, ?, ?, ?, 'Restored', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $log_stmt->bind_param("isssisiiiiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
+                                 $detail_data['serial_number'], $user_id, $user_name, $detail_data['total_quantity'], 
+                                 0, 0, 0, 0,
+                                 $detail_data['unused_quantity'], $detail_data['in_use_quantity'], 
+                                 $detail_data['damaged_quantity'], $detail_data['repair_quantity']);
+            $log_stmt->execute();
+            $log_stmt->close();
+        }
+        
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware restored successfully.', 'success');
+    } else {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to restore hardware.', 'error');
+    }
+    $stmt->close();
+}
+
+// Handle permanent delete (admin only)
+if (isset($_GET['permanent_delete']) && validateInt($_GET['permanent_delete']) && isAdmin()) {
+    $id = (int)$_GET['permanent_delete'];
+    
+    // Permanently delete hardware
     $stmt = $conn->prepare("DELETE FROM hardware WHERE id = ?");
     $stmt->bind_param("i", $id);
     
     if ($stmt->execute()) {
-        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware deleted successfully.', 'success');
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware permanently deleted.', 'success');
     } else {
-        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to delete hardware.', 'error');
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to permanently delete hardware.', 'error');
     }
     $stmt->close();
 }
@@ -180,19 +240,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $filter_category = isset($_GET['filter_category']) ? (int)$_GET['filter_category'] : 0;
 $filter_brand = isset($_GET['filter_brand']) ? sanitizeInput($_GET['filter_brand']) : '';
 $filter_model = isset($_GET['filter_model']) ? sanitizeInput($_GET['filter_model']) : '';
+$show_deleted = isset($_GET['show_deleted']) && $_GET['show_deleted'] === '1' && isAdmin();
 
 // Pagination settings
 $records_per_page = 20;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $records_per_page;
 
-// Build count query for pagination
-$count_query = "SELECT COUNT(*) as total FROM hardware h WHERE 1=1";
+// Build count query for pagination - respect soft deletes
+$deleted_filter = $show_deleted ? "" : " AND h.deleted_at IS NULL";
+$count_query = "SELECT COUNT(*) as total FROM hardware h WHERE 1=1" . $deleted_filter;
 
 // Build query with filters
 $query = "SELECT h.*, c.name as category_name FROM hardware h 
           LEFT JOIN categories c ON h.category_id = c.id 
-          WHERE 1=1";
+          WHERE 1=1" . $deleted_filter;
 
 $params = [];
 $types = "";
@@ -255,7 +317,8 @@ $stmt->close();
 $pagination_params = array_filter([
     'filter_category' => $filter_category ?: null,
     'filter_brand' => $filter_brand ?: null,
-    'filter_model' => $filter_model ?: null
+    'filter_model' => $filter_model ?: null,
+    'show_deleted' => $show_deleted ? '1' : null
 ]);
 
 // Get all categories for dropdown
@@ -265,27 +328,27 @@ while ($row = $result->fetch_assoc()) {
     $categories[] = $row;
 }
 
-// Get distinct brands for filter dropdown
+// Get distinct brands for filter dropdown (exclude soft-deleted items)
 $brands = [];
-$result = $conn->query("SELECT DISTINCT brand FROM hardware WHERE brand IS NOT NULL AND brand != '' ORDER BY brand");
+$result = $conn->query("SELECT DISTINCT brand FROM hardware WHERE brand IS NOT NULL AND brand != '' AND deleted_at IS NULL ORDER BY brand");
 while ($row = $result->fetch_assoc()) {
     if (!empty($row['brand'])) {
         $brands[] = $row['brand'];
     }
 }
 
-// Get distinct models for filter dropdown
+// Get distinct models for filter dropdown (exclude soft-deleted items)
 $models = [];
-$result = $conn->query("SELECT DISTINCT model FROM hardware WHERE model IS NOT NULL AND model != '' ORDER BY model");
+$result = $conn->query("SELECT DISTINCT model FROM hardware WHERE model IS NOT NULL AND model != '' AND deleted_at IS NULL ORDER BY model");
 while ($row = $result->fetch_assoc()) {
     if (!empty($row['model'])) {
         $models[] = $row['model'];
     }
 }
 
-// Get distinct locations for dropdown
+// Get distinct locations for dropdown (exclude soft-deleted items)
 $locations = [];
-$result = $conn->query("SELECT DISTINCT location FROM hardware WHERE location IS NOT NULL AND location != '' ORDER BY location");
+$result = $conn->query("SELECT DISTINCT location FROM hardware WHERE location IS NOT NULL AND location != '' AND deleted_at IS NULL ORDER BY location");
 while ($row = $result->fetch_assoc()) {
     if (!empty($row['location'])) {
         $locations[] = $row['location'];
@@ -332,10 +395,19 @@ include '../includes/header.php';
     <div class="card-header card-header-primary">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <h5 class="mb-0 d-flex align-items-center gap-2">
-                <i class="bi bi-table" aria-hidden="true"></i> All Hardware
+                <i class="bi bi-table" aria-hidden="true"></i> <?php echo $show_deleted ? 'All Hardware (Including Deleted)' : 'All Hardware'; ?>
                 <span class="badge bg-light text-primary ms-2"><?php echo $total_records; ?></span>
             </h5>
             <div class="d-flex gap-2 align-items-center">
+                <?php if (isAdmin()): ?>
+                <!-- Show Deleted Toggle (Admin Only) -->
+                <a href="?<?php echo http_build_query(array_merge($pagination_params, ['show_deleted' => $show_deleted ? null : '1', 'page' => 1])); ?>" 
+                   class="btn btn-sm <?php echo $show_deleted ? 'btn-warning' : 'btn-outline-secondary'; ?>"
+                   title="<?php echo $show_deleted ? 'Hide deleted items' : 'Show deleted items'; ?>">
+                    <i class="bi bi-trash<?php echo $show_deleted ? '-fill' : ''; ?>"></i>
+                    <span class="d-none d-sm-inline"><?php echo $show_deleted ? 'Hide Deleted' : 'Show Deleted'; ?></span>
+                </a>
+                <?php endif; ?>
                 <!-- Toggle Search Button -->
                 <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
                         aria-expanded="false" aria-controls="searchFilterPanel"
@@ -354,6 +426,9 @@ include '../includes/header.php';
                     </button>
                     <div class="dropdown-menu dropdown-menu-end filter-dropdown p-3 shadow-lg" aria-labelledby="filterDropdown" style="min-width: 300px;">
                         <form method="GET" id="filterForm">
+                            <?php if ($show_deleted): ?>
+                            <input type="hidden" name="show_deleted" value="1">
+                            <?php endif; ?>
                             <h6 class="dropdown-header px-0 mb-2"><i class="bi bi-funnel me-1"></i> Filter Hardware</h6>
                             <div class="mb-3">
                                 <label for="filter_category" class="form-label small mb-1">Category</label>
@@ -386,14 +461,14 @@ include '../includes/header.php';
                                 <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
                                     <i class="bi bi-check-lg"></i> Apply
                                 </button>
-                                <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-outline-secondary btn-sm">
+                                <a href="<?php echo BASE_PATH; ?>pages/hardware.php<?php echo $show_deleted ? '?show_deleted=1' : ''; ?>" class="btn btn-outline-secondary btn-sm">
                                     <i class="bi bi-x-lg"></i> Clear
                                 </a>
                             </div>
                         </form>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-light" onclick="exportHardwareToCSV()">
+                <button class="btn btn-sm btn-light" onclick="showExportModal()">
                     <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
                 </button>
             </div>
