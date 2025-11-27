@@ -33,8 +33,8 @@ if (!isset($pageTitle)) {
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="<?php echo BASE_PATH; ?>dashboard.php">
-                <img src="<?php echo BASE_PATH; ?>assets/images/logo.svg" alt="Logo" height="32" class="me-2">
-                <span>PC Inventory - ACLC Ormoc</span>
+                    <img src="<?php echo BASE_PATH; ?>assets/images/logo.png" alt="Logo" height="64" class="me-2">                               
+                    <span>PC Inventory - ACLC Ormoc</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

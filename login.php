@@ -78,7 +78,7 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <i class="bi bi-pc-display" style="font-size: 48px;"></i>
+                <img src="<?php echo BASE_PATH; ?>assets/images/logo.png" alt="Logo" height="128" class="me-2">
                 <h2>PC Hardware Inventory</h2>
                 <p class="mb-0" style="font-size: 1.1rem; font-weight: 500;">ACLC College of Ormoc</p>
                 <p class="mb-0" style="font-size: 0.9rem; opacity: 0.9;">Sign in to your account</p>
