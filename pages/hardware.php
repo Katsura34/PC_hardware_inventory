@@ -71,8 +71,10 @@ if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
     $stmt = $conn->prepare("UPDATE hardware SET deleted_at = NULL WHERE id = ?");
     $stmt->bind_param("i", $id);
     
-    if ($stmt->execute() && $stmt->affected_rows > 0) {
-        // Log to history
+    if ($stmt->execute()) {
+        $stmt->close();
+        
+        // Log restore action to history
         $detail_stmt = $conn->prepare("SELECT h.name, h.serial_number, h.total_quantity, h.unused_quantity, h.in_use_quantity, h.damaged_quantity, h.repair_quantity, c.name as category_name 
                                        FROM hardware h 
                                        LEFT JOIN categories c ON h.category_id = c.id 
@@ -86,25 +88,38 @@ if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
         if ($detail_data) {
             $user_id = $_SESSION['user_id'];
             $user_name = $_SESSION['full_name'];
+            // Prepare values for bind_param (requires variables, not literals; handle NULLs)
+            $hardware_name = $detail_data['name'] ?? '';
+            $category_name = $detail_data['category_name'] ?? '';
+            $serial_number = $detail_data['serial_number'] ?? '';
+            $total_quantity = (int)($detail_data['total_quantity'] ?? 0);
+            $old_unused = 0;
+            $old_in_use = 0;
+            $old_damaged = 0;
+            $old_repair = 0;
+            $new_unused = (int)($detail_data['unused_quantity'] ?? 0);
+            $new_in_use = (int)($detail_data['in_use_quantity'] ?? 0);
+            $new_damaged = (int)($detail_data['damaged_quantity'] ?? 0);
+            $new_repair = (int)($detail_data['repair_quantity'] ?? 0);
+            
             $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
                                        user_id, user_name, action_type, quantity_change, 
                                        old_unused, old_in_use, old_damaged, old_repair, 
                                        new_unused, new_in_use, new_damaged, new_repair) 
                                        VALUES (?, ?, ?, ?, ?, ?, 'Restored', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $log_stmt->bind_param("isssisiiiiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
-                                 $detail_data['serial_number'], $user_id, $user_name, $detail_data['total_quantity'], 
-                                 0, 0, 0, 0,
-                                 $detail_data['unused_quantity'], $detail_data['in_use_quantity'], 
-                                 $detail_data['damaged_quantity'], $detail_data['repair_quantity']);
+            $log_stmt->bind_param("isssisiiiiiiiii", $id, $hardware_name, $category_name, 
+                                 $serial_number, $user_id, $user_name, $total_quantity, 
+                                 $old_unused, $old_in_use, $old_damaged, $old_repair,
+                                 $new_unused, $new_in_use, $new_damaged, $new_repair);
             $log_stmt->execute();
             $log_stmt->close();
         }
         
         redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Hardware restored successfully.', 'success');
     } else {
+        $stmt->close();
         redirectWithMessage(BASE_PATH . 'pages/hardware.php', 'Failed to restore hardware.', 'error');
     }
-    $stmt->close();
 }
 
 // Handle permanent delete (admin only)
