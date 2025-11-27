@@ -97,6 +97,14 @@ if (!isset($pageTitle)) {
                             Users
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo ($current_page === 'backup.php') ? 'active' : ''; ?>" 
+                           href="<?php echo BASE_PATH; ?>pages/backup.php"
+                           <?php echo ($current_page === 'backup.php') ? 'aria-current="page"' : ''; ?>>
+                            <i class="bi bi-database me-1" aria-hidden="true"></i>
+                            Backup
+                        </a>
+                    </li>
                     <?php endif; ?>
                 </ul>
                 

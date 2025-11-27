@@ -19,16 +19,16 @@ $stats = [
     'repair' => 0
 ];
 
-// Total hardware items
-$result = $conn->query("SELECT COUNT(*) as count FROM hardware");
+// Total hardware items (exclude soft-deleted)
+$result = $conn->query("SELECT COUNT(*) as count FROM hardware WHERE deleted_at IS NULL");
 if ($row = $result->fetch_assoc()) {
     $stats['total_hardware'] = $row['count'];
 }
 
-// Total quantities
+// Total quantities (exclude soft-deleted)
 $result = $conn->query("SELECT SUM(total_quantity) as total, SUM(in_use_quantity) as in_use, 
                         SUM(unused_quantity) as available, SUM(damaged_quantity) as damaged, 
-                        SUM(repair_quantity) as repair FROM hardware");
+                        SUM(repair_quantity) as repair FROM hardware WHERE deleted_at IS NULL");
 if ($row = $result->fetch_assoc()) {
     $stats['total_quantity'] = $row['total'] ?? 0;
     $stats['in_use'] = $row['in_use'] ?? 0;
@@ -37,30 +37,31 @@ if ($row = $result->fetch_assoc()) {
     $stats['repair'] = $row['repair'] ?? 0;
 }
 
-// Get recent hardware
+// Get recent hardware (exclude soft-deleted)
 $recentHardware = [];
 $result = $conn->query("SELECT h.*, c.name as category_name FROM hardware h 
                        LEFT JOIN categories c ON h.category_id = c.id 
+                       WHERE h.deleted_at IS NULL
                        ORDER BY h.date_added DESC LIMIT 5");
 while ($row = $result->fetch_assoc()) {
     $recentHardware[] = $row;
 }
 
-// Get low stock items (unused quantity < 2)
+// Get low stock items (exclude soft-deleted, unused quantity < 2)
 $lowStock = [];
 $result = $conn->query("SELECT h.*, c.name as category_name FROM hardware h 
                        LEFT JOIN categories c ON h.category_id = c.id 
-                       WHERE h.unused_quantity < 2 AND h.total_quantity > 0
+                       WHERE h.unused_quantity < 2 AND h.total_quantity > 0 AND h.deleted_at IS NULL
                        ORDER BY h.unused_quantity ASC LIMIT 5");
 while ($row = $result->fetch_assoc()) {
     $lowStock[] = $row;
 }
 
-// Get categories summary
+// Get categories summary (exclude soft-deleted)
 $categories = [];
 $result = $conn->query("SELECT c.name, COUNT(h.id) as count, SUM(h.total_quantity) as total 
                        FROM categories c 
-                       LEFT JOIN hardware h ON c.id = h.category_id 
+                       LEFT JOIN hardware h ON c.id = h.category_id AND h.deleted_at IS NULL
                        GROUP BY c.id, c.name 
                        ORDER BY count DESC");
 while ($row = $result->fetch_assoc()) {
