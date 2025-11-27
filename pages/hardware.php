@@ -807,10 +807,11 @@ function editHardware(item) {
     var forms = document.querySelectorAll('.needs-validation');
     Array.prototype.slice.call(forms).forEach(function(form) {
         form.addEventListener('submit', function(event) {
+            form.classList.add('was-validated');
+            
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
-                form.classList.add('was-validated');
                 return;
             }
             
@@ -837,8 +838,6 @@ function editHardware(item) {
             if (actionInput && actionInput.value === 'add') {
                 showLoading('Adding hardware...');
             }
-            
-            form.classList.add('was-validated');
         }, false);
     });
 })();

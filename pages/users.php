@@ -279,10 +279,11 @@ function editUser(user) {
     var forms = document.querySelectorAll('.needs-validation');
     Array.prototype.slice.call(forms).forEach(function(form) {
         form.addEventListener('submit', function(event) {
+            form.classList.add('was-validated');
+            
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
-                form.classList.add('was-validated');
                 return;
             }
             
@@ -309,8 +310,6 @@ function editUser(user) {
             if (actionInput && actionInput.value === 'add') {
                 showLoading('Adding user...');
             }
-            
-            form.classList.add('was-validated');
         }, false);
     });
 })();

@@ -198,13 +198,13 @@ $rememberedUser = $_COOKIE['remember_user'] ?? '';
             var forms = document.querySelectorAll('.needs-validation');
             Array.prototype.slice.call(forms).forEach(function(form) {
                 form.addEventListener('submit', function(event) {
+                    form.classList.add('was-validated');
+                    
                     if (!form.checkValidity()) {
                         event.preventDefault();
                         event.stopPropagation();
-                        form.classList.add('was-validated');
                         return;
                     }
-                    form.classList.add('was-validated');
                     showLoginLoading();
                 }, false);
             });
