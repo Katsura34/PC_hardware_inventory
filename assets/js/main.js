@@ -23,7 +23,8 @@ function createConfirmationModal() {
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p id="confirmModalMessage" class="mb-0">Are you sure you want to proceed?</p>
+                    <p id="confirmModalMessage" class="mb-2"></p>
+                    <p id="confirmModalSubMessage" class="mb-0 text-muted small"><i class="bi bi-exclamation-circle me-1"></i><span id="confirmModalSubMessageText"></span></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -43,7 +44,8 @@ function createConfirmationModal() {
 // Show custom confirmation modal
 // Returns a Promise that resolves to true if confirmed, false if cancelled
 // type can be 'danger' (for delete), 'warning' (for edit), 'primary' (for general actions)
-function showConfirmation(message, title = 'Confirm Action', buttonText = 'Confirm', type = 'danger') {
+// subMessage is an optional secondary message shown below the main message
+function showConfirmation(message, title = 'Confirm Action', buttonText = 'Confirm', type = 'danger', subMessage = '') {
     return new Promise((resolve) => {
         createConfirmationModal();
         
@@ -51,6 +53,8 @@ function showConfirmation(message, title = 'Confirm Action', buttonText = 'Confi
         const modalHeader = document.getElementById('confirmModalHeader');
         const modalTitle = document.getElementById('confirmModalTitle');
         const modalMessage = document.getElementById('confirmModalMessage');
+        const modalSubMessage = document.getElementById('confirmModalSubMessage');
+        const modalSubMessageText = document.getElementById('confirmModalSubMessageText');
         const modalIcon = document.getElementById('confirmModalIcon');
         const confirmBtn = document.getElementById('confirmModalBtn');
         
@@ -58,6 +62,15 @@ function showConfirmation(message, title = 'Confirm Action', buttonText = 'Confi
         modalTitle.textContent = title;
         modalMessage.textContent = message;
         confirmBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> ' + buttonText;
+        
+        // Set sub-message if provided (using textContent to prevent XSS)
+        if (subMessage) {
+            modalSubMessageText.textContent = subMessage;
+            modalSubMessage.style.display = 'block';
+        } else {
+            modalSubMessageText.textContent = '';
+            modalSubMessage.style.display = 'none';
+        }
         
         // Reset classes
         modalHeader.className = 'modal-header text-white';
@@ -128,6 +141,8 @@ function showConfirmation(message, title = 'Confirm Action', buttonText = 'Confi
 // Handle delete confirmation with custom modal
 // Use this for links that trigger delete actions
 function confirmDelete(message = 'Are you sure you want to delete this item?', element = null) {
+    const warningMessage = 'You will not be able to recover this if you delete.';
+    
     // If called from onclick, prevent default and show modal
     if (element) {
         // Get the event from the window object for cross-browser compatibility
@@ -137,7 +152,7 @@ function confirmDelete(message = 'Are you sure you want to delete this item?', e
         }
         const href = element.getAttribute('href');
         
-        showConfirmation(message, 'Confirm Delete', 'Delete', 'danger').then((confirmed) => {
+        showConfirmation(message, 'Confirm Delete', 'Delete', 'danger', warningMessage).then((confirmed) => {
             if (confirmed) {
                 window.location.href = href;
             }
@@ -387,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const lines = text.split('\n').filter(line => line.trim());
                 
                 if (lines.length < 2) {
-                    alert('CSV file is empty or invalid');
+                    showAlert('CSV file is empty or invalid', 'Invalid File', 'error');
                     return;
                 }
                 
@@ -440,19 +455,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 importBtn.innerHTML = originalText;
                 
                 if (data.success) {
-                    alert(data.message);
-                    // Close modal and reload page
+                    // Close modal and show success message, then reload page
                     const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
                     modal.hide();
-                    window.location.reload();
+                    showAlert(data.message, 'Import Successful', 'success').then(() => {
+                        window.location.reload();
+                    });
                 } else {
-                    alert('Import failed: ' + data.message);
+                    showAlert('Import failed: ' + data.message, 'Import Error', 'error');
                 }
             })
             .catch(error => {
                 importBtn.disabled = false;
                 importBtn.innerHTML = originalText;
-                alert('Error importing CSV: ' + error.message);
+                showAlert('Error importing CSV: ' + error.message, 'Import Error', 'error');
             });
         });
     }
