@@ -1,8 +1,243 @@
 // Main JavaScript for PC Hardware Inventory
 
-// Confirm delete action
-function confirmDelete(message = 'Are you sure you want to delete this item?') {
+// ============================================
+// Custom Confirmation Modal (replaces browser confirm)
+// ============================================
+
+// Create the confirmation modal HTML and add it to the page
+function createConfirmationModal() {
+    // Check if modal already exists
+    if (document.getElementById('confirmationModal')) {
+        return;
+    }
+    
+    const modalHTML = `
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="confirmModalHeader">
+                    <h5 class="modal-title" id="confirmationModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2" id="confirmModalIcon"></i>
+                        <span id="confirmModalTitle">Confirm Action</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmModalMessage" class="mb-0">Are you sure you want to proceed?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </button>
+                    <button type="button" class="btn" id="confirmModalBtn">
+                        <i class="bi bi-check-circle me-1"></i> Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Show custom confirmation modal
+// Returns a Promise that resolves to true if confirmed, false if cancelled
+// type can be 'danger' (for delete), 'warning' (for edit), 'primary' (for general actions)
+function showConfirmation(message, title = 'Confirm Action', buttonText = 'Confirm', type = 'danger') {
+    return new Promise((resolve) => {
+        createConfirmationModal();
+        
+        const modal = document.getElementById('confirmationModal');
+        const modalHeader = document.getElementById('confirmModalHeader');
+        const modalTitle = document.getElementById('confirmModalTitle');
+        const modalMessage = document.getElementById('confirmModalMessage');
+        const modalIcon = document.getElementById('confirmModalIcon');
+        const confirmBtn = document.getElementById('confirmModalBtn');
+        
+        // Set content
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        confirmBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> ' + buttonText;
+        
+        // Reset classes
+        modalHeader.className = 'modal-header text-white';
+        confirmBtn.className = 'btn';
+        
+        // Set type-specific styling
+        switch (type) {
+            case 'danger':
+                modalHeader.classList.add('bg-danger');
+                modalIcon.className = 'bi bi-exclamation-triangle-fill me-2';
+                confirmBtn.classList.add('btn-danger');
+                break;
+            case 'warning':
+                modalHeader.classList.add('bg-warning');
+                modalHeader.classList.remove('text-white');
+                modalIcon.className = 'bi bi-pencil-fill me-2';
+                confirmBtn.classList.add('btn-warning');
+                // Update close button for dark background
+                modal.querySelector('.btn-close').classList.remove('btn-close-white');
+                break;
+            case 'info':
+                modalHeader.classList.add('bg-info');
+                modalIcon.className = 'bi bi-info-circle-fill me-2';
+                confirmBtn.classList.add('btn-info');
+                break;
+            default: // primary
+                modalHeader.classList.add('bg-primary');
+                modalIcon.className = 'bi bi-question-circle-fill me-2';
+                confirmBtn.classList.add('btn-primary');
+        }
+        
+        // Ensure close button is white for dark backgrounds
+        if (type !== 'warning') {
+            modal.querySelector('.btn-close').classList.add('btn-close-white');
+        }
+        
+        // Create Bootstrap modal instance
+        const bsModal = new bootstrap.Modal(modal);
+        
+        // Handle confirm button click
+        const handleConfirm = () => {
+            cleanup();
+            bsModal.hide();
+            resolve(true);
+        };
+        
+        // Handle modal dismiss (cancel or close)
+        const handleDismiss = () => {
+            cleanup();
+            resolve(false);
+        };
+        
+        // Cleanup event listeners
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            modal.removeEventListener('hidden.bs.modal', handleDismiss);
+        };
+        
+        // Add event listeners
+        confirmBtn.addEventListener('click', handleConfirm);
+        modal.addEventListener('hidden.bs.modal', handleDismiss);
+        
+        // Show modal
+        bsModal.show();
+    });
+}
+
+// Handle delete confirmation with custom modal
+// Use this for links that trigger delete actions
+function confirmDelete(message = 'Are you sure you want to delete this item?', element = null) {
+    // If called from onclick, prevent default and show modal
+    if (element) {
+        // Get the event from the window object for cross-browser compatibility
+        var evt = window.event || arguments.callee.caller.arguments[0];
+        if (evt) {
+            evt.preventDefault();
+        }
+        const href = element.getAttribute('href');
+        
+        showConfirmation(message, 'Confirm Delete', 'Delete', 'danger').then((confirmed) => {
+            if (confirmed) {
+                window.location.href = href;
+            }
+        });
+        return false;
+    }
+    
+    // Fallback for legacy usage (will still use browser confirm as fallback)
     return confirm(message);
+}
+
+// ============================================
+// Custom Alert Modal (replaces browser alert)
+// ============================================
+
+// Create the alert modal HTML and add it to the page
+function createAlertModal() {
+    // Check if modal already exists
+    if (document.getElementById('alertModal')) {
+        return;
+    }
+    
+    const modalHTML = `
+    <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="alertModalHeader">
+                    <h5 class="modal-title" id="alertModalLabel">
+                        <i class="bi bi-info-circle-fill me-2" id="alertModalIcon"></i>
+                        <span id="alertModalTitle">Notice</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="alertModalMessage" class="mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="bi bi-check me-1"></i> OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Show custom alert modal
+// type can be 'success', 'error', 'warning', or 'info'
+function showAlert(message, title = 'Notice', type = 'info') {
+    return new Promise((resolve) => {
+        createAlertModal();
+        
+        const modal = document.getElementById('alertModal');
+        const modalHeader = document.getElementById('alertModalHeader');
+        const modalTitle = document.getElementById('alertModalTitle');
+        const modalMessage = document.getElementById('alertModalMessage');
+        const modalIcon = document.getElementById('alertModalIcon');
+        
+        // Set content
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        
+        // Reset classes
+        modalHeader.className = 'modal-header';
+        
+        // Set type-specific styling
+        switch (type) {
+            case 'success':
+                modalHeader.classList.add('bg-success', 'text-white');
+                modalIcon.className = 'bi bi-check-circle-fill me-2';
+                break;
+            case 'error':
+                modalHeader.classList.add('bg-danger', 'text-white');
+                modalIcon.className = 'bi bi-x-circle-fill me-2';
+                break;
+            case 'warning':
+                modalHeader.classList.add('bg-warning');
+                modalIcon.className = 'bi bi-exclamation-triangle-fill me-2';
+                break;
+            default: // info
+                modalHeader.classList.add('bg-primary', 'text-white');
+                modalIcon.className = 'bi bi-info-circle-fill me-2';
+        }
+        
+        // Create Bootstrap modal instance
+        const bsModal = new bootstrap.Modal(modal);
+        
+        // Handle modal dismiss
+        const handleDismiss = () => {
+            modal.removeEventListener('hidden.bs.modal', handleDismiss);
+            resolve();
+        };
+        
+        modal.addEventListener('hidden.bs.modal', handleDismiss);
+        
+        // Show modal
+        bsModal.show();
+    });
 }
 
 // Auto-dismiss alerts after 5 seconds

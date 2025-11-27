@@ -1,11 +1,11 @@
-name,category_id,type,brand,model,serial_number,unused_quantity,in_use_quantity,damaged_quantity,repair_quantity,location
-AMD Ryzen 5,1,3rd Gen,AMD,Ryzen 5 3600,SNCPU002,3,2,0,0,Lab 1
-Kingston 16GB RAM,2,DDR4,Kingston,HyperX,SNRAM002,5,3,1,0,Lab 2
-WD SSD 1TB,3,NVMe,Western Digital,Blue SN550,SNSSD002,4,2,0,0,Lab 1
-LG Monitor 27",6,IPS,LG,27GL850,SNMON002,6,4,0,0,Office
-Logitech Mouse,8,Wireless,Logitech,MX Master 3,SNMOU001,10,8,1,0,Lab 3
-Intel Core i7,1,12th Gen,Intel,i7-12700K,SNCPU003,2,1,0,1,Lab 4
-Corsair 32GB RAM,2,DDR5,Corsair,Dominator,SNRAM003,4,2,0,0,Lab 3
-Samsung SSD 2TB,3,NVMe,Samsung,980 PRO,SNSSD003,3,1,0,0,Storage
-ASUS Monitor 32",6,4K IPS,ASUS,ProArt,SNMON003,2,2,0,0,Office
-HP Keyboard,7,Mechanical,HP,Elite X3,SNKBD001,15,10,2,1,Warehouse
+name,category,type,brand,model,serial_number,unused_quantity,in_use_quantity,damaged_quantity,repair_quantity,location
+AMD Ryzen 5,CPU,3rd Gen,AMD,Ryzen 5 3600,SNCPU002,3,2,0,0,Lab 1
+Kingston 16GB RAM,RAM,DDR4,Kingston,HyperX,SNRAM002,5,3,1,0,Lab 2
+WD SSD 1TB,SSD,NVMe,Western Digital,Blue SN550,SNSSD002,4,2,0,0,Lab 1
+LG Monitor 27",Monitor,IPS,LG,27GL850,SNMON002,6,4,0,0,Office
+Logitech Mouse,Mouse,Wireless,Logitech,MX Master 3,SNMOU001,10,8,1,0,Lab 3
+Intel Core i7,CPU,12th Gen,Intel,i7-12700K,SNCPU003,2,1,0,1,Lab 4
+Corsair 32GB RAM,RAM,DDR5,Corsair,Dominator,SNRAM003,4,2,0,0,Lab 3
+Samsung SSD 2TB,SSD,NVMe,Samsung,980 PRO,SNSSD003,3,1,0,0,Storage
+ASUS Monitor 32",Monitor,4K IPS,ASUS,ProArt,SNMON003,2,2,0,0,Office
+HP Keyboard,Keyboard,Mechanical,HP,Elite X3,SNKBD001,15,10,2,1,Warehouse

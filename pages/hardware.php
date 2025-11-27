@@ -422,7 +422,7 @@ include '../includes/header.php';
                                 <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
                             </button>
                             <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" 
-                               onclick="return confirmDelete('Are you sure you want to delete this hardware?')">
+                               onclick="return confirmDelete('Are you sure you want to delete this hardware?', this)">
                                 <i class="bi bi-trash"></i><span class="d-none d-sm-inline"> Delete</span>
                             </a>
                         </td>
@@ -611,8 +611,8 @@ include '../includes/header.php';
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <strong><i class="bi bi-info-circle"></i> CSV Format:</strong>
-                        <br>name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
-                        <br><small class="text-muted">First row should be the header. The location column (11th) is optional if you select a default location below.</small>
+                        <br>name, category, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
+                        <br><small class="text-muted">First row should be the header. Use category name (e.g., CPU, RAM, SSD) instead of ID. The location column (11th) is optional if you select a default location below.</small>
                     </div>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Select CSV File</label>
@@ -750,7 +750,7 @@ var hardwareData = <?php echo json_encode($hardware); ?>;
 
 // Export hardware to CSV in the correct import format
 function exportHardwareToCSV() {
-    const headers = ['name', 'category_id', 'type', 'brand', 'model', 'serial_number', 
+    const headers = ['name', 'category', 'type', 'brand', 'model', 'serial_number', 
                      'unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity', 'location'];
     
     let csv = [headers.join(',')];
@@ -758,7 +758,7 @@ function exportHardwareToCSV() {
     hardwareData.forEach(function(item) {
         let row = [
             '"' + (item.name || '').replace(/"/g, '""') + '"',
-            item.category_id || '',
+            '"' + (item.category_name || '').replace(/"/g, '""') + '"',
             '"' + (item.type || '').replace(/"/g, '""') + '"',
             '"' + (item.brand || '').replace(/"/g, '""') + '"',
             '"' + (item.model || '').replace(/"/g, '""') + '"',
@@ -782,23 +782,32 @@ function exportHardwareToCSV() {
     window.URL.revokeObjectURL(url);
 }
 
-// Edit hardware function
+// Edit hardware function - shows confirmation first
 function editHardware(item) {
-    document.getElementById('edit_id').value = item.id;
-    document.getElementById('edit_name').value = item.name;
-    document.getElementById('edit_category_id').value = item.category_id;
-    document.getElementById('edit_type').value = item.type || '';
-    document.getElementById('edit_brand').value = item.brand || '';
-    document.getElementById('edit_model').value = item.model || '';
-    document.getElementById('edit_serial_number').value = item.serial_number || '';
-    document.getElementById('edit_location').value = item.location || '';
-    document.getElementById('edit_unused_quantity').value = item.unused_quantity;
-    document.getElementById('edit_in_use_quantity').value = item.in_use_quantity;
-    document.getElementById('edit_damaged_quantity').value = item.damaged_quantity;
-    document.getElementById('edit_repair_quantity').value = item.repair_quantity;
-    
-    const editModal = new bootstrap.Modal(document.getElementById('editHardwareModal'));
-    editModal.show();
+    showConfirmation(
+        'Do you want to edit "' + item.name + '"?',
+        'Confirm Edit',
+        'Edit',
+        'warning'
+    ).then((confirmed) => {
+        if (confirmed) {
+            document.getElementById('edit_id').value = item.id;
+            document.getElementById('edit_name').value = item.name;
+            document.getElementById('edit_category_id').value = item.category_id;
+            document.getElementById('edit_type').value = item.type || '';
+            document.getElementById('edit_brand').value = item.brand || '';
+            document.getElementById('edit_model').value = item.model || '';
+            document.getElementById('edit_serial_number').value = item.serial_number || '';
+            document.getElementById('edit_location').value = item.location || '';
+            document.getElementById('edit_unused_quantity').value = item.unused_quantity;
+            document.getElementById('edit_in_use_quantity').value = item.in_use_quantity;
+            document.getElementById('edit_damaged_quantity').value = item.damaged_quantity;
+            document.getElementById('edit_repair_quantity').value = item.repair_quantity;
+            
+            const editModal = new bootstrap.Modal(document.getElementById('editHardwareModal'));
+            editModal.show();
+        }
+    });
 }
 
 // Form validation
