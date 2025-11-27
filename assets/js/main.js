@@ -850,7 +850,7 @@ function showToast(message, type = 'info', duration = 4000) {
 
 document.addEventListener('keydown', function(e) {
     // Only process shortcuts when not typing in an input
-    if (e.target.matches('input, textarea, select')) return;
+    if (e.target.matches('input, textarea, select, [contenteditable]')) return;
     
     // Ctrl/Cmd + / to show keyboard shortcuts help
     if ((e.ctrlKey || e.metaKey) && e.key === '/') {
@@ -1078,7 +1078,14 @@ function trapFocusInModal(modalElement) {
 // Apply to all modals
 document.addEventListener('shown.bs.modal', function(e) {
     trapFocusInModal(e.target);
-    // Focus first input or button in modal
-    const firstFocusable = e.target.querySelector('input:not([type="hidden"]), button:not(.btn-close)');
+    // Focus first focusable element in modal (comprehensive selector)
+    const firstFocusable = e.target.querySelector(
+        'input:not([type="hidden"]):not([disabled]), ' +
+        'select:not([disabled]), ' +
+        'textarea:not([disabled]), ' +
+        'button:not(.btn-close):not([disabled]), ' +
+        'a[href], ' +
+        '[tabindex]:not([tabindex="-1"])'
+    );
     if (firstFocusable) firstFocusable.focus();
 });

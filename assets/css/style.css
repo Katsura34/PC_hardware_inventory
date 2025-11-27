@@ -1686,12 +1686,28 @@ footer small {
 
 /* Accessibility enhancements */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+    /* Only disable decorative animations, preserve essential transitions */
+    .stat-card,
+    .btn,
+    .card-interactive,
+    .navbar-brand img,
+    .alert,
+    .toast,
+    .loading-content {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    /* Preserve visibility of hover states but remove motion */
+    .btn:hover,
+    .card:hover,
+    .stat-card:hover {
+        transform: none !important;
+    }
+    
+    /* Keep loading spinner functional */
+    .spinner-border {
+        animation-duration: 1s !important;
     }
 }
 
