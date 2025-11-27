@@ -9,10 +9,18 @@ requireLogin();
 $pageTitle = 'Inventory History - PC Hardware Inventory';
 $conn = getDBConnection();
 
+// Pagination settings
+$records_per_page = 20;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $records_per_page;
+
 // Get filter parameters
 $action_filter = isset($_GET['action']) ? sanitizeInput($_GET['action']) : '';
 $date_from = isset($_GET['date_from']) ? sanitizeInput($_GET['date_from']) : '';
 $date_to = isset($_GET['date_to']) ? sanitizeInput($_GET['date_to']) : '';
+
+// Build base query for counting
+$count_query = "SELECT COUNT(*) as total FROM inventory_history ih WHERE 1=1";
 
 // Build query with filters
 $query = "SELECT ih.*, 
@@ -32,6 +40,7 @@ $types = "";
 // Add action filter
 if (!empty($action_filter) && in_array($action_filter, ['Added', 'Updated', 'Deleted'])) {
     $query .= " AND ih.action_type = ?";
+    $count_query .= " AND ih.action_type = ?";
     $params[] = $action_filter;
     $types .= "s";
 }
@@ -39,32 +48,58 @@ if (!empty($action_filter) && in_array($action_filter, ['Added', 'Updated', 'Del
 // Add date range filters
 if (!empty($date_from)) {
     $query .= " AND DATE(ih.action_date) >= ?";
+    $count_query .= " AND DATE(ih.action_date) >= ?";
     $params[] = $date_from;
     $types .= "s";
 }
 
 if (!empty($date_to)) {
     $query .= " AND DATE(ih.action_date) <= ?";
+    $count_query .= " AND DATE(ih.action_date) <= ?";
     $params[] = $date_to;
     $types .= "s";
 }
 
-$query .= " ORDER BY ih.action_date DESC LIMIT 500";
-
-// Get inventory history with filters
-$history = [];
+// Get total count for pagination
+$total_records = 0;
 if (!empty($params)) {
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $count_stmt = $conn->prepare($count_query);
+    $count_stmt->bind_param($types, ...$params);
+    $count_stmt->execute();
+    $count_result = $count_stmt->get_result();
+    $total_records = $count_result->fetch_assoc()['total'];
+    $count_stmt->close();
 } else {
-    $result = $conn->query($query);
+    $count_result = $conn->query($count_query);
+    $total_records = $count_result->fetch_assoc()['total'];
 }
+
+$total_pages = ceil($total_records / $records_per_page);
+
+// Add pagination to main query
+$query .= " ORDER BY ih.action_date DESC LIMIT ? OFFSET ?";
+$params[] = $records_per_page;
+$params[] = $offset;
+$types .= "ii";
+
+// Get inventory history with filters and pagination
+$history = [];
+$stmt = $conn->prepare($query);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
 
 while ($row = $result->fetch_assoc()) {
     $history[] = $row;
 }
+$stmt->close();
+
+// Build pagination URL parameters
+$pagination_params = array_filter([
+    'action' => $action_filter ?: null,
+    'date_from' => $date_from ?: null,
+    'date_to' => $date_to ?: null
+]);
 
 include '../includes/header.php';
 ?>
@@ -83,16 +118,57 @@ include '../includes/header.php';
 
 <!-- History Table -->
 <div class="card table-card">
-    <div class="card-header">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
-            <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> Activity Log</h5>
-            <input type="text" id="searchInput" class="form-control form-control-sm w-100" style="max-width: 300px;" 
-                   placeholder="Search history..." onkeyup="searchTable('searchInput', 'historyTable')">
+    <div class="card-header card-header-primary">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <h5 class="mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-table" aria-hidden="true"></i> Activity Log
+                <span class="badge bg-light text-primary ms-2"><?php echo $total_records; ?></span>
+            </h5>
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Toggle Search Button -->
+                <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
+                        aria-expanded="false" aria-controls="searchFilterPanel"
+                        onclick="toggleHistorySearch()">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <span class="d-none d-sm-inline">Search</span>
+                </button>
+                <!-- Filter Dropdown -->
+                <?php 
+                $active_filter_count = (!empty($action_filter) ? 1 : 0) + (!empty($date_from) ? 1 : 0) + (!empty($date_to) ? 1 : 0);
+                $has_filters = $active_filter_count > 0;
+                ?>
+                <button class="btn btn-sm <?php echo $has_filters ? 'btn-warning' : 'btn-light'; ?>" 
+                        type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" 
+                        aria-expanded="false" aria-controls="filterCollapse">
+                    <i class="bi bi-funnel<?php echo $has_filters ? '-fill' : ''; ?>"></i>
+                    <span class="d-none d-sm-inline"> Filters</span>
+                    <?php if ($has_filters): ?>
+                    <span class="badge bg-dark text-white ms-1"><?php echo $active_filter_count; ?></span>
+                    <?php endif; ?>
+                </button>
+            </div>
         </div>
-        <!-- Filters -->
+        <!-- Collapsible Search Panel -->
+        <div class="search-filter-panel collapse mt-3" id="searchFilterPanel">
+            <div class="search-box">
+                <i class="bi bi-search search-icon" aria-hidden="true"></i>
+                <input type="text" id="searchInput" class="form-control" 
+                       placeholder="Search history by hardware name, category, user..." 
+                       aria-label="Search history"
+                       onkeyup="searchTable('searchInput', 'historyTable')">
+                <button class="btn btn-sm btn-outline-secondary position-absolute end-0 me-2" 
+                        type="button" onclick="clearHistorySearch()" 
+                        style="top: 50%; transform: translateY(-50%);"
+                        aria-label="Clear search">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Collapsible Filters Panel -->
+        <div class="collapse mt-3" id="filterCollapse">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3 col-sm-6">
-                <label for="action" class="form-label small mb-1">Action Type</label>
+                <label for="action" class="form-label small mb-1 text-white-50">Action Type</label>
                 <select class="form-select form-select-sm" id="action" name="action">
                     <option value="">All Actions</option>
                     <option value="Added" <?php echo $action_filter === 'Added' ? 'selected' : ''; ?>>Added</option>
@@ -101,37 +177,46 @@ include '../includes/header.php';
                 </select>
             </div>
             <div class="col-md-3 col-sm-6">
-                <label for="date_from" class="form-label small mb-1"><i class="bi bi-calendar-event me-1"></i>Start Date</label>
+                <label for="date_from" class="form-label small mb-1 text-white-50"><i class="bi bi-calendar-event me-1"></i>Start Date</label>
                 <input type="date" class="form-control form-control-sm" id="date_from" name="date_from" value="<?php echo escapeOutput($date_from); ?>" title="Filter records from this date">
             </div>
             <div class="col-md-3 col-sm-6">
-                <label for="date_to" class="form-label small mb-1"><i class="bi bi-calendar-event me-1"></i>End Date</label>
+                <label for="date_to" class="form-label small mb-1 text-white-50"><i class="bi bi-calendar-event me-1"></i>End Date</label>
                 <input type="date" class="form-control form-control-sm" id="date_to" name="date_to" value="<?php echo escapeOutput($date_to); ?>" title="Filter records up to this date">
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
-                        <i class="bi bi-funnel"></i> Filter
+                    <button type="submit" class="btn btn-light btn-sm flex-grow-1">
+                        <i class="bi bi-check-lg"></i> Apply
                     </button>
-                    <a href="<?php echo BASE_PATH; ?>pages/history.php" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-x-circle"></i> Clear
+                    <a href="<?php echo BASE_PATH; ?>pages/history.php" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-x-lg"></i> Clear
                     </a>
                 </div>
             </div>
         </form>
-        <?php if (!empty($action_filter) || !empty($date_from) || !empty($date_to)): ?>
-        <div class="mt-2">
-            <small class="text-muted">
-                <i class="bi bi-funnel-fill"></i> Filters active: 
-                <?php 
-                $filters = [];
-                if (!empty($action_filter)) $filters[] = "Action: " . escapeOutput($action_filter);
-                if (!empty($date_from)) $filters[] = "From: " . escapeOutput($date_from);
-                if (!empty($date_to)) $filters[] = "To: " . escapeOutput($date_to);
-                echo implode(' | ', $filters);
-                ?>
-                (<?php echo count($history); ?> records)
-            </small>
+        </div>
+        <?php if ($has_filters): ?>
+        <div class="filter-tags d-flex flex-wrap gap-2 align-items-center mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.2);">
+            <small class="text-white-50 me-1"><i class="bi bi-funnel-fill"></i> Active filters:</small>
+            <?php if (!empty($action_filter)): ?>
+            <span class="badge bg-light text-primary d-flex align-items-center gap-1">
+                Action: <?php echo escapeOutput($action_filter); ?>
+                <a href="?<?php echo http_build_query(array_filter(['date_from' => $date_from ?: null, 'date_to' => $date_to ?: null])); ?>" class="text-primary text-decoration-none ms-1" title="Remove filter">&times;</a>
+            </span>
+            <?php endif; ?>
+            <?php if (!empty($date_from)): ?>
+            <span class="badge bg-light text-primary d-flex align-items-center gap-1">
+                From: <?php echo escapeOutput($date_from); ?>
+                <a href="?<?php echo http_build_query(array_filter(['action' => $action_filter ?: null, 'date_to' => $date_to ?: null])); ?>" class="text-primary text-decoration-none ms-1" title="Remove filter">&times;</a>
+            </span>
+            <?php endif; ?>
+            <?php if (!empty($date_to)): ?>
+            <span class="badge bg-light text-primary d-flex align-items-center gap-1">
+                To: <?php echo escapeOutput($date_to); ?>
+                <a href="?<?php echo http_build_query(array_filter(['action' => $action_filter ?: null, 'date_from' => $date_from ?: null])); ?>" class="text-primary text-decoration-none ms-1" title="Remove filter">&times;</a>
+            </span>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
     </div>
@@ -268,6 +353,62 @@ include '../includes/header.php';
             </table>
         </div>
     </div>
+    <!-- Pagination -->
+    <?php if ($total_pages > 1): ?>
+    <div class="card-footer bg-light">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <small class="text-muted">
+                Showing <?php echo $offset + 1; ?> to <?php echo min($offset + $records_per_page, $total_records); ?> of <?php echo $total_records; ?> records
+            </small>
+            <nav aria-label="History pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    <!-- First Page -->
+                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => 1])); ?>" aria-label="First">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <!-- Previous Page -->
+                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => $page - 1])); ?>" aria-label="Previous">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <?php
+                    // Calculate page range to display
+                    $start_page = max(1, $page - 2);
+                    $end_page = min($total_pages, $page + 2);
+                    
+                    if ($start_page > 1): ?>
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    <?php endif;
+                    
+                    for ($i = $start_page; $i <= $end_page; $i++): ?>
+                    <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => $i])); ?>"><?php echo $i; ?></a>
+                    </li>
+                    <?php endfor;
+                    
+                    if ($end_page < $total_pages): ?>
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    <?php endif; ?>
+                    <!-- Next Page -->
+                    <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => $page + 1])); ?>" aria-label="Next">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <!-- Last Page -->
+                    <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => $total_pages])); ?>" aria-label="Last">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <div class="mt-4">
@@ -299,5 +440,62 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+// Toggle Search Filter Panel for History
+function toggleHistorySearch() {
+    var panel = document.getElementById('searchFilterPanel');
+    var btn = document.getElementById('toggleSearchBtn');
+    var isExpanded = panel.classList.contains('show');
+    
+    if (isExpanded) {
+        panel.classList.remove('show');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.innerHTML = '<i class="bi bi-search" aria-hidden="true"></i><span class="d-none d-sm-inline"> Search</span>';
+        // Clear search when hiding
+        clearHistorySearch();
+    } else {
+        panel.classList.add('show');
+        btn.setAttribute('aria-expanded', 'true');
+        btn.innerHTML = '<i class="bi bi-x-lg" aria-hidden="true"></i><span class="d-none d-sm-inline"> Close</span>';
+        // Focus on search input
+        setTimeout(function() {
+            document.getElementById('searchInput').focus();
+        }, 100);
+    }
+}
+
+// Clear Search Input for History
+function clearHistorySearch() {
+    var input = document.getElementById('searchInput');
+    if (input) {
+        input.value = '';
+        searchTable('searchInput', 'historyTable');
+    }
+}
+
+// Keyboard shortcut for search (/ key) - only add if not already added
+if (!window.historyPageKeyboardHandlerAdded) {
+    window.historyPageKeyboardHandlerAdded = true;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !e.target.matches('input, textarea, select')) {
+            e.preventDefault();
+            var panel = document.getElementById('searchFilterPanel');
+            if (panel && !panel.classList.contains('show')) {
+                toggleHistorySearch();
+            } else if (panel) {
+                document.getElementById('searchInput').focus();
+            }
+        }
+        // Escape to close search
+        if (e.key === 'Escape') {
+            var panel = document.getElementById('searchFilterPanel');
+            if (panel && panel.classList.contains('show')) {
+                toggleHistorySearch();
+            }
+        }
+    });
+}
+</script>
 
 <?php include '../includes/footer.php'; ?>

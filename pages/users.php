@@ -86,12 +86,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Get all users
+// Pagination settings
+$records_per_page = 20;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $records_per_page;
+
+// Get total count for pagination
+$count_result = $conn->query("SELECT COUNT(*) as total FROM users");
+$total_records = $count_result->fetch_assoc()['total'];
+$total_pages = ceil($total_records / $records_per_page);
+
+// Get users with pagination
 $users = [];
-$result = $conn->query("SELECT * FROM users ORDER BY date_created DESC");
+$stmt = $conn->prepare("SELECT * FROM users ORDER BY date_created DESC LIMIT ? OFFSET ?");
+$stmt->bind_param("ii", $records_per_page, $offset);
+$stmt->execute();
+$result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
     $users[] = $row;
 }
+$stmt->close();
+
+// Build pagination URL parameters (empty for users page - no filters)
+$pagination_params = [];
 
 include '../includes/header.php';
 ?>
@@ -128,7 +145,7 @@ include '../includes/header.php';
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <h5 class="mb-0 d-flex align-items-center gap-2">
                 <i class="bi bi-table" aria-hidden="true"></i> All Users
-                <span class="badge bg-light text-primary ms-2"><?php echo count($users); ?></span>
+                <span class="badge bg-light text-primary ms-2"><?php echo $total_records; ?></span>
             </h5>
             <!-- Toggle Search Button - HCI: Show/Hide filter -->
             <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
@@ -242,6 +259,62 @@ include '../includes/header.php';
             </table>
         </div>
     </div>
+    <!-- Pagination -->
+    <?php if ($total_pages > 1): ?>
+    <div class="card-footer bg-light">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <small class="text-muted">
+                Showing <?php echo $offset + 1; ?> to <?php echo min($offset + $records_per_page, $total_records); ?> of <?php echo $total_records; ?> users
+            </small>
+            <nav aria-label="Users pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    <!-- First Page -->
+                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => 1])); ?>" aria-label="First">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <!-- Previous Page -->
+                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => $page - 1])); ?>" aria-label="Previous">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <?php
+                    // Calculate page range to display
+                    $start_page = max(1, $page - 2);
+                    $end_page = min($total_pages, $page + 2);
+                    
+                    if ($start_page > 1): ?>
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    <?php endif;
+                    
+                    for ($i = $start_page; $i <= $end_page; $i++): ?>
+                    <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => $i])); ?>"><?php echo $i; ?></a>
+                    </li>
+                    <?php endfor;
+                    
+                    if ($end_page < $total_pages): ?>
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    <?php endif; ?>
+                    <!-- Next Page -->
+                    <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => $page + 1])); ?>" aria-label="Next">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <!-- Last Page -->
+                    <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($pagination_params, ['page' => $total_pages])); ?>" aria-label="Last">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <script>
@@ -281,7 +354,7 @@ function clearSearch() {
 if (!window.usersPageKeyboardHandlerAdded) {
     window.usersPageKeyboardHandlerAdded = true;
     document.addEventListener('keydown', function(e) {
-        if (e.key === '/' && !e.target.matches('input, textarea')) {
+        if (e.key === '/' && !e.target.matches('input, textarea, select')) {
             e.preventDefault();
             var panel = document.getElementById('searchFilterPanel');
             if (panel && !panel.classList.contains('show')) {
