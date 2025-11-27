@@ -86,6 +86,7 @@ if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
         if ($detail_data) {
             $user_id = $_SESSION['user_id'];
             $user_name = $_SESSION['full_name'];
+            $zero = 0;
             $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
                                        user_id, user_name, action_type, quantity_change, 
                                        old_unused, old_in_use, old_damaged, old_repair, 
@@ -93,7 +94,7 @@ if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
                                        VALUES (?, ?, ?, ?, ?, ?, 'Restored', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $log_stmt->bind_param("isssisiiiiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
                                  $detail_data['serial_number'], $user_id, $user_name, $detail_data['total_quantity'], 
-                                 0, 0, 0, 0,
+                                 $zero, $zero, $zero, $zero,
                                  $detail_data['unused_quantity'], $detail_data['in_use_quantity'], 
                                  $detail_data['damaged_quantity'], $detail_data['repair_quantity']);
             $log_stmt->execute();
