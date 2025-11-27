@@ -130,7 +130,11 @@ function showConfirmation(message, title = 'Confirm Action', buttonText = 'Confi
 function confirmDelete(message = 'Are you sure you want to delete this item?', element = null) {
     // If called from onclick, prevent default and show modal
     if (element) {
-        event.preventDefault();
+        // Get the event from the window object for cross-browser compatibility
+        var evt = window.event || arguments.callee.caller.arguments[0];
+        if (evt) {
+            evt.preventDefault();
+        }
         const href = element.getAttribute('href');
         
         showConfirmation(message, 'Confirm Delete', 'Delete', 'danger').then((confirmed) => {

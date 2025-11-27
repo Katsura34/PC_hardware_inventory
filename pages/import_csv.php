@@ -32,8 +32,9 @@ try {
         // Skip header row
         $header = fgetcsv($handle);
         
-        // Validate header - minimum 10 columns required (location is optional if default is set)
-        // Note: category column can be category_id (numeric) or category (name)
+        // Expected CSV format (header row is skipped, data is processed by column position)
+        // Column 2 (index 1) accepts either category name (e.g., "CPU", "RAM") or category_id (numeric)
+        // This allows staff to use friendly category names instead of memorizing IDs
         $expected_headers = ['name', 'category', 'type', 'brand', 'model', 'serial_number', 
                            'unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity', 'location'];
         
