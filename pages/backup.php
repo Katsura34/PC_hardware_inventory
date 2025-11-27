@@ -26,8 +26,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $backup_content .= "-- Created: " . date('Y-m-d H:i:s') . "\n";
         $backup_content .= "-- Created by: " . $_SESSION['full_name'] . "\n\n";
         
-        // Get all tables
-        $tables = ['categories', 'hardware', 'users', 'inventory_history'];
+        // Disable foreign key checks at the start of backup
+        $backup_content .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
+        
+        // Get all tables in dependency order for safe restore:
+        // - inventory_history: no foreign keys (references are optional/nullable)
+        // - hardware: depends on categories (category_id foreign key)
+        // - users: no foreign keys
+        // - categories: referenced by hardware (must be created before hardware)
+        // Note: With FOREIGN_KEY_CHECKS=0, order doesn't matter for DROP, but matters for CREATE
+        $tables = ['inventory_history', 'hardware', 'users', 'categories'];
         
         foreach ($tables as $table) {
             // Get table structure
@@ -55,6 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $backup_content .= "\n";
             }
         }
+        
+        // Re-enable foreign key checks at the end of backup
+        $backup_content .= "\nSET FOREIGN_KEY_CHECKS = 1;\n";
         
         // Write backup file
         if (file_put_contents($backup_path, $backup_content)) {
@@ -133,6 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
             }
             
+            // Disable foreign key checks to allow dropping tables in any order
+            $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+            
             // Split SQL into individual statements and execute
             $conn->multi_query($sql);
             
@@ -143,8 +157,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
             } while ($conn->more_results() && $conn->next_result());
             
-            if ($conn->error) {
-                redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Restore failed: ' . $conn->error, 'error');
+            // Re-enable foreign key checks
+            // After multi_query(), the connection is in a special state processing multiple result sets.
+            // We cannot execute new queries on the same connection until all results are consumed.
+            // Getting a fresh connection ensures we can safely run the SET FOREIGN_KEY_CHECKS command.
+            $restore_error = $conn->error;
+            
+            // Get a fresh connection to re-enable foreign key checks
+            $conn = getDBConnection();
+            $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+            
+            if ($restore_error) {
+                redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Restore failed: ' . $restore_error, 'error');
             } else {
                 redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Database restored successfully from: ' . $filename, 'success');
             }
