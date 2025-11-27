@@ -1303,9 +1303,9 @@ if (!window.hardwarePageKeyboardHandlerAdded) {
 // Handle restore confirmation with custom modal
 function confirmRestore(message, element) {
     if (element) {
-        var evt = window.event || arguments.callee.caller.arguments[0];
-        if (evt) {
-            evt.preventDefault();
+        // Prevent default using event.preventDefault if available
+        if (window.event) {
+            window.event.preventDefault();
         }
         const href = element.getAttribute('href');
         
@@ -1323,9 +1323,9 @@ function confirmRestore(message, element) {
 // Handle permanent delete confirmation with custom modal
 function confirmPermanentDelete(message, element) {
     if (element) {
-        var evt = window.event || arguments.callee.caller.arguments[0];
-        if (evt) {
-            evt.preventDefault();
+        // Prevent default using event.preventDefault if available
+        if (window.event) {
+            window.event.preventDefault();
         }
         const href = element.getAttribute('href');
         

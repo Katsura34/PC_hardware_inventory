@@ -153,7 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             } while ($conn->more_results() && $conn->next_result());
             
             // Re-enable foreign key checks
-            // Need to close and reopen connection or use a new query after multi_query
+            // After multi_query(), the connection is in a special state processing multiple result sets.
+            // We cannot execute new queries on the same connection until all results are consumed.
+            // Getting a fresh connection ensures we can safely run the SET FOREIGN_KEY_CHECKS command.
             $restore_error = $conn->error;
             
             // Get a fresh connection to re-enable foreign key checks
