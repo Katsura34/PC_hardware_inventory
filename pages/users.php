@@ -158,7 +158,7 @@ include '../includes/header.php';
                         </td>
                         <td class="d-none d-md-table-cell"><small><?php echo date('M d, Y', strtotime($user['date_created'])); ?></small></td>
                         <td>
-                            <button class="btn btn-sm btn-info" onclick='editUser(<?php echo json_encode($user); ?>)'>
+                            <button class="btn btn-sm btn-info" onclick='editUser(<?php echo htmlspecialchars(json_encode($user), ENT_QUOTES, "UTF-8"); ?>)'>
                                 <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Edit</span>
                             </button>
                             <?php if ($user['id'] !== $_SESSION['user_id']): ?>

@@ -369,19 +369,19 @@ include '../includes/header.php';
             ?>
             <span class="badge bg-primary d-flex align-items-center gap-1">
                 Category: <?php echo escapeOutput($cat_name); ?>
-                <a href="?<?php echo http_build_query(array_filter(['filter_brand' => $filter_brand, 'filter_model' => $filter_model])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+                <a href="?<?php echo http_build_query(array_filter(['filter_brand' => $filter_brand ?: null, 'filter_model' => $filter_model ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
             </span>
             <?php endif; ?>
             <?php if (!empty($filter_brand)): ?>
             <span class="badge bg-primary d-flex align-items-center gap-1">
                 Brand: <?php echo escapeOutput($filter_brand); ?>
-                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_model' => $filter_model])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_model' => $filter_model ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
             </span>
             <?php endif; ?>
             <?php if (!empty($filter_model)): ?>
             <span class="badge bg-primary d-flex align-items-center gap-1">
                 Model: <?php echo escapeOutput($filter_model); ?>
-                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_brand' => $filter_brand])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_brand' => $filter_brand ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
             </span>
             <?php endif; ?>
             <small class="text-muted ms-2">(<?php echo count($hardware); ?> items)</small>
