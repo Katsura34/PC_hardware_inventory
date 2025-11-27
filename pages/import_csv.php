@@ -33,8 +33,16 @@ try {
         $header = fgetcsv($handle);
         
         // Validate header - minimum 10 columns required (location is optional if default is set)
-        $expected_headers = ['name', 'category_id', 'type', 'brand', 'model', 'serial_number', 
+        // Note: category column can be category_id (numeric) or category (name)
+        $expected_headers = ['name', 'category', 'type', 'brand', 'model', 'serial_number', 
                            'unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity', 'location'];
+        
+        // Build a lookup map for category names to IDs
+        $category_map = [];
+        $cat_result = $conn->query("SELECT id, name FROM categories");
+        while ($cat_row = $cat_result->fetch_assoc()) {
+            $category_map[strtolower(trim($cat_row['name']))] = $cat_row['id'];
+        }
         
         $line = 1;
         while (($data = fgetcsv($handle)) !== false) {
@@ -53,7 +61,23 @@ try {
             
             // Parse data
             $name = sanitizeForDB($conn, trim($data[0]));
-            $category_id = (int)$data[1];
+            
+            // Handle category - support both ID (numeric) and name (text)
+            $category_value = trim($data[1]);
+            if (is_numeric($category_value)) {
+                // If it's a number, use it as category_id directly
+                $category_id = (int)$category_value;
+            } else {
+                // If it's text, look up the category by name (case-insensitive)
+                $category_key = strtolower($category_value);
+                if (isset($category_map[$category_key])) {
+                    $category_id = $category_map[$category_key];
+                } else {
+                    $errors[] = "Line $line: Unknown category '$category_value'";
+                    continue;
+                }
+            }
+            
             $type = sanitizeForDB($conn, trim($data[2]));
             $brand = sanitizeForDB($conn, trim($data[3]));
             $model = sanitizeForDB($conn, trim($data[4]));

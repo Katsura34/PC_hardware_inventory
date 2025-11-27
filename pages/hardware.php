@@ -611,8 +611,8 @@ include '../includes/header.php';
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <strong><i class="bi bi-info-circle"></i> CSV Format:</strong>
-                        <br>name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
-                        <br><small class="text-muted">First row should be the header. The location column (11th) is optional if you select a default location below.</small>
+                        <br>name, category, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
+                        <br><small class="text-muted">First row should be the header. Use category name (e.g., CPU, RAM, SSD) instead of ID. The location column (11th) is optional if you select a default location below.</small>
                     </div>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Select CSV File</label>
@@ -750,7 +750,7 @@ var hardwareData = <?php echo json_encode($hardware); ?>;
 
 // Export hardware to CSV in the correct import format
 function exportHardwareToCSV() {
-    const headers = ['name', 'category_id', 'type', 'brand', 'model', 'serial_number', 
+    const headers = ['name', 'category', 'type', 'brand', 'model', 'serial_number', 
                      'unused_quantity', 'in_use_quantity', 'damaged_quantity', 'repair_quantity', 'location'];
     
     let csv = [headers.join(',')];
@@ -758,7 +758,7 @@ function exportHardwareToCSV() {
     hardwareData.forEach(function(item) {
         let row = [
             '"' + (item.name || '').replace(/"/g, '""') + '"',
-            item.category_id || '',
+            '"' + (item.category_name || '').replace(/"/g, '""') + '"',
             '"' + (item.type || '').replace(/"/g, '""') + '"',
             '"' + (item.brand || '').replace(/"/g, '""') + '"',
             '"' + (item.model || '').replace(/"/g, '""') + '"',
