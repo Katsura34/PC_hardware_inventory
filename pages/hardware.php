@@ -86,6 +86,7 @@ if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
         if ($detail_data) {
             $user_id = $_SESSION['user_id'];
             $user_name = $_SESSION['full_name'];
+            $zero = 0;
             $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
                                        user_id, user_name, action_type, quantity_change, 
                                        old_unused, old_in_use, old_damaged, old_repair, 
@@ -93,7 +94,7 @@ if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
                                        VALUES (?, ?, ?, ?, ?, ?, 'Restored', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $log_stmt->bind_param("isssisiiiiiiiii", $id, $detail_data['name'], $detail_data['category_name'], 
                                  $detail_data['serial_number'], $user_id, $user_name, $detail_data['total_quantity'], 
-                                 0, 0, 0, 0,
+                                 $zero, $zero, $zero, $zero,
                                  $detail_data['unused_quantity'], $detail_data['in_use_quantity'], 
                                  $detail_data['damaged_quantity'], $detail_data['repair_quantity']);
             $log_stmt->execute();
@@ -441,8 +442,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $filter_category = isset($_GET['filter_category']) ? (int)$_GET['filter_category'] : 0;
 $filter_brand = isset($_GET['filter_brand']) ? sanitizeInput($_GET['filter_brand']) : '';
 $filter_model = isset($_GET['filter_model']) ? sanitizeInput($_GET['filter_model']) : '';
-$show_deleted = isset($_GET['show_deleted']) && $_GET['show_deleted'] === '1' && isAdmin();
-$deleted_only = isset($_GET['deleted_only']) && $_GET['deleted_only'] === '1' && isAdmin();
+
+// Handle trash filter (new combined dropdown)
+$trash_filter = isset($_GET['trash_filter']) ? sanitizeInput($_GET['trash_filter']) : '';
+$show_deleted = ($trash_filter === 'show_deleted' || (isset($_GET['show_deleted']) && $_GET['show_deleted'] === '1')) && isAdmin();
+$deleted_only = ($trash_filter === 'deleted_only' || (isset($_GET['deleted_only']) && $_GET['deleted_only'] === '1')) && isAdmin();
 
 // Pagination settings
 $records_per_page = 20;
@@ -619,24 +623,6 @@ include '../includes/header.php';
                 <span class="badge bg-light text-primary ms-2"><?php echo $total_records; ?></span>
             </h5>
             <div class="d-flex gap-2 align-items-center">
-                <?php if (isAdmin()): ?>
-                <!-- Deleted Only Filter (Admin Only) - Show only trashed items -->
-                <a href="?<?php echo http_build_query(array_merge(array_diff_key($pagination_params, ['show_deleted' => '', 'deleted_only' => '']), ['deleted_only' => $deleted_only ? null : '1', 'page' => 1])); ?>" 
-                   class="btn btn-sm <?php echo $deleted_only ? 'btn-danger' : 'btn-outline-danger'; ?>"
-                   title="<?php echo $deleted_only ? 'Show all items' : 'Show deleted items only'; ?>">
-                    <i class="bi bi-trash<?php echo $deleted_only ? '-fill' : ''; ?>"></i>
-                    <span class="d-none d-sm-inline"><?php echo $deleted_only ? 'Exit Trash' : 'View Trash'; ?></span>
-                </a>
-                <!-- Show All Toggle (Admin Only) - Include deleted with active -->
-                <?php if (!$deleted_only): ?>
-                <a href="?<?php echo http_build_query(array_merge(array_diff_key($pagination_params, ['show_deleted' => '', 'deleted_only' => '']), ['show_deleted' => $show_deleted ? null : '1', 'page' => 1])); ?>" 
-                   class="btn btn-sm <?php echo $show_deleted ? 'btn-warning' : 'btn-outline-secondary'; ?>"
-                   title="<?php echo $show_deleted ? 'Hide deleted items' : 'Show all items including deleted'; ?>">
-                    <i class="bi bi-eye<?php echo $show_deleted ? '-fill' : ''; ?>"></i>
-                    <span class="d-none d-sm-inline"><?php echo $show_deleted ? 'Hide Deleted' : 'Show All'; ?></span>
-                </a>
-                <?php endif; ?>
-                <?php endif; ?>
                 <!-- Toggle Search Button -->
                 <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
                         aria-expanded="false" aria-controls="searchFilterPanel"
@@ -646,18 +632,17 @@ include '../includes/header.php';
                 </button>
                 <!-- Filter Dropdown -->
                 <div class="dropdown">
-                    <button class="btn btn-sm <?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)) ? 'btn-warning' : 'btn-light'; ?>" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                        <i class="bi bi-funnel<?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)) ? '-fill' : ''; ?>"></i>
+                    <button class="btn btn-sm <?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model) || $deleted_only || $show_deleted) ? 'btn-warning' : 'btn-light'; ?>" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        <i class="bi bi-funnel<?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model) || $deleted_only || $show_deleted) ? '-fill' : ''; ?>"></i>
                         <span class="d-none d-sm-inline"> Filters</span>
-                        <?php if ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)): ?>
-                        <span class="badge bg-dark text-white ms-1"><?php echo count(array_filter([$filter_category > 0, !empty($filter_brand), !empty($filter_model)])); ?></span>
+                        <?php 
+                        $active_filter_count = count(array_filter([$filter_category > 0, !empty($filter_brand), !empty($filter_model), $deleted_only, $show_deleted]));
+                        if ($active_filter_count > 0): ?>
+                        <span class="badge bg-dark text-white ms-1"><?php echo $active_filter_count; ?></span>
                         <?php endif; ?>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end filter-dropdown p-3 shadow-lg" aria-labelledby="filterDropdown" style="min-width: 300px;">
                         <form method="GET" id="filterForm">
-                            <?php if ($show_deleted): ?>
-                            <input type="hidden" name="show_deleted" value="1">
-                            <?php endif; ?>
                             <h6 class="dropdown-header px-0 mb-2"><i class="bi bi-funnel me-1"></i> Filter Hardware</h6>
                             <div class="mb-3">
                                 <label for="filter_category" class="form-label small mb-1">Category</label>
@@ -684,13 +669,23 @@ include '../includes/header.php';
                                     <?php foreach ($models as $model): ?>
                                     <option value="<?php echo escapeOutput($model); ?>" <?php echo $filter_model === $model ? 'selected' : ''; ?>><?php echo escapeOutput($model); ?></option>
                                     <?php endforeach; ?>
+                            </select>
+                            </div>
+                            <?php if (isAdmin()): ?>
+                            <div class="mb-3">
+                                <label class="form-label small mb-1"><i class="bi bi-trash me-1"></i> Trash Filter</label>
+                                <select class="form-select form-select-sm" name="trash_filter" id="trash_filter">
+                                    <option value="">Active Items Only</option>
+                                    <option value="show_deleted" <?php echo ($show_deleted && !$deleted_only) ? 'selected' : ''; ?>>Include Deleted</option>
+                                    <option value="deleted_only" <?php echo $deleted_only ? 'selected' : ''; ?>>Deleted Only (Trash)</option>
                                 </select>
                             </div>
+                            <?php endif; ?>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
                                     <i class="bi bi-check-lg"></i> Apply
                                 </button>
-                                <a href="<?php echo BASE_PATH; ?>pages/hardware.php<?php echo $show_deleted ? '?show_deleted=1' : ''; ?>" class="btn btn-outline-secondary btn-sm">
+                                <a href="<?php echo BASE_PATH; ?>pages/hardware.php" class="btn btn-outline-secondary btn-sm">
                                     <i class="bi bi-x-lg"></i> Clear
                                 </a>
                             </div>
