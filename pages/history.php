@@ -133,13 +133,17 @@ include '../includes/header.php';
                     <span class="d-none d-sm-inline">Search</span>
                 </button>
                 <!-- Filter Dropdown -->
-                <button class="btn btn-sm <?php echo (!empty($action_filter) || !empty($date_from) || !empty($date_to)) ? 'btn-warning' : 'btn-light'; ?>" 
+                <?php 
+                $active_filter_count = (!empty($action_filter) ? 1 : 0) + (!empty($date_from) ? 1 : 0) + (!empty($date_to) ? 1 : 0);
+                $has_filters = $active_filter_count > 0;
+                ?>
+                <button class="btn btn-sm <?php echo $has_filters ? 'btn-warning' : 'btn-light'; ?>" 
                         type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" 
                         aria-expanded="false" aria-controls="filterCollapse">
-                    <i class="bi bi-funnel<?php echo (!empty($action_filter) || !empty($date_from) || !empty($date_to)) ? '-fill' : ''; ?>"></i>
+                    <i class="bi bi-funnel<?php echo $has_filters ? '-fill' : ''; ?>"></i>
                     <span class="d-none d-sm-inline"> Filters</span>
-                    <?php if (!empty($action_filter) || !empty($date_from) || !empty($date_to)): ?>
-                    <span class="badge bg-dark text-white ms-1"><?php echo count(array_filter([!empty($action_filter), !empty($date_from), !empty($date_to)])); ?></span>
+                    <?php if ($has_filters): ?>
+                    <span class="badge bg-dark text-white ms-1"><?php echo $active_filter_count; ?></span>
                     <?php endif; ?>
                 </button>
             </div>
@@ -192,7 +196,7 @@ include '../includes/header.php';
             </div>
         </form>
         </div>
-        <?php if (!empty($action_filter) || !empty($date_from) || !empty($date_to)): ?>
+        <?php if ($has_filters): ?>
         <div class="filter-tags d-flex flex-wrap gap-2 align-items-center mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.2);">
             <small class="text-white-50 me-1"><i class="bi bi-funnel-fill"></i> Active filters:</small>
             <?php if (!empty($action_filter)): ?>

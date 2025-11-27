@@ -354,7 +354,7 @@ function clearSearch() {
 if (!window.usersPageKeyboardHandlerAdded) {
     window.usersPageKeyboardHandlerAdded = true;
     document.addEventListener('keydown', function(e) {
-        if (e.key === '/' && !e.target.matches('input, textarea')) {
+        if (e.key === '/' && !e.target.matches('input, textarea, select')) {
             e.preventDefault();
             var panel = document.getElementById('searchFilterPanel');
             if (panel && !panel.classList.contains('show')) {
