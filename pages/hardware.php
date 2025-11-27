@@ -294,19 +294,27 @@ include '../includes/header.php';
 
 <!-- Hardware Table -->
 <div class="card table-card">
-    <div class="card-header">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
-            <h5 class="mb-2 mb-md-0"><i class="bi bi-table"></i> All Hardware</h5>
+    <div class="card-header card-header-primary">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <h5 class="mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-table" aria-hidden="true"></i> All Hardware
+                <span class="badge bg-light text-primary ms-2"><?php echo count($hardware); ?></span>
+            </h5>
             <div class="d-flex gap-2 align-items-center">
-                <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search..." style="min-width: 150px;"
-                       onkeyup="searchTable('searchInput', 'hardwareTable')">
+                <!-- Toggle Search Button -->
+                <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
+                        aria-expanded="false" aria-controls="searchFilterPanel"
+                        onclick="toggleHardwareSearch()">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <span class="d-none d-sm-inline">Search</span>
+                </button>
                 <!-- Filter Dropdown -->
                 <div class="dropdown">
-                    <button class="btn btn-sm <?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)) ? 'btn-primary' : 'btn-outline-primary'; ?>" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <button class="btn btn-sm <?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)) ? 'btn-warning' : 'btn-light'; ?>" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                         <i class="bi bi-funnel<?php echo ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)) ? '-fill' : ''; ?>"></i>
                         <span class="d-none d-sm-inline"> Filters</span>
                         <?php if ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)): ?>
-                        <span class="badge bg-white text-primary ms-1"><?php echo count(array_filter([$filter_category > 0, !empty($filter_brand), !empty($filter_model)])); ?></span>
+                        <span class="badge bg-dark text-white ms-1"><?php echo count(array_filter([$filter_category > 0, !empty($filter_brand), !empty($filter_model)])); ?></span>
                         <?php endif; ?>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end filter-dropdown p-3 shadow-lg" aria-labelledby="filterDropdown" style="min-width: 300px;">
@@ -350,14 +358,30 @@ include '../includes/header.php';
                         </form>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-success" onclick="exportHardwareToCSV()">
+                <button class="btn btn-sm btn-light" onclick="exportHardwareToCSV()">
                     <i class="bi bi-download"></i><span class="d-none d-sm-inline"> Export</span>
                 </button>
             </div>
         </div>
+        <!-- Collapsible Search Panel -->
+        <div class="search-filter-panel collapse mt-3" id="searchFilterPanel">
+            <div class="search-box">
+                <i class="bi bi-search search-icon" aria-hidden="true"></i>
+                <input type="text" id="searchInput" class="form-control" 
+                       placeholder="Search hardware by name, category, brand, model..." 
+                       aria-label="Search hardware"
+                       onkeyup="searchTable('searchInput', 'hardwareTable')">
+                <button class="btn btn-sm btn-outline-secondary position-absolute end-0 me-2" 
+                        type="button" onclick="clearHardwareSearch()" 
+                        style="top: 50%; transform: translateY(-50%);"
+                        aria-label="Clear search">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
         <?php if ($filter_category > 0 || !empty($filter_brand) || !empty($filter_model)): ?>
-        <div class="filter-tags d-flex flex-wrap gap-2 align-items-center">
-            <small class="text-muted me-1"><i class="bi bi-funnel-fill"></i> Active filters:</small>
+        <div class="filter-tags d-flex flex-wrap gap-2 align-items-center mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.2);">
+            <small class="text-white-50 me-1"><i class="bi bi-funnel-fill"></i> Active filters:</small>
             <?php if ($filter_category > 0): 
                 $cat_name = '';
                 foreach ($categories as $cat) {
@@ -367,37 +391,36 @@ include '../includes/header.php';
                     }
                 }
             ?>
-            <span class="badge bg-primary d-flex align-items-center gap-1">
+            <span class="badge bg-light text-primary d-flex align-items-center gap-1">
                 Category: <?php echo escapeOutput($cat_name); ?>
-                <a href="?<?php echo http_build_query(array_filter(['filter_brand' => $filter_brand ?: null, 'filter_model' => $filter_model ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+                <a href="?<?php echo http_build_query(array_filter(['filter_brand' => $filter_brand ?: null, 'filter_model' => $filter_model ?: null])); ?>" class="text-primary text-decoration-none ms-1" title="Remove filter">&times;</a>
             </span>
             <?php endif; ?>
             <?php if (!empty($filter_brand)): ?>
-            <span class="badge bg-primary d-flex align-items-center gap-1">
+            <span class="badge bg-light text-primary d-flex align-items-center gap-1">
                 Brand: <?php echo escapeOutput($filter_brand); ?>
-                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_model' => $filter_model ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_model' => $filter_model ?: null])); ?>" class="text-primary text-decoration-none ms-1" title="Remove filter">&times;</a>
             </span>
             <?php endif; ?>
             <?php if (!empty($filter_model)): ?>
-            <span class="badge bg-primary d-flex align-items-center gap-1">
+            <span class="badge bg-light text-primary d-flex align-items-center gap-1">
                 Model: <?php echo escapeOutput($filter_model); ?>
-                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_brand' => $filter_brand ?: null])); ?>" class="text-white text-decoration-none ms-1" title="Remove filter">&times;</a>
+                <a href="?<?php echo http_build_query(array_filter(['filter_category' => $filter_category ?: null, 'filter_brand' => $filter_brand ?: null])); ?>" class="text-primary text-decoration-none ms-1" title="Remove filter">&times;</a>
             </span>
             <?php endif; ?>
-            <small class="text-muted ms-2">(<?php echo count($hardware); ?> items)</small>
         </div>
         <?php endif; ?>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0" id="hardwareTable">
+            <table class="table table-hover table-hci mb-0" id="hardwareTable">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th class="d-none d-md-table-cell">Category</th>
-                        <th class="d-none d-lg-table-cell">Brand/Model</th>
-                        <th class="d-none d-lg-table-cell">Serial</th>
-                        <th>Total</th>
+                        <th scope="col">Name</th>
+                        <th scope="col" class="d-none d-md-table-cell">Category</th>
+                        <th scope="col" class="d-none d-lg-table-cell">Brand/Model</th>
+                        <th scope="col" class="d-none d-lg-table-cell">Serial</th>
+                        <th scope="col">Total</th>
                         <th>Available</th>
                         <th class="d-none d-md-table-cell">In Use</th>
                         <th class="d-none d-lg-table-cell">Damaged</th>
@@ -859,6 +882,61 @@ function editHardware(item) {
         }, false);
     });
 })();
+
+// Toggle Search Filter Panel for Hardware
+function toggleHardwareSearch() {
+    var panel = document.getElementById('searchFilterPanel');
+    var btn = document.getElementById('toggleSearchBtn');
+    var isExpanded = panel.classList.contains('show');
+    
+    if (isExpanded) {
+        panel.classList.remove('show');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.innerHTML = '<i class="bi bi-search" aria-hidden="true"></i><span class="d-none d-sm-inline"> Search</span>';
+        // Clear search when hiding
+        clearHardwareSearch();
+    } else {
+        panel.classList.add('show');
+        btn.setAttribute('aria-expanded', 'true');
+        btn.innerHTML = '<i class="bi bi-x-lg" aria-hidden="true"></i><span class="d-none d-sm-inline"> Close</span>';
+        // Focus on search input
+        setTimeout(function() {
+            document.getElementById('searchInput').focus();
+        }, 100);
+    }
+}
+
+// Clear Search Input for Hardware
+function clearHardwareSearch() {
+    var input = document.getElementById('searchInput');
+    if (input) {
+        input.value = '';
+        searchTable('searchInput', 'hardwareTable');
+    }
+}
+
+// Keyboard shortcut for search (/ key) - only add if not already added
+if (!window.hardwarePageKeyboardHandlerAdded) {
+    window.hardwarePageKeyboardHandlerAdded = true;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !e.target.matches('input, textarea, select')) {
+            e.preventDefault();
+            var panel = document.getElementById('searchFilterPanel');
+            if (panel && !panel.classList.contains('show')) {
+                toggleHardwareSearch();
+            } else if (panel) {
+                document.getElementById('searchInput').focus();
+            }
+        }
+        // Escape to close search
+        if (e.key === 'Escape') {
+            var panel = document.getElementById('searchFilterPanel');
+            if (panel && panel.classList.contains('show')) {
+                toggleHardwareSearch();
+            }
+        }
+    });
+}
 </script>
 
 <?php include '../includes/footer.php'; ?>

@@ -26,6 +26,9 @@
     <!-- Custom JS -->
     <script src="<?php echo BASE_PATH; ?>assets/js/main.js"></script>
     
+    <!-- HCI UI Enhancements -->
+    <script src="<?php echo BASE_PATH; ?>assets/js/ui-enhancements.js"></script>
+    
     <!-- HCI Enhancement: Prevent double-click submissions -->
     <script>
     document.querySelectorAll('form').forEach(function(form) {
