@@ -488,7 +488,7 @@ include '../includes/header.php';
                     <div class="alert alert-info">
                         <strong><i class="bi bi-info-circle"></i> CSV Format:</strong>
                         <br>name, category_id, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location
-                        <br><small class="text-muted">First row should be the header. Location column is optional if default location is selected below.</small>
+                        <br><small class="text-muted">First row should be the header. The location column (11th) is optional if you select a default location below.</small>
                     </div>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Select CSV File</label>

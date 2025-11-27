@@ -45,7 +45,7 @@ try {
                 continue;
             }
             
-            // Validate minimum required fields (10 columns, location can be in column 11 or use default)
+            // Validate minimum required fields (10 columns minimum: name through repair_quantity; location is optional as column 11 or via default selection)
             if (count($data) < 10) {
                 $errors[] = "Line $line: Insufficient columns (minimum 10 required)";
                 continue;
