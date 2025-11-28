@@ -8,6 +8,14 @@
 // - Visibility: Status indicators, progress feedback
 
 // ============================================
+// Responsive Breakpoint Constants
+// Match these values with CSS media query breakpoints
+// ============================================
+const BREAKPOINT_MOBILE = 576;   // Extra small devices (portrait phones)
+const BREAKPOINT_TABLET = 768;   // Small devices (landscape phones, tablets)
+const BREAKPOINT_DESKTOP = 992;  // Medium devices (tablets, small desktops)
+
+// ============================================
 // Loading Overlay (shows during all actions)
 // HCI Principle: Feedback - Users always know what's happening
 // ============================================
@@ -1036,4 +1044,105 @@ document.addEventListener('shown.bs.modal', function(e) {
         '[tabindex]:not([tabindex="-1"])'
     );
     if (firstFocusable) firstFocusable.focus();
+});
+
+// ============================================
+// HCI Enhancement: Mobile Filter Dropdown Fix
+// Fix for filter dropdown getting cut off on mobile
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Fix filter dropdown positioning on mobile
+    const filterDropdowns = document.querySelectorAll('.filter-dropdown');
+    
+    filterDropdowns.forEach(function(dropdown) {
+        // When dropdown is shown, ensure it's visible
+        dropdown.addEventListener('shown.bs.dropdown', repositionFilterDropdown);
+        
+        // Also listen for the parent's shown event
+        const parentDropdown = dropdown.closest('.dropdown');
+        if (parentDropdown) {
+            parentDropdown.addEventListener('shown.bs.dropdown', function() {
+                repositionFilterDropdown.call(dropdown);
+            });
+        }
+    });
+    
+    // Handle Bootstrap dropdown events on the toggle buttons
+    const filterToggleButtons = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    filterToggleButtons.forEach(function(btn) {
+        btn.addEventListener('shown.bs.dropdown', function() {
+            const dropdown = this.nextElementSibling;
+            if (dropdown && dropdown.classList.contains('filter-dropdown')) {
+                repositionFilterDropdown.call(dropdown);
+            }
+        });
+    });
+    
+    function repositionFilterDropdown() {
+        const dropdown = this;
+        if (!dropdown) return;
+        
+        // Only apply fixes on mobile screens (using defined breakpoint constant)
+        if (window.innerWidth <= BREAKPOINT_MOBILE) {
+            // Reset any inline styles first
+            dropdown.style.position = 'fixed';
+            dropdown.style.top = '120px';
+            dropdown.style.left = '50%';
+            dropdown.style.right = 'auto';
+            dropdown.style.transform = 'translateX(-50%)';
+            dropdown.style.maxWidth = 'calc(100vw - 20px)';
+            dropdown.style.width = 'calc(100vw - 20px)';
+            dropdown.style.maxHeight = '70vh';
+            dropdown.style.overflowY = 'auto';
+            dropdown.style.zIndex = '1055';
+        } else if (window.innerWidth <= BREAKPOINT_TABLET) {
+            // Tablet adjustments
+            const rect = dropdown.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            
+            // If dropdown extends beyond viewport, reposition
+            if (rect.right > viewportWidth) {
+                dropdown.style.right = '10px';
+                dropdown.style.left = 'auto';
+            }
+            if (rect.left < 0) {
+                dropdown.style.left = '10px';
+                dropdown.style.right = 'auto';
+            }
+        }
+    }
+    
+    // Reposition on window resize
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            const openDropdowns = document.querySelectorAll('.filter-dropdown.show');
+            openDropdowns.forEach(function(dropdown) {
+                repositionFilterDropdown.call(dropdown);
+            });
+        }, 100);
+    });
+});
+
+// ============================================
+// HCI Enhancement: Mobile Scroll Lock for Dropdowns
+// Prevents background scrolling when dropdown is open on mobile
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdownToggles = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    
+    dropdownToggles.forEach(function(toggle) {
+        toggle.addEventListener('shown.bs.dropdown', function() {
+            if (window.innerWidth <= BREAKPOINT_MOBILE) {
+                document.body.style.overflow = 'hidden';
+            }
+        });
+        
+        toggle.addEventListener('hidden.bs.dropdown', function() {
+            document.body.style.overflow = '';
+        });
+    });
 });
