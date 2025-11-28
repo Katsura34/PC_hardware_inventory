@@ -97,7 +97,7 @@ closeDBConnection(); // Called at end of script if needed
 
 #### Session Configuration
 - HTTP-only cookies enabled (prevents JavaScript access)
-- Cookies used only over cookies (not URL parameters)
+- Uses cookies exclusively for session transport (not URL parameters)
 - SameSite: Strict (prevents CSRF attacks)
 - Session regeneration every 30 minutes (prevents session fixation)
 
