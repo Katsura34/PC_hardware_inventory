@@ -63,8 +63,8 @@ if (isset($_GET['delete']) && validateInt($_GET['delete'])) {
     $stmt->close();
 }
 
-// Handle restore (admin only)
-if (isset($_GET['restore']) && validateInt($_GET['restore']) && isAdmin()) {
+// Handle restore (available to all logged-in users)
+if (isset($_GET['restore']) && validateInt($_GET['restore'])) {
     $id = (int)$_GET['restore'];
     
     // Restore hardware
@@ -456,8 +456,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $filter_category = isset($_GET['filter_category']) ? (int)$_GET['filter_category'] : 0;
 $filter_brand = isset($_GET['filter_brand']) ? sanitizeInput($_GET['filter_brand']) : '';
 $filter_model = isset($_GET['filter_model']) ? sanitizeInput($_GET['filter_model']) : '';
-$show_deleted = isset($_GET['show_deleted']) && $_GET['show_deleted'] === '1' && isAdmin();
-$deleted_only = isset($_GET['deleted_only']) && $_GET['deleted_only'] === '1' && isAdmin();
+$show_deleted = isset($_GET['show_deleted']) && $_GET['show_deleted'] === '1';
+$deleted_only = isset($_GET['deleted_only']) && $_GET['deleted_only'] === '1';
 
 // Pagination settings
 $records_per_page = 20;
@@ -632,15 +632,14 @@ include '../includes/header.php';
                 <span class="badge bg-light text-primary ms-2"><?php echo $total_records; ?></span>
             </h5>
             <div class="d-flex gap-2 align-items-center">
-                <?php if (isAdmin()): ?>
-                <!-- Deleted Only Filter (Admin Only) - Show only trashed items -->
+                <!-- Deleted Only Filter - Show only trashed items -->
                 <a href="?<?php echo http_build_query(array_merge(array_diff_key($pagination_params, ['show_deleted' => '', 'deleted_only' => '']), ['deleted_only' => $deleted_only ? null : '1', 'page' => 1])); ?>" 
                    class="btn btn-sm <?php echo $deleted_only ? 'btn-danger' : 'btn-outline-danger'; ?>"
                    title="<?php echo $deleted_only ? 'Show all items' : 'Show deleted items only'; ?>">
                     <i class="bi bi-trash<?php echo $deleted_only ? '-fill' : ''; ?>"></i>
                     <span class="d-none d-sm-inline"><?php echo $deleted_only ? 'Exit Trash' : 'View Trash'; ?></span>
                 </a>
-                <!-- Show All Toggle (Admin Only) - Include deleted with active -->
+                <!-- Show All Toggle - Include deleted with active -->
                 <?php if (!$deleted_only): ?>
                 <a href="?<?php echo http_build_query(array_merge(array_diff_key($pagination_params, ['show_deleted' => '', 'deleted_only' => '']), ['show_deleted' => $show_deleted ? null : '1', 'page' => 1])); ?>" 
                    class="btn btn-sm <?php echo $show_deleted ? 'btn-warning' : 'btn-outline-secondary'; ?>"
@@ -648,7 +647,6 @@ include '../includes/header.php';
                     <i class="bi bi-eye<?php echo $show_deleted ? '-fill' : ''; ?>"></i>
                     <span class="d-none d-sm-inline"><?php echo $show_deleted ? 'Hide Deleted' : 'Show All'; ?></span>
                 </a>
-                <?php endif; ?>
                 <?php endif; ?>
                 <!-- Toggle Search Button -->
                 <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
@@ -846,11 +844,11 @@ include '../includes/header.php';
                         <td class="d-none d-lg-table-cell"><small><?php echo escapeOutput($item['location'] ?: '-'); ?></small></td>
                         <td>
                             <?php if ($isDeleted): ?>
-                                <?php if (isAdmin()): ?>
                                 <a href="?restore=<?php echo $item['id']; ?>&<?php echo http_build_query($pagination_params); ?>" class="btn btn-sm btn-success" 
                                    onclick="return confirmRestore('Are you sure you want to restore this hardware?', this)">
                                     <i class="bi bi-arrow-counterclockwise"></i><span class="d-none d-sm-inline"> Restore</span>
                                 </a>
+                                <?php if (isAdmin()): ?>
                                 <a href="?permanent_delete=<?php echo $item['id']; ?>&<?php echo http_build_query($pagination_params); ?>" class="btn btn-sm btn-danger" 
                                    onclick="return confirmPermanentDelete('Are you sure you want to PERMANENTLY delete this hardware? This action cannot be undone.', this)">
                                     <i class="bi bi-x-circle"></i><span class="d-none d-sm-inline"> Permanent</span>
