@@ -1960,6 +1960,11 @@ body.has-sidebar {
    Mobile Responsive Filter Dropdown Fix
    Issue: Filter dropdown gets cut off on mobile
    when table has no data or limited content
+   
+   Breakpoint Reference (match with main.js):
+   - Mobile: 576px (BREAKPOINT_MOBILE)
+   - Tablet: 768px (BREAKPOINT_TABLET)
+   - Desktop: 992px (BREAKPOINT_DESKTOP)
    ============================================ */
 
 /* Filter dropdown mobile responsiveness */
@@ -1969,7 +1974,7 @@ body.has-sidebar {
     -webkit-overflow-scrolling: touch;
 }
 
-/* On mobile, make filter dropdown responsive */
+/* On mobile (max-width: 576px), make filter dropdown responsive */
 @media (max-width: 576px) {
     /* Filter dropdown fixes for mobile */
     .dropdown-menu.filter-dropdown {

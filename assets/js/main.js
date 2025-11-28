@@ -8,6 +8,14 @@
 // - Visibility: Status indicators, progress feedback
 
 // ============================================
+// Responsive Breakpoint Constants
+// Match these values with CSS media query breakpoints
+// ============================================
+const BREAKPOINT_MOBILE = 576;   // Extra small devices (portrait phones)
+const BREAKPOINT_TABLET = 768;   // Small devices (landscape phones, tablets)
+const BREAKPOINT_DESKTOP = 992;  // Medium devices (tablets, small desktops)
+
+// ============================================
 // Loading Overlay (shows during all actions)
 // HCI Principle: Feedback - Users always know what's happening
 // ============================================
@@ -1075,8 +1083,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const dropdown = this;
         if (!dropdown) return;
         
-        // Only apply fixes on mobile screens
-        if (window.innerWidth <= 576) {
+        // Only apply fixes on mobile screens (using defined breakpoint constant)
+        if (window.innerWidth <= BREAKPOINT_MOBILE) {
             // Reset any inline styles first
             dropdown.style.position = 'fixed';
             dropdown.style.top = '120px';
@@ -1088,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dropdown.style.maxHeight = '70vh';
             dropdown.style.overflowY = 'auto';
             dropdown.style.zIndex = '1055';
-        } else if (window.innerWidth <= 768) {
+        } else if (window.innerWidth <= BREAKPOINT_TABLET) {
             // Tablet adjustments
             const rect = dropdown.getBoundingClientRect();
             const viewportWidth = window.innerWidth;
@@ -1128,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     dropdownToggles.forEach(function(toggle) {
         toggle.addEventListener('shown.bs.dropdown', function() {
-            if (window.innerWidth <= 576) {
+            if (window.innerWidth <= BREAKPOINT_MOBILE) {
                 document.body.style.overflow = 'hidden';
             }
         });
