@@ -1037,3 +1037,104 @@ document.addEventListener('shown.bs.modal', function(e) {
     );
     if (firstFocusable) firstFocusable.focus();
 });
+
+// ============================================
+// HCI Enhancement: Mobile Filter Dropdown Fix
+// Fix for filter dropdown getting cut off on mobile
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Fix filter dropdown positioning on mobile
+    const filterDropdowns = document.querySelectorAll('.filter-dropdown');
+    
+    filterDropdowns.forEach(function(dropdown) {
+        // When dropdown is shown, ensure it's visible
+        dropdown.addEventListener('shown.bs.dropdown', repositionFilterDropdown);
+        
+        // Also listen for the parent's shown event
+        const parentDropdown = dropdown.closest('.dropdown');
+        if (parentDropdown) {
+            parentDropdown.addEventListener('shown.bs.dropdown', function() {
+                repositionFilterDropdown.call(dropdown);
+            });
+        }
+    });
+    
+    // Handle Bootstrap dropdown events on the toggle buttons
+    const filterToggleButtons = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    filterToggleButtons.forEach(function(btn) {
+        btn.addEventListener('shown.bs.dropdown', function() {
+            const dropdown = this.nextElementSibling;
+            if (dropdown && dropdown.classList.contains('filter-dropdown')) {
+                repositionFilterDropdown.call(dropdown);
+            }
+        });
+    });
+    
+    function repositionFilterDropdown() {
+        const dropdown = this;
+        if (!dropdown) return;
+        
+        // Only apply fixes on mobile screens
+        if (window.innerWidth <= 576) {
+            // Reset any inline styles first
+            dropdown.style.position = 'fixed';
+            dropdown.style.top = '120px';
+            dropdown.style.left = '50%';
+            dropdown.style.right = 'auto';
+            dropdown.style.transform = 'translateX(-50%)';
+            dropdown.style.maxWidth = 'calc(100vw - 20px)';
+            dropdown.style.width = 'calc(100vw - 20px)';
+            dropdown.style.maxHeight = '70vh';
+            dropdown.style.overflowY = 'auto';
+            dropdown.style.zIndex = '1055';
+        } else if (window.innerWidth <= 768) {
+            // Tablet adjustments
+            const rect = dropdown.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            
+            // If dropdown extends beyond viewport, reposition
+            if (rect.right > viewportWidth) {
+                dropdown.style.right = '10px';
+                dropdown.style.left = 'auto';
+            }
+            if (rect.left < 0) {
+                dropdown.style.left = '10px';
+                dropdown.style.right = 'auto';
+            }
+        }
+    }
+    
+    // Reposition on window resize
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            const openDropdowns = document.querySelectorAll('.filter-dropdown.show');
+            openDropdowns.forEach(function(dropdown) {
+                repositionFilterDropdown.call(dropdown);
+            });
+        }, 100);
+    });
+});
+
+// ============================================
+// HCI Enhancement: Mobile Scroll Lock for Dropdowns
+// Prevents background scrolling when dropdown is open on mobile
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdownToggles = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    
+    dropdownToggles.forEach(function(toggle) {
+        toggle.addEventListener('shown.bs.dropdown', function() {
+            if (window.innerWidth <= 576) {
+                document.body.style.overflow = 'hidden';
+            }
+        });
+        
+        toggle.addEventListener('hidden.bs.dropdown', function() {
+            document.body.style.overflow = '';
+        });
+    });
+});

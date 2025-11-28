@@ -1955,3 +1955,312 @@ body.has-sidebar {
         color: #000 !important;
     }
 }
+
+/* ============================================
+   Mobile Responsive Filter Dropdown Fix
+   Issue: Filter dropdown gets cut off on mobile
+   when table has no data or limited content
+   ============================================ */
+
+/* Filter dropdown mobile responsiveness */
+.filter-dropdown {
+    max-height: 80vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* On mobile, make filter dropdown responsive */
+@media (max-width: 576px) {
+    /* Filter dropdown fixes for mobile */
+    .dropdown-menu.filter-dropdown {
+        min-width: auto !important;
+        width: calc(100vw - 20px) !important;
+        max-width: 320px !important;
+        position: fixed !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        margin-top: 10px !important;
+        z-index: 1055 !important;
+    }
+    
+    /* Ensure dropdown stays within viewport */
+    .dropdown-menu.filter-dropdown.show {
+        inset: auto !important;
+        top: 120px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+    
+    /* Card header flex adjustments for mobile */
+    .card-header .d-flex.flex-md-row {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    /* Header button group wrap on mobile */
+    .card-header .d-flex.gap-2 {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+    
+    /* Filter tags on mobile */
+    .filter-tags {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    /* Make sure dropdowns on card headers don't overflow */
+    .card-header {
+        overflow: visible !important;
+    }
+    
+    /* Table card overflow handling */
+    .table-card {
+        overflow: visible !important;
+    }
+    
+    /* Card body needs min-height when table is empty */
+    .card-body.p-0 {
+        min-height: 100px;
+    }
+}
+
+/* Tablet and small desktop adjustments */
+@media (max-width: 768px) {
+    /* Filter dropdown positioning fix */
+    .dropdown-menu.filter-dropdown {
+        min-width: 280px !important;
+        max-width: calc(100vw - 30px) !important;
+    }
+    
+    /* Ensure card container allows dropdown overflow */
+    .card.table-card {
+        overflow: visible !important;
+    }
+    
+    /* Card header adjustments */
+    .card-header-primary {
+        overflow: visible !important;
+    }
+    
+    /* Action buttons on mobile - better touch targets */
+    .btn-sm {
+        min-height: 32px;
+        min-width: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Pagination mobile improvements */
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2px;
+    }
+    
+    .pagination .page-link {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    /* Welcome banner mobile adjustments */
+    .welcome-banner {
+        padding: var(--space-md);
+    }
+    
+    .welcome-banner h2 {
+        font-size: 1.25rem;
+    }
+    
+    /* Stat cards mobile grid */
+    .stat-card .card-body {
+        padding: var(--space-md);
+    }
+    
+    .stat-value {
+        font-size: 1.75rem;
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+    }
+}
+
+/* ============================================
+   Additional Mobile Improvements
+   ============================================ */
+
+/* Mobile action button improvements */
+@media (max-width: 576px) {
+    /* Action buttons in table cells */
+    td .btn-sm {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+    
+    /* Stack action buttons on very small screens */
+    td .d-flex.gap-1 {
+        flex-direction: column;
+        gap: 4px !important;
+    }
+    
+    td .btn-sm span.d-none.d-sm-inline {
+        display: none !important;
+    }
+    
+    /* Modal improvements on mobile */
+    .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    .modal-lg {
+        max-width: calc(100% - 20px) !important;
+    }
+    
+    /* Modal body scroll on mobile */
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    /* Form row adjustments for mobile */
+    .modal-body .row.g-3 > [class*="col-md"] {
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Page title mobile adjustments */
+    h1.text-gradient {
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    h1.text-gradient i {
+        font-size: 1.5rem;
+    }
+    
+    /* Page header description */
+    .text-muted {
+        font-size: 0.875rem;
+    }
+    
+    /* Category summary cards on mobile */
+    .card.border-0.bg-light .card-body {
+        padding: 12px;
+    }
+    
+    /* History/Audit trail mobile improvements */
+    #historyTable td small {
+        font-size: 11px;
+    }
+    
+    /* Filter collapse panel on mobile */
+    .collapse.mt-3 form.row {
+        flex-direction: column;
+    }
+    
+    .collapse.mt-3 form.row > [class*="col-"] {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+        margin-bottom: 10px;
+    }
+    
+    /* Batch toolbar mobile */
+    #batchToolbar .d-flex {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 8px !important;
+    }
+    
+    #batchToolbar .vr {
+        display: none !important;
+    }
+    
+    #batchToolbar .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   Touch-friendly improvements
+   ============================================ */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets for mobile devices */
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .btn-sm {
+        min-height: 36px;
+        min-width: 36px;
+    }
+    
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+    }
+    
+    /* Dropdown items larger for touch */
+    .dropdown-item {
+        padding: 12px 16px;
+    }
+    
+    /* Pagination touch targets */
+    .page-link {
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   Backup page mobile fixes
+   ============================================ */
+@media (max-width: 576px) {
+    /* Backup table action buttons */
+    .table td .btn {
+        margin-bottom: 4px;
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Backup info cards */
+    .row.mb-4 > .col-md-6 {
+        margin-bottom: 15px;
+    }
+}
+
+/* ============================================
+   Dashboard mobile fixes
+   ============================================ */
+@media (max-width: 576px) {
+    /* Dashboard stats grid - 2 columns on mobile */
+    .row.g-3.mb-4 > [class*="col-md-4"] {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    /* Dashboard tables on mobile */
+    .col-lg-6 .table-card {
+        margin-bottom: 15px;
+    }
+    
+    /* Categories summary grid */
+    .row.g-3 > .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}

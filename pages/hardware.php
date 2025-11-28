@@ -780,7 +780,7 @@ include '../includes/header.php';
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive" style="min-height: 200px;">
             <table class="table table-hover table-hci mb-0" id="hardwareTable">
                 <thead>
                     <tr>
@@ -803,7 +803,13 @@ include '../includes/header.php';
                 <tbody>
                     <?php if (empty($hardware)): ?>
                     <tr>
-                        <td colspan="12" class="text-center text-muted py-4">No hardware found</td>
+                        <td colspan="12" class="text-center text-muted py-5">
+                            <div class="empty-state-hci">
+                                <i class="bi bi-inbox empty-icon" style="font-size: 48px; opacity: 0.3;"></i>
+                                <h6 class="mt-3">No hardware found</h6>
+                                <p class="text-muted small mb-0">Try adjusting your search or filter criteria</p>
+                            </div>
+                        </td>
                     </tr>
                     <?php else: ?>
                     <?php foreach ($hardware as $item): ?>
