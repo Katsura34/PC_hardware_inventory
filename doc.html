@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Function Reference - PC Hardware Inventory System</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --sidebar-bg: #f8fafc;
+            --sidebar-width: 280px;
+            --text-color: #334155;
+            --border-color: #e2e8f0;
+            --header-height: 60px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+        }
+
+        /* Sidebar Styling */
+        aside {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            top: 0;
+            left: 0;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        aside h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #0f172a;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        nav li {
+            margin-bottom: 8px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #64748b;
+            font-size: 0.95rem;
+            display: block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        nav a:hover, nav a.active {
+            background: #e0e7ff;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Main Content Styling */
+        main {
+            margin-left: var(--sidebar-width);
+            padding: 40px 60px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #0f172a;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+
+        section {
+            margin-bottom: 60px;
+            scroll-margin-top: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 40px;
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            background: #e2e8f0;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-weight: normal;
+        }
+
+        .badge.admin {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            color: #334155;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #475569;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Code Styling */
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "Courier New", Courier, monospace;
+            color: #d63384;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            aside {
+                display: none; /* In a real app, you'd add a toggle */
+            }
+            main {
+                margin-left: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <h2>Function Docs</h2>
+        <nav>
+            <ul>
+                <li><a href="#login">Login Page</a></li>
+                <li><a href="#logout">Logout Page</a></li>
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#hardware">Hardware Page</a></li>
+                <li><a href="#users">Users Page</a></li>
+                <li><a href="#history">History Page</a></li>
+                <li><a href="#backup">Backup Page</a></li>
+                <li><a href="#csv">CSV Import</a></li>
+                <li><a href="#header-footer">Header & Footer</a></li>
+                <li><a href="#config">Config Files</a></li>
+                <li><a href="#js">JS Assets</a></li>
+                <li><a href="#default">Default Login</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main>
+        <h1>PC Hardware Inventory System</h1>
+        <p class="subtitle">Function Reference Documentation v2.0</p>
+
+        <section id="login">
+            <h2>Login Page <span class="badge">login.php</span></h2>
+            <p><strong>Purpose:</strong> User authentication page.</p>
+            <h3>What's Inside:</h3>
+            <table>
+                <thead>
+                    <tr><th>Function/Feature</th><th>What It Does</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Login Form</td><td>Accepts username and password</td></tr>
+                    <tr><td><code>verifyPassword()</code></td><td>Checks if password is correct</td></tr>
+                    <tr><td><code>setUserSession()</code></td><td>Creates session after successful login</td></tr>
+                    <tr><td>Remember Me</td><td>Saves username in cookie for 30 days</td></tr>
+                    <tr><td>Password Toggle</td><td>Shows/hides password field</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="logout">
+            <h2>Logout Page <span class="badge">logout.php</span></h2>
+            <p><strong>Purpose:</strong> Ends user session.</p>
+            <table>
+                <thead><tr><th>Function/Feature</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td><code>clearSession()</code></td><td>Destroys all session data</td></tr>
+                    <tr><td>Redirect</td><td>Sends user back to login page</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="dashboard">
+            <h2>Dashboard <span class="badge">dashboard.php</span></h2>
+            <p><strong>Purpose:</strong> Shows overview and statistics.</p>
+            <h3>Key Features</h3>
+            <table>
+                <thead><tr><th>Function/Feature</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td><code>requireLogin()</code></td><td>Blocks access if not logged in</td></tr>
+                    <tr><td>Total Hardware Count</td><td>Shows number of hardware items</td></tr>
+                    <tr><td>Quantity Statistics</td><td>Shows total, available, in-use, damaged, repair counts</td></tr>
+                    <tr><td>Recent Hardware</td><td>Lists last 5 added items</td></tr>
+                    <tr><td>Low Stock Alert</td><td>Shows items with less than 2 available</td></tr>
+                    <tr><td>Categories Summary</td><td>Shows item count per category</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="hardware">
+            <h2>Hardware Page <span class="badge">pages/hardware.php</span></h2>
+            <p><strong>Purpose:</strong> Main page for managing hardware inventory.</p>
+
+            <h3>View Functions</h3>
+            <table>
+                <thead><tr><th>Function/Feature</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td>Hardware Table</td><td>Lists all hardware with details</td></tr>
+                    <tr><td>Search</td><td>Filters table by text</td></tr>
+                    <tr><td>Filter by Category/Brand/Model</td><td>Shows only selected attributes</td></tr>
+                    <tr><td>View Trash</td><td>Shows deleted items (admin only)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Add/Edit/Delete Functions</h3>
+            <table>
+                <thead><tr><th>Function/Feature</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td>Add Hardware Modal</td><td>Form to create new hardware</td></tr>
+                    <tr><td><code>editHardware()</code></td><td>Opens edit modal with item data</td></tr>
+                    <tr><td>Delete</td><td>Soft deletes item (can restore)</td></tr>
+                    <tr><td>Batch Delete</td><td>Deletes multiple selected items</td></tr>
+                    <tr><td>Import CSV</td><td>Bulk import from CSV file</td></tr>
+                    <tr><td><code>exportHardwareToCSV()</code></td><td>Creates CSV file for download</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="users">
+            <h2>Users Page <span class="badge admin">Admin Only</span></h2>
+            <p><strong>Purpose:</strong> Manage user accounts (pages/users.php).</p>
+            <table>
+                <thead><tr><th>Function/Feature</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td><code>requireAdmin()</code></td><td>Blocks non-admin users</td></tr>
+                    <tr><td><code>hashPassword()</code></td><td>Encrypts password before storage</td></tr>
+                    <tr><td><code>editUser()</code></td><td>Opens edit modal</td></tr>
+                    <tr><td>Self-Delete Prevention</td><td>Prevents deleting your own account</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="history">
+            <h2>History Page <span class="badge">pages/history.php</span></h2>
+            <p><strong>Purpose:</strong> Audit trail - shows all inventory changes.</p>
+            <h3>Display Information</h3>
+            <ul>
+                <li><strong>Date & Time:</strong> When change happened</li>
+                <li><strong>Hardware Item:</strong> Name and serial number</li>
+                <li><strong>Action Type:</strong> Added/Updated/Deleted/Restored</li>
+                <li><strong>Modified By:</strong> User who made change</li>
+                <li><strong>Quantity Change:</strong> How much changed (+/-)</li>
+            </ul>
+        </section>
+
+        <section id="backup">
+            <h2>Backup Page <span class="badge admin">Admin Only</span></h2>
+            <p><strong>Purpose:</strong> Database backup and restore (pages/backup.php).</p>
+            <table>
+                <thead><tr><th>Function/Feature</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td>Create Backup</td><td>Generates SQL backup file</td></tr>
+                    <tr><td>Download Backup</td><td>Downloads .sql file</td></tr>
+                    <tr><td>Restore Process</td><td>Replaces database with backup</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="csv">
+            <h2>CSV Import <span class="badge">pages/import_csv.php</span></h2>
+            <p><strong>Purpose:</strong> AJAX endpoint for importing CSV files.</p>
+            <p>Format required:</p>
+            <pre><code>name,category,type,brand,model,serial_number,unused_quantity,in_use_quantity,damaged_quantity,repair_quantity,location</code></pre>
+        </section>
+
+        <section id="header-footer">
+            <h2>Header & Footer</h2>
+            <p><strong>Common components included in all pages.</strong></p>
+            <h3>Header</h3>
+            <ul>
+                <li>Navigation Bar</li>
+                <li><code>getFlashMessage()</code>: Displays success/error messages</li>
+                <li>User Dropdown (Logout)</li>
+            </ul>
+            <h3>Footer</h3>
+            <ul>
+                <li><code>main.js</code>: Custom JavaScript functions</li>
+                <li>Double-Submit Prevention: Disables buttons after click</li>
+            </ul>
+        </section>
+
+        <section id="config">
+            <h2>Configuration Files</h2>
+            <h3>Database & Session</h3>
+            <table>
+                <thead><tr><th>Function</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td><code>getDBConnection()</code></td><td>Creates database connection</td></tr>
+                    <tr><td><code>isLoggedIn()</code></td><td>Checks if user is logged in</td></tr>
+                    <tr><td><code>isAdmin()</code></td><td>Checks if user is admin</td></tr>
+                </tbody>
+            </table>
+            <h3>Security (security.php)</h3>
+            <table>
+                <thead><tr><th>Function</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td><code>sanitizeInput()</code></td><td>Cleans user input</td></tr>
+                    <tr><td><code>hashPassword()</code></td><td>Encrypts password</td></tr>
+                    <tr><td><code>escapeOutput()</code></td><td>Prevents XSS attacks</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="js">
+            <h2>JavaScript Assets <span class="badge">assets/js/main.js</span></h2>
+            <table>
+                <thead><tr><th>Function</th><th>What It Does</th></tr></thead>
+                <tbody>
+                    <tr><td><code>showLoading()</code> / <code>hideLoading()</code></td><td>Controls loading spinner</td></tr>
+                    <tr><td><code>confirmDelete()</code></td><td>Confirms delete action</td></tr>
+                    <tr><td><code>searchTable()</code></td><td>Filters table rows</td></tr>
+                    <tr><td><code>showToast()</code></td><td>Shows notification</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="default">
+            <h2>Default Login Credentials</h2>
+            <table>
+                <thead><tr><th>Role</th><th>Username</th><th>Password</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Admin</strong></td><td>admin</td><td>password123</td></tr>
+                    <tr><td><strong>Staff</strong></td><td>staff01</td><td>password123</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        // Smooth scrolling for sidebar links
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Active link highlighter
+        window.addEventListener('scroll', () => {
+            let current = '';
+            document.querySelectorAll('section').forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            document.querySelectorAll('nav a').forEach(li => {
+                li.classList.remove('active');
+                if (li.getAttribute('href').includes(current)) {
+                    li.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
