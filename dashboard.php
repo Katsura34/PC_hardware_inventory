@@ -16,7 +16,8 @@ $stats = [
     'in_use' => 0,
     'available' => 0,
     'damaged' => 0,
-    'repair' => 0
+    'repair' => 0,
+    'out_of_stock' => 0
 ];
 
 // Total hardware items (exclude soft-deleted)
@@ -56,6 +57,17 @@ $result = $conn->query("SELECT h.*, c.name as category_name FROM hardware h
 while ($row = $result->fetch_assoc()) {
     $lowStock[] = $row;
 }
+
+// Get out of stock items (unused quantity = 0, exclude soft-deleted)
+$outOfStock = [];
+$result = $conn->query("SELECT h.*, c.name as category_name FROM hardware h 
+                       LEFT JOIN categories c ON h.category_id = c.id 
+                       WHERE h.unused_quantity = 0 AND h.deleted_at IS NULL
+                       ORDER BY h.name ASC");
+while ($row = $result->fetch_assoc()) {
+    $outOfStock[] = $row;
+}
+$stats['out_of_stock'] = count($outOfStock);
 
 // Get categories summary (exclude soft-deleted)
 $categories = [];
@@ -250,6 +262,59 @@ include 'includes/header.php';
                                     <span class="badge bg-warning">Low Stock</span>
                                     <?php endif; ?>
                                 </td>
+                            </tr>
+                            <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Out of Stock Items -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card table-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-x-circle text-danger"></i> Out of Stock Items</h5>
+                <span class="badge bg-danger"><?php echo count($outOfStock); ?> items</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Total Qty</th>
+                                <th>In Use</th>
+                                <th>Damaged</th>
+                                <th>In Repair</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($outOfStock)): ?>
+                            <tr>
+                                <td colspan="6" class="text-center text-success py-4">
+                                    <i class="bi bi-check-circle"></i> No items out of stock!
+                                </td>
+                            </tr>
+                            <?php else: ?>
+                            <?php foreach ($outOfStock as $item): ?>
+                            <tr>
+                                <td>
+                                    <strong><?php echo escapeOutput($item['name']); ?></strong>
+                                    <?php if (!empty($item['brand'])): ?>
+                                    <br><small class="text-muted"><?php echo escapeOutput($item['brand']); ?></small>
+                                    <?php endif; ?>
+                                </td>
+                                <td><span class="badge bg-primary"><?php echo escapeOutput($item['category_name']); ?></span></td>
+                                <td><?php echo $item['total_quantity']; ?></td>
+                                <td><span class="badge bg-warning"><?php echo $item['in_use_quantity']; ?></span></td>
+                                <td><span class="badge bg-danger"><?php echo $item['damaged_quantity']; ?></span></td>
+                                <td><span class="badge bg-secondary"><?php echo $item['repair_quantity']; ?></span></td>
                             </tr>
                             <?php endforeach; ?>
                             <?php endif; ?>
