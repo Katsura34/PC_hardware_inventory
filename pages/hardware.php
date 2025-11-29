@@ -837,7 +837,7 @@ include '../includes/header.php';
                         </td>
                         <td class="d-none d-lg-table-cell"><small class="text-muted"><?php echo escapeOutput($item['serial_number'] ?: '-'); ?></small></td>
                         <td>
-                            <?php if ($item['total_quantity'] == 0): ?>
+                            <?php if ((int)$item['total_quantity'] === 0): ?>
                             <span class="badge bg-danger">Out of Stock</span>
                             <?php else: ?>
                             <span class="badge bg-info"><?php echo $item['total_quantity']; ?></span>
