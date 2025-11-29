@@ -179,6 +179,37 @@ include 'includes/header.php';
     </div>
 </div>
 
+<!-- Charts Section - HCI Principle: Visibility & Mapping -->
+<div class="row g-3 mb-4" role="region" aria-label="Inventory Charts">
+    <!-- Inventory Status Distribution Chart -->
+    <div class="col-lg-6">
+        <div class="card table-card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Inventory Status Distribution</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div class="chart-container" style="position: relative; width: 100%; max-width: 350px;">
+                    <canvas id="statusChart" aria-label="Inventory status distribution chart" role="img"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Category Distribution Chart -->
+    <div class="col-lg-6">
+        <div class="card table-card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Items by Category</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div class="chart-container" style="position: relative; width: 100%; height: 280px;">
+                    <canvas id="categoryChart" aria-label="Items by category chart" role="img"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <!-- Recent Hardware -->
     <div class="col-lg-6">
@@ -364,5 +395,199 @@ include 'includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- Chart.js Initialization -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inventory Status Distribution - Doughnut Chart
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        // Data from PHP
+        const statusData = {
+            available: <?php echo (int)$stats['available']; ?>,
+            inUse: <?php echo (int)$stats['in_use']; ?>,
+            damaged: <?php echo (int)$stats['damaged']; ?>,
+            repair: <?php echo (int)$stats['repair']; ?>
+        };
+        
+        // Only create chart if there's data
+        const totalStatus = statusData.available + statusData.inUse + statusData.damaged + statusData.repair;
+        
+        if (totalStatus > 0) {
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Available', 'In Use', 'Damaged', 'In Repair'],
+                    datasets: [{
+                        data: [statusData.available, statusData.inUse, statusData.damaged, statusData.repair],
+                        backgroundColor: [
+                            '#059669', // Success green - Available
+                            '#d97706', // Warning amber - In Use
+                            '#dc2626', // Danger red - Damaged
+                            '#64748b'  // Secondary gray - In Repair
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverBorderWidth: 4,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '55%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: {
+                                family: "'Inter', sans-serif",
+                                size: 14,
+                                weight: '600'
+                            },
+                            bodyFont: {
+                                family: "'Inter', sans-serif",
+                                size: 13
+                            },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = Math.round((value / totalStatus) * 100);
+                                    return context.label + ': ' + value + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+        } else {
+            // Show empty state message
+            statusCtx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i><p class="mb-0">No inventory data available</p></div>';
+        }
+    }
+    
+    // Category Distribution - Bar Chart
+    const categoryCtx = document.getElementById('categoryChart');
+    if (categoryCtx) {
+        // Data from PHP
+        const categoryLabels = [<?php echo implode(',', array_map(function($c) { return "'" . addslashes($c['name']) . "'"; }, $categories)); ?>];
+        const categoryCounts = [<?php echo implode(',', array_map(function($c) { return (int)($c['count'] ?? 0); }, $categories)); ?>];
+        const categoryTotals = [<?php echo implode(',', array_map(function($c) { return (int)($c['total'] ?? 0); }, $categories)); ?>];
+        
+        if (categoryLabels.length > 0 && categoryCounts.some(c => c > 0)) {
+            new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        label: 'Number of Items',
+                        data: categoryCounts,
+                        backgroundColor: '#2563eb',
+                        borderColor: '#1d4ed8',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#1d4ed8'
+                    }, {
+                        label: 'Total Quantity',
+                        data: categoryTotals,
+                        backgroundColor: '#059669',
+                        borderColor: '#047857',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#047857'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 11
+                                },
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#e2e8f0'
+                            },
+                            ticks: {
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 11
+                                },
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'rect',
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: {
+                                family: "'Inter', sans-serif",
+                                size: 14,
+                                weight: '600'
+                            },
+                            bodyFont: {
+                                family: "'Inter', sans-serif",
+                                size: 13
+                            },
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        } else {
+            // Show empty state message
+            categoryCtx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i><p class="mb-0">No category data available</p></div>';
+        }
+    }
+});
+</script>
 
 <?php include 'includes/footer.php'; ?>
