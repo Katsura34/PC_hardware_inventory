@@ -836,7 +836,13 @@ include '../includes/header.php';
                             </small>
                         </td>
                         <td class="d-none d-lg-table-cell"><small class="text-muted"><?php echo escapeOutput($item['serial_number'] ?: '-'); ?></small></td>
-                        <td><span class="badge bg-info"><?php echo $item['total_quantity']; ?></span></td>
+                        <td>
+                            <?php if ($item['total_quantity'] == 0): ?>
+                            <span class="badge bg-danger">Out of Stock</span>
+                            <?php else: ?>
+                            <span class="badge bg-info"><?php echo $item['total_quantity']; ?></span>
+                            <?php endif; ?>
+                        </td>
                         <td><span class="badge bg-success"><?php echo $item['unused_quantity']; ?></span></td>
                         <td class="d-none d-md-table-cell"><span class="badge bg-warning"><?php echo $item['in_use_quantity']; ?></span></td>
                         <td class="d-none d-lg-table-cell"><span class="badge bg-danger"><?php echo $item['damaged_quantity']; ?></span></td>
