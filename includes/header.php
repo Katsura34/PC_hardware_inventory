@@ -31,7 +31,7 @@ if (!isset($pageTitle)) {
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/theme-hci.css">
     
     <!-- Chart.js for Dashboard Graphs -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-0S8rEECqrZDECM6j9yUtYSgU8dqj8FdChJPh/N6+4nxwJQU7X1MkJyVheByjZ3cu" crossorigin="anonymous"></script>
     
     <!-- Base path for JavaScript -->
     <script>window.BASE_PATH = '<?php echo BASE_PATH; ?>';</script>

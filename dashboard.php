@@ -488,10 +488,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Category Distribution - Bar Chart
     const categoryCtx = document.getElementById('categoryChart');
     if (categoryCtx) {
-        // Data from PHP
-        const categoryLabels = [<?php echo implode(',', array_map(function($c) { return "'" . addslashes($c['name']) . "'"; }, $categories)); ?>];
-        const categoryCounts = [<?php echo implode(',', array_map(function($c) { return (int)($c['count'] ?? 0); }, $categories)); ?>];
-        const categoryTotals = [<?php echo implode(',', array_map(function($c) { return (int)($c['total'] ?? 0); }, $categories)); ?>];
+        // Data from PHP - using json_encode for safe JavaScript injection
+        const categoryLabels = <?php echo json_encode(array_map(function($c) { return $c['name']; }, $categories), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        const categoryCounts = <?php echo json_encode(array_map(function($c) { return (int)($c['count'] ?? 0); }, $categories)); ?>;
+        const categoryTotals = <?php echo json_encode(array_map(function($c) { return (int)($c['total'] ?? 0); }, $categories)); ?>;
         
         if (categoryLabels.length > 0 && categoryCounts.some(c => c > 0)) {
             new Chart(categoryCtx, {
