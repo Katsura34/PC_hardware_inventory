@@ -58,16 +58,21 @@ while ($row = $result->fetch_assoc()) {
     $lowStock[] = $row;
 }
 
+// Get out of stock count
+$result = $conn->query("SELECT COUNT(*) as count FROM hardware WHERE unused_quantity = 0 AND deleted_at IS NULL");
+if ($row = $result->fetch_assoc()) {
+    $stats['out_of_stock'] = $row['count'];
+}
+
 // Get out of stock items (unused quantity = 0, exclude soft-deleted)
 $outOfStock = [];
 $result = $conn->query("SELECT h.*, c.name as category_name FROM hardware h 
                        LEFT JOIN categories c ON h.category_id = c.id 
                        WHERE h.unused_quantity = 0 AND h.deleted_at IS NULL
-                       ORDER BY h.name ASC");
+                       ORDER BY h.name ASC LIMIT 10");
 while ($row = $result->fetch_assoc()) {
     $outOfStock[] = $row;
 }
-$stats['out_of_stock'] = count($outOfStock);
 
 // Get categories summary (exclude soft-deleted)
 $categories = [];
