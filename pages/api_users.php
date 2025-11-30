@@ -37,6 +37,8 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 // Set timezone to Philippines (Asia/Manila, UTC+8) for all datetime operations
+// NOTE: MySQL NOW() stores timestamps in the server's local timezone (Philippines),
+// so we must specify $ph_timezone when parsing database timestamps to get correct Unix timestamps
 $ph_timezone = new DateTimeZone('Asia/Manila');
 $current_ph_time = new DateTime('now', $ph_timezone);
 $current_ph_timestamp = $current_ph_time->getTimestamp();
@@ -48,23 +50,20 @@ while ($row = $result->fetch_assoc()) {
     $is_user_active = !empty($row['is_active']) && $row['is_active'] == 1;
     
     // Also check if last_activity was within the timeout period for accuracy
-    // Use Philippines timezone for consistency
     if ($is_user_active && !empty($row['last_activity'])) {
-        $last_activity_datetime = new DateTime($row['last_activity']);
-        $last_activity_datetime->setTimezone($ph_timezone);
+        $last_activity_datetime = new DateTime($row['last_activity'], $ph_timezone);
         $last_activity_timestamp = $last_activity_datetime->getTimestamp();
         if ($current_ph_timestamp - $last_activity_timestamp > $timeout_seconds) {
             $is_user_active = false;
         }
     }
     
-    // Calculate session start timestamp for live session duration (Philippines time)
+    // Calculate session start timestamp for live session duration
     $session_start_epoch = null;
     $server_now_epoch = $current_ph_timestamp;
     $session_start_display = null;
     if ($is_user_active && !empty($row['session_start'])) {
-        $session_datetime = new DateTime($row['session_start']);
-        $session_datetime->setTimezone($ph_timezone);
+        $session_datetime = new DateTime($row['session_start'], $ph_timezone);
         $session_start_epoch = $session_datetime->getTimestamp();
         $session_start_display = $session_datetime->format('M d, Y H:i');
     }
@@ -86,17 +85,15 @@ while ($row = $result->fetch_assoc()) {
         }
     }
     
-    // Format last login for display using Philippines timezone
+    // Format last login for display
     $last_login_display = null;
     if (!empty($row['last_login'])) {
-        $last_login_dt = new DateTime($row['last_login']);
-        $last_login_dt->setTimezone($ph_timezone);
+        $last_login_dt = new DateTime($row['last_login'], $ph_timezone);
         $last_login_display = $last_login_dt->format('M d, Y H:i');
     }
     
-    // Format date_created using Philippines timezone
-    $date_created_dt = new DateTime($row['date_created']);
-    $date_created_dt->setTimezone($ph_timezone);
+    // Format date_created for display
+    $date_created_dt = new DateTime($row['date_created'], $ph_timezone);
     $date_created_display = $date_created_dt->format('M d, Y');
     
     $users[] = [
