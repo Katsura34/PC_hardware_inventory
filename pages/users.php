@@ -208,6 +208,10 @@ include '../includes/header.php';
                     <?php else: ?>
                     <?php foreach ($users as $user): ?>
                     <?php
+                    // Set timezone to Philippines (Asia/Manila, UTC+8) for all datetime operations
+                    // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
+                    $ph_timezone = new DateTimeZone('Asia/Manila');
+                    
                     // Format login duration for display
                     $login_duration_display = 'Never logged in';
                     if (!empty($user['last_login_duration'])) {
@@ -255,10 +259,8 @@ include '../includes/header.php';
                             $is_user_active = !empty($user['is_active']) && $user['is_active'] == 1;
                             // Also check if last_activity was within the timeout period for accuracy
                             if ($is_user_active && !empty($user['last_activity'])) {
-                                // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
-                                $ph_tz = new DateTimeZone('Asia/Manila');
-                                $last_activity_dt = new DateTime($user['last_activity'], $ph_tz);
-                                $current_dt = new DateTime('now', $ph_tz);
+                                $last_activity_dt = new DateTime($user['last_activity'], $ph_timezone);
+                                $current_dt = new DateTime('now', $ph_timezone);
                                 $timeout_seconds = SESSION_TIMEOUT_MINUTES * 60;
                                 if ($current_dt->getTimestamp() - $last_activity_dt->getTimestamp() > $timeout_seconds) {
                                     $is_user_active = false;
@@ -293,11 +295,7 @@ include '../includes/header.php';
                         <td data-label="Session Duration" class="d-none d-lg-table-cell">
                             <?php if ($is_user_active && !empty($user['session_start'])): ?>
                             <?php 
-                            // Set timezone to Philippines (Asia/Manila, UTC+8)
-                            $ph_timezone = new DateTimeZone('Asia/Manila');
-                            
                             // Create DateTime object from session_start timestamp
-                            // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
                             // We must specify the timezone when parsing to get the correct Unix timestamp
                             $session_datetime = new DateTime($user['session_start'], $ph_timezone);
                             $sessionStartEpoch = $session_datetime->getTimestamp();
