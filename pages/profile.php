@@ -20,6 +20,11 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
+// Redirect if user not found
+if (!$user) {
+    redirectWithMessage(BASE_PATH . 'logout.php', 'User session invalid. Please log in again.', 'error');
+}
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';

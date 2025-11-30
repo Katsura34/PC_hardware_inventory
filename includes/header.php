@@ -133,6 +133,13 @@ if (!isset($pageTitle)) {
                                     Profile Settings
                                 </a>
                             </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="#" data-bs-toggle="modal" data-bs-target="#whatsNewModal">
+                                    <i class="bi bi-megaphone" aria-hidden="true"></i>
+                                    What's New
+                                    <span class="badge bg-primary ms-auto">Updates</span>
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="<?php echo BASE_PATH; ?>logout.php">
@@ -146,6 +153,105 @@ if (!isset($pageTitle)) {
             </div>
         </div>
     </nav>
+    
+    <!-- What's New Modal -->
+    <div class="modal fade" id="whatsNewModal" tabindex="-1" aria-labelledby="whatsNewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="whatsNewModalLabel">
+                        <i class="bi bi-megaphone me-2" aria-hidden="true"></i>
+                        What's New - System Updates
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Update Log Entries -->
+                    <div class="update-log">
+                        <!-- Latest Update -->
+                        <div class="update-entry mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-success me-2">NEW</span>
+                                <h6 class="mb-0">Version 2.1 - November 2025</h6>
+                            </div>
+                            <ul class="list-unstyled ms-3">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    <strong>Profile Settings:</strong> Users can now change their username, full name, and password from the Profile Settings page.
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    <strong>Password Confirmation:</strong> Password changes now require confirmation before being applied.
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    <strong>What's New Section:</strong> Added this updates log so users can see recent system changes.
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Previous Update -->
+                        <div class="update-entry mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-secondary me-2">v2.0</span>
+                                <h6 class="mb-0">Version 2.0 - Session Tracking</h6>
+                            </div>
+                            <ul class="list-unstyled ms-3">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-primary me-2"></i>
+                                    <strong>Live Session Duration:</strong> Admins can now see live session duration for online users in the Users page.
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-primary me-2"></i>
+                                    <strong>User Status Tracking:</strong> Real-time online/offline status for all users.
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-primary me-2"></i>
+                                    <strong>Enhanced UI:</strong> Improved navigation and user experience throughout the system.
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Initial Release -->
+                        <div class="update-entry">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-secondary me-2">v1.0</span>
+                                <h6 class="mb-0">Initial Release</h6>
+                            </div>
+                            <ul class="list-unstyled ms-3">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-primary me-2"></i>
+                                    <strong>Hardware Inventory:</strong> Add, edit, and manage PC hardware inventory.
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-primary me-2"></i>
+                                    <strong>User Management:</strong> Admin can manage staff accounts.
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-primary me-2"></i>
+                                    <strong>Audit Trail:</strong> Track all inventory changes with detailed history.
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-primary me-2"></i>
+                                    <strong>Backup & Restore:</strong> Database backup functionality for admins.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Got it!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <?php endif; ?>
     
     <!-- Main Content Area -->
