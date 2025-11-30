@@ -6,6 +6,7 @@
 -- - last_login_duration: Duration of the user's last session in seconds
 -- - is_active: Whether user is currently logged in (1) or not (0)
 -- - last_activity: Timestamp of user's last activity for timeout detection
+-- - session_start: Timestamp when the current session started (for live duration counting)
 --
 -- Run this migration if you have an existing database
 -- ==========================================
@@ -24,9 +25,13 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active TINYINT(1) DEFAULT 0;
 -- Add last_activity column to track user's last activity
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_activity TIMESTAMP NULL DEFAULT NULL;
 
+-- Add session_start column to track when current session started (for live duration counting)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS session_start TIMESTAMP NULL DEFAULT NULL;
+
 -- Note: For MySQL versions that don't support IF NOT EXISTS, use:
 -- ALTER TABLE users ADD COLUMN last_login TIMESTAMP NULL DEFAULT NULL;
 -- ALTER TABLE users ADD COLUMN last_login_duration INT NULL DEFAULT NULL;
 -- ALTER TABLE users ADD COLUMN is_active TINYINT(1) DEFAULT 0;
 -- ALTER TABLE users ADD COLUMN last_activity TIMESTAMP NULL DEFAULT NULL;
+-- ALTER TABLE users ADD COLUMN session_start TIMESTAMP NULL DEFAULT NULL;
 -- (These will fail harmlessly if columns already exist)

@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS users (
     last_login TIMESTAMP NULL DEFAULT NULL,   -- tracks when user last logged in
     last_login_duration INT NULL DEFAULT NULL, -- stores duration of last session in seconds
     is_active TINYINT(1) DEFAULT 0,           -- 1 if user is currently logged in, 0 if not
-    last_activity TIMESTAMP NULL DEFAULT NULL -- tracks user's last activity for timeout detection
+    last_activity TIMESTAMP NULL DEFAULT NULL, -- tracks user's last activity for timeout detection
+    session_start TIMESTAMP NULL DEFAULT NULL  -- tracks when current session started (for live duration counting)
 );
 
 -- Sample Users (passwords are hashed using password_hash in PHP)
