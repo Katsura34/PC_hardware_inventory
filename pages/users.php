@@ -478,6 +478,10 @@ function updateLiveSessionDurations() {
         var loginTime = parseInt(badge.getAttribute('data-login-time'), 10);
         if (loginTime) {
             var duration = currentTime - loginTime;
+            // Ensure duration is not negative (in case of clock sync issues)
+            if (duration < 0) {
+                duration = 0;
+            }
             var durationSpan = badge.querySelector('.live-duration');
             if (durationSpan) {
                 durationSpan.textContent = formatDuration(duration);
@@ -487,12 +491,13 @@ function updateLiveSessionDurations() {
 }
 
 // Initialize live session counters and update every second
+var liveSessionIntervalId = null;
 document.addEventListener('DOMContentLoaded', function() {
     // Initial update
     updateLiveSessionDurations();
     
-    // Update every second
-    setInterval(updateLiveSessionDurations, 1000);
+    // Update every second (store interval ID for potential cleanup)
+    liveSessionIntervalId = setInterval(updateLiveSessionDurations, 1000);
 });
 </script>
 
