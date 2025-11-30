@@ -185,7 +185,7 @@ include '../includes/header.php';
                         <th scope="col">Role</th>
                         <th scope="col">Status</th>
                         <th scope="col" class="d-none d-lg-table-cell">Last Login</th>
-                        <th scope="col" class="d-table-cell">Session Duration</th>
+                        <th scope="col">Session Duration</th>
                         <th scope="col" class="d-none d-xl-table-cell">Date Created</th>
                         <th scope="col">Actions</th>
                     </tr>

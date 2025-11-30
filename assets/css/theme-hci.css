@@ -1058,9 +1058,7 @@ body.has-topbar {
 /* Mobile dropdown menu styling */
 @media (max-width: 767.98px) {
     /* Session Duration badge styling for mobile */
-    .live-session-badge,
-    td[data-label="Session Duration"] .badge.bg-success,
-    td[data-label="Session Duration"] .badge.bg-secondary {
+    td[data-label="Session Duration"] .badge {
         font-size: 10px;
         padding: 3px 6px;
     }
@@ -1072,11 +1070,6 @@ body.has-topbar {
     
     td[data-label="Session Duration"] small {
         font-size: 11px;
-    }
-    
-    td[data-label="Session Duration"] .badge {
-        font-size: 10px;
-        padding: 2px 5px;
     }
     
     td[data-label="Session Duration"] .badge i {
