@@ -284,11 +284,16 @@ include '../includes/header.php';
                         </td>
                         <td data-label="Session Duration" class="d-none d-lg-table-cell">
                             <?php if ($is_user_active && !empty($user['last_login'])): ?>
+                            <?php 
+                            // Calculate initial duration on server side to avoid client/server clock mismatch
+                            $login_timestamp = strtotime($user['last_login']);
+                            $initial_duration = max(0, time() - $login_timestamp);
+                            ?>
                             <!-- Live session counter for online users -->
                             <small>
                                 <span class="badge bg-success live-session-badge" 
-                                      data-login-time="<?php echo strtotime($user['last_login']); ?>"
-                                      title="Current session started at <?php echo date('M d, Y H:i', strtotime($user['last_login'])); ?>">
+                                      data-initial-duration="<?php echo $initial_duration; ?>"
+                                      title="Current session started at <?php echo date('M d, Y H:i', $login_timestamp); ?>">
                                     <i class="bi bi-play-circle me-1" aria-hidden="true"></i>
                                     <span class="live-duration">Calculating...</span>
                                 </span>
@@ -454,6 +459,9 @@ if (!window.usersPageKeyboardHandlerAdded) {
 }
 
 // ============ Live Session Duration Counter ============
+// Track when page was loaded (for calculating elapsed time)
+var pageLoadTime = Date.now();
+
 // Format duration in seconds to human-readable string
 function formatDuration(seconds) {
     if (seconds < 60) {
@@ -472,16 +480,15 @@ function formatDuration(seconds) {
 // Update all live session duration counters
 function updateLiveSessionDurations() {
     var badges = document.querySelectorAll('.live-session-badge');
-    var currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+    // Calculate seconds elapsed since page load
+    var elapsedSincePageLoad = Math.floor((Date.now() - pageLoadTime) / 1000);
     
     badges.forEach(function(badge) {
-        var loginTime = parseInt(badge.getAttribute('data-login-time'), 10);
-        if (loginTime) {
-            var duration = currentTime - loginTime;
-            // Ensure duration is not negative (in case of clock sync issues)
-            if (duration < 0) {
-                duration = 0;
-            }
+        // Get initial duration calculated by server (avoids clock mismatch issues)
+        var initialDuration = parseInt(badge.getAttribute('data-initial-duration'), 10);
+        if (!isNaN(initialDuration) && initialDuration >= 0) {
+            // Total duration = server-calculated initial duration + time elapsed since page load
+            var duration = initialDuration + elapsedSincePageLoad;
             var durationSpan = badge.querySelector('.live-duration');
             if (durationSpan) {
                 durationSpan.textContent = formatDuration(duration);
