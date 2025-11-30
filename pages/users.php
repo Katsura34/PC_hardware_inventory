@@ -482,14 +482,10 @@ if (!window.usersPageKeyboardHandlerAdded) {
 }
 
 // ============ Live Session Duration Counter ============
-// Get current time in Philippines timezone (Asia/Manila, UTC+8)
-function getPhilippinesTime() {
-    // Get current UTC time
-    var now = new Date();
-    // Philippines is UTC+8, so add 8 hours in milliseconds
-    var utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-    var philippinesOffset = 8 * 60 * 60000; // 8 hours in milliseconds
-    return utcTime + philippinesOffset;
+// Get current time in milliseconds (Unix timestamp)
+// The server provides login_timestamp as Unix timestamp, so we compare directly with Date.now()
+function getCurrentTimeMs() {
+    return Date.now();
 }
 
 // Format duration in seconds to human-readable string
@@ -510,15 +506,15 @@ function formatDuration(seconds) {
 // Update all live session duration counters
 function updateLiveSessionDurations() {
     var badges = document.querySelectorAll('.live-session-badge');
-    // Get current Philippines time in milliseconds
-    var currentPhTime = getPhilippinesTime();
+    // Get current time in milliseconds (Unix timestamp)
+    var currentTimeMs = getCurrentTimeMs();
     
     badges.forEach(function(badge) {
-        // Get login timestamp in milliseconds (already converted to PH time on server)
+        // Get login timestamp in milliseconds (Unix timestamp from server)
         var loginTimestamp = parseInt(badge.getAttribute('data-login-timestamp'), 10);
         if (!isNaN(loginTimestamp) && loginTimestamp > 0) {
-            // Calculate duration: current Philippines time - login timestamp
-            var durationMs = currentPhTime - loginTimestamp;
+            // Calculate duration: current time - login time
+            var durationMs = currentTimeMs - loginTimestamp;
             var duration = Math.max(0, Math.floor(durationMs / 1000));
             var durationSpan = badge.querySelector('.live-duration');
             if (durationSpan) {
