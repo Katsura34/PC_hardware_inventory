@@ -426,6 +426,18 @@ include '../includes/header.php';
 </div>
 
 <script>
+// Server time synchronization for accurate live duration
+// Server provides current time in milliseconds (Philippines timezone)
+<?php
+// Provide server time to JavaScript for synchronization
+$ph_timezone_global = new DateTimeZone('Asia/Manila');
+$server_time_now = new DateTime('now', $ph_timezone_global);
+$server_timestamp_ms = $server_time_now->getTimestamp() * 1000;
+?>
+var serverTimeAtLoad = <?php echo $server_timestamp_ms; ?>;
+var clientTimeAtLoad = Date.now();
+var serverClientTimeOffset = serverTimeAtLoad - clientTimeAtLoad;
+
 // Toggle Search Filter Panel
 function toggleSearchFilter() {
     var panel = document.getElementById('searchFilterPanel');
@@ -482,10 +494,11 @@ if (!window.usersPageKeyboardHandlerAdded) {
 }
 
 // ============ Live Session Duration Counter ============
-// Get current time in milliseconds (Unix timestamp)
-// The server provides login_timestamp as Unix timestamp, so we compare directly with Date.now()
+// Get current time synchronized with server (accounts for client/server time differences)
+// This ensures the timer doesn't "reset" or show incorrect values on page refresh
 function getCurrentTimeMs() {
-    return Date.now();
+    // Apply server-client time offset to get accurate server time
+    return Date.now() + serverClientTimeOffset;
 }
 
 // Format duration in seconds to human-readable string
@@ -626,6 +639,12 @@ function refreshUsersTable() {
             if (!data.success) {
                 console.error('API error:', data.error);
                 return;
+            }
+            
+            // Update server-client time offset for accurate live duration
+            // Validate that server_time is a valid positive timestamp
+            if (data.server_time && typeof data.server_time === 'number' && data.server_time > 0) {
+                serverClientTimeOffset = data.server_time - Date.now();
             }
             
             var tbody = document.querySelector('#usersTable tbody');
