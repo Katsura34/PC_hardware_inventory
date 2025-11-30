@@ -954,33 +954,33 @@ function clearSession() { ... }    // Destroy session
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INT AUTO_INCREMENT | Primary key |
-| username | VARCHAR(50) UNIQUE | Login name |
+| username | VARCHAR(100) UNIQUE | Login name |
 | password | VARCHAR(255) | Hashed password |
-| full_name | VARCHAR(100) | Display name |
-| role | ENUM('admin','staff') | User role |
+| full_name | VARCHAR(255) | Display name |
+| role | VARCHAR(50) | User role (admin/staff) |
 | is_active | TINYINT(1) | Online status |
-| last_login | DATETIME | Last login time |
-| session_start | DATETIME | Current session start |
-| last_activity | DATETIME | Last activity time |
+| last_login | TIMESTAMP | Last login time |
+| session_start | TIMESTAMP | Current session start |
+| last_activity | TIMESTAMP | Last activity time |
 | last_login_duration | INT | Previous session duration (seconds) |
-| date_created | DATETIME | Account creation time |
+| date_created | TIMESTAMP | Account creation time |
 
 ### categories
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INT AUTO_INCREMENT | Primary key |
-| name | VARCHAR(50) | Category name |
-| description | TEXT | Category description |
+| name | VARCHAR(100) UNIQUE | Category name |
+| description | VARCHAR(255) | Category description |
 
 ### hardware
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INT AUTO_INCREMENT | Primary key |
-| name | VARCHAR(100) | Hardware name |
+| name | VARCHAR(255) | Hardware name |
 | category_id | INT | Foreign key to categories |
-| type | VARCHAR(50) | Hardware type |
-| brand | VARCHAR(50) | Manufacturer |
-| model | VARCHAR(50) | Model number |
+| type | VARCHAR(100) | Hardware type |
+| brand | VARCHAR(100) | Manufacturer |
+| model | VARCHAR(100) | Model number |
 | serial_number | VARCHAR(100) | Serial number |
 | total_quantity | INT | Sum of all quantities |
 | unused_quantity | INT | Available items |
@@ -988,20 +988,20 @@ function clearSession() { ... }    // Destroy session
 | damaged_quantity | INT | Broken items |
 | repair_quantity | INT | Items in repair |
 | location | VARCHAR(100) | Physical location |
-| date_added | DATETIME | Creation time |
-| deleted_at | DATETIME | Soft delete timestamp |
+| date_added | TIMESTAMP | Creation time |
+| deleted_at | TIMESTAMP | Soft delete timestamp |
 
 ### inventory_history
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INT AUTO_INCREMENT | Primary key |
-| hardware_id | INT | Reference to hardware |
-| hardware_name | VARCHAR(100) | Denormalized name |
-| category_name | VARCHAR(50) | Denormalized category |
+| hardware_id | INT | Reference to hardware (optional) |
+| hardware_name | VARCHAR(255) | Denormalized name |
+| category_name | VARCHAR(100) | Denormalized category |
 | serial_number | VARCHAR(100) | Denormalized serial |
-| user_id | INT | Reference to user |
-| user_name | VARCHAR(100) | Denormalized user name |
-| action_type | ENUM | Added, Updated, Deleted, Restored |
+| user_id | INT | Reference to user (optional) |
+| user_name | VARCHAR(255) | Denormalized user name |
+| action_type | VARCHAR(50) | Added, Updated, Deleted, Restored |
 | quantity_change | INT | Net quantity change |
 | old_unused | INT | Previous unused qty |
 | old_in_use | INT | Previous in-use qty |
@@ -1011,7 +1011,7 @@ function clearSession() { ... }    // Destroy session
 | new_in_use | INT | New in-use qty |
 | new_damaged | INT | New damaged qty |
 | new_repair | INT | New repair qty |
-| action_date | DATETIME | When action occurred |
+| action_date | TIMESTAMP | When action occurred |
 
 ---
 
