@@ -1219,94 +1219,15 @@ include '../includes/header.php';
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-upload"></i> Import Hardware from CSV</h5>
+                <h5 class="modal-title"><i class="bi bi-upload"></i> Import Hardware from CSV
+                    <button type="button" class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="modal" data-bs-target="#importInstructionsModal" title="View Import Instructions">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="importCSVForm" enctype="multipart/form-data">
                 <div class="modal-body">
-                    <!-- Instructions Section -->
-                    <div class="card border-info mb-3">
-                        <div class="card-header bg-info text-white">
-                            <i class="bi bi-info-circle"></i> <strong>How to Import CSV</strong>
-                        </div>
-                        <div class="card-body">
-                            <h6 class="card-title"><i class="bi bi-1-circle"></i> Prepare Your CSV File</h6>
-                            <p class="card-text">Your CSV file must have the following columns in this exact order:</p>
-                            <ol class="mb-3">
-                                <li><strong>name</strong> - Hardware name (required)</li>
-                                <li><strong>category</strong> - Category name like CPU, RAM, SSD, Monitor (required)</li>
-                                <li><strong>type</strong> - Hardware type/generation</li>
-                                <li><strong>brand</strong> - Manufacturer brand</li>
-                                <li><strong>model</strong> - Model number/name</li>
-                                <li><strong>serial_number</strong> - Unique serial number</li>
-                                <li><strong>unused_quantity</strong> - Available/unused quantity (number)</li>
-                                <li><strong>in_use_quantity</strong> - Quantity currently in use (number)</li>
-                                <li><strong>damaged_quantity</strong> - Damaged quantity (number)</li>
-                                <li><strong>repair_quantity</strong> - Quantity under repair (number)</li>
-                                <li><strong>location</strong> - Storage location (optional if default is selected)</li>
-                            </ol>
-                            
-                            <h6 class="card-title"><i class="bi bi-2-circle"></i> CSV Format Example</h6>
-                            <div class="table-responsive mb-3">
-                                <table class="table table-sm table-bordered table-striped">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>name</th>
-                                            <th>category</th>
-                                            <th>type</th>
-                                            <th>brand</th>
-                                            <th>model</th>
-                                            <th>serial_number</th>
-                                            <th>unused_quantity</th>
-                                            <th>in_use_quantity</th>
-                                            <th>damaged_quantity</th>
-                                            <th>repair_quantity</th>
-                                            <th>location</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Intel Core i7</td>
-                                            <td>CPU</td>
-                                            <td>12th Gen</td>
-                                            <td>Intel</td>
-                                            <td>i7-12700K</td>
-                                            <td>SN123456</td>
-                                            <td>5</td>
-                                            <td>3</td>
-                                            <td>0</td>
-                                            <td>1</td>
-                                            <td>Lab 1</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Kingston RAM</td>
-                                            <td>RAM</td>
-                                            <td>DDR4</td>
-                                            <td>Kingston</td>
-                                            <td>HyperX 16GB</td>
-                                            <td>SN789012</td>
-                                            <td>10</td>
-                                            <td>5</td>
-                                            <td>1</td>
-                                            <td>0</td>
-                                            <td>Lab 2</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <div class="alert alert-warning mb-0">
-                                <i class="bi bi-exclamation-triangle"></i> <strong>Important Notes:</strong>
-                                <ul class="mb-0 mt-2">
-                                    <li>The <strong>first row</strong> must be the header row</li>
-                                    <li>Use <strong>category names</strong> (CPU, RAM, SSD) not IDs - new categories will be created automatically</li>
-                                    <li>If a hardware item with the same name, serial number, brand, and category already exists, quantities will be <strong>added</strong> to the existing item</li>
-                                    <li>Download a <a href="<?php echo BASE_PATH; ?>sample_hardware.csv" class="alert-link">sample CSV file</a> to use as a template</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- File Upload Section -->
                     <div class="mb-3">
                         <label for="csvFile" class="form-label"><strong>Select CSV File</strong></label>
@@ -1340,6 +1261,97 @@ include '../includes/header.php';
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import Instructions Modal -->
+<div class="modal fade" id="importInstructionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="bi bi-info-circle"></i> How to Import CSV</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="card-title"><i class="bi bi-1-circle"></i> Prepare Your CSV File</h6>
+                <p class="card-text">Your CSV file must have the following columns in this exact order:</p>
+                <ol class="mb-3">
+                    <li><strong>name</strong> - Hardware name (required)</li>
+                    <li><strong>category</strong> - Category name like CPU, RAM, SSD, Monitor (required)</li>
+                    <li><strong>type</strong> - Hardware type/generation</li>
+                    <li><strong>brand</strong> - Manufacturer brand</li>
+                    <li><strong>model</strong> - Model number/name</li>
+                    <li><strong>serial_number</strong> - Unique serial number</li>
+                    <li><strong>unused_quantity</strong> - Available/unused quantity (number)</li>
+                    <li><strong>in_use_quantity</strong> - Quantity currently in use (number)</li>
+                    <li><strong>damaged_quantity</strong> - Damaged quantity (number)</li>
+                    <li><strong>repair_quantity</strong> - Quantity under repair (number)</li>
+                    <li><strong>location</strong> - Storage location (optional if default is selected)</li>
+                </ol>
+                
+                <h6 class="card-title"><i class="bi bi-2-circle"></i> CSV Format Example</h6>
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>name</th>
+                                <th>category</th>
+                                <th>type</th>
+                                <th>brand</th>
+                                <th>model</th>
+                                <th>serial_number</th>
+                                <th>unused_quantity</th>
+                                <th>in_use_quantity</th>
+                                <th>damaged_quantity</th>
+                                <th>repair_quantity</th>
+                                <th>location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Intel Core i7</td>
+                                <td>CPU</td>
+                                <td>12th Gen</td>
+                                <td>Intel</td>
+                                <td>i7-12700K</td>
+                                <td>SN123456</td>
+                                <td>5</td>
+                                <td>3</td>
+                                <td>0</td>
+                                <td>1</td>
+                                <td>Lab 1</td>
+                            </tr>
+                            <tr>
+                                <td>Kingston RAM</td>
+                                <td>RAM</td>
+                                <td>DDR4</td>
+                                <td>Kingston</td>
+                                <td>HyperX 16GB</td>
+                                <td>SN789012</td>
+                                <td>10</td>
+                                <td>5</td>
+                                <td>1</td>
+                                <td>0</td>
+                                <td>Lab 2</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Important Notes:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>The <strong>first row</strong> must be the header row</li>
+                        <li>Use <strong>category names</strong> (CPU, RAM, SSD) not IDs - new categories will be created automatically</li>
+                        <li>If a hardware item with the same name, serial number, brand, and category already exists, quantities will be <strong>added</strong> to the existing item</li>
+                        <li>Download a <a href="<?php echo BASE_PATH; ?>sample_hardware.csv" class="alert-link">sample CSV file</a> to use as a template</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
