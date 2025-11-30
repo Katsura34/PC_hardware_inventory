@@ -81,9 +81,9 @@ function updateUserActivity() {
         return;
     }
     
-    // Only update every 60 seconds to reduce database load
+    // Only update every ACTIVITY_UPDATE_INTERVAL seconds to reduce database load
     $last_update = $_SESSION['last_activity_update'] ?? 0;
-    if (time() - $last_update < 60) {
+    if (time() - $last_update < ACTIVITY_UPDATE_INTERVAL) {
         return;
     }
     
@@ -98,9 +98,13 @@ function updateUserActivity() {
     
     $_SESSION['last_activity_update'] = time();
     
-    // Also mark users as inactive if they haven't had activity in 15 minutes
-    $timeout_minutes = 15;
-    $conn->query("UPDATE users SET is_active = 0 WHERE last_activity < DATE_SUB(NOW(), INTERVAL {$timeout_minutes} MINUTE) AND is_active = 1");
+    // Also mark users as inactive if they haven't had activity within timeout period
+    // Use prepared statement for safety
+    $stmt = $conn->prepare("UPDATE users SET is_active = 0 WHERE last_activity < DATE_SUB(NOW(), INTERVAL ? MINUTE) AND is_active = 1");
+    $timeout_minutes = SESSION_TIMEOUT_MINUTES;
+    $stmt->bind_param("i", $timeout_minutes);
+    $stmt->execute();
+    $stmt->close();
 }
 
 // Clear session

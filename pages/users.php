@@ -248,10 +248,10 @@ include '../includes/header.php';
                             <?php 
                             // Check if user is active based on is_active flag and last_activity
                             $is_user_active = !empty($user['is_active']) && $user['is_active'] == 1;
-                            // Also check if last_activity was within the last 15 minutes for accuracy
+                            // Also check if last_activity was within the timeout period for accuracy
                             if ($is_user_active && !empty($user['last_activity'])) {
                                 $last_activity_time = strtotime($user['last_activity']);
-                                $timeout_seconds = 15 * 60; // 15 minutes
+                                $timeout_seconds = SESSION_TIMEOUT_MINUTES * 60;
                                 if (time() - $last_activity_time > $timeout_seconds) {
                                     $is_user_active = false;
                                 }
@@ -580,37 +580,5 @@ function editUser(user) {
     });
 })();
 </script>
-
-<!-- Status indicator styles -->
-<style>
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.status-online {
-    background-color: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-    animation: pulse-online 2s infinite;
-}
-
-.status-offline {
-    background-color: #6b7280;
-}
-
-@keyframes pulse-online {
-    0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-    }
-    70% {
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-    }
-}
-</style>
 
 <?php include '../includes/footer.php'; ?>
