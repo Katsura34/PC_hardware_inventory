@@ -207,9 +207,9 @@ include '../includes/header.php';
                     </tr>
                     <?php else: ?>
                     <?php 
-                    // Set timezone to Philippines (Asia/Manila, UTC+8) for all datetime operations
-                    // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
-                    $ph_timezone = new DateTimeZone('Asia/Manila');
+                    // Use the system's default timezone for all datetime operations
+                    // This allows the system to work with any server timezone configuration
+                    $server_timezone = new DateTimeZone(date_default_timezone_get());
                     ?>
                     <?php foreach ($users as $user): ?>
                     <?php
