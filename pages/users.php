@@ -206,12 +206,13 @@ include '../includes/header.php';
                         </td>
                     </tr>
                     <?php else: ?>
-                    <?php foreach ($users as $user): ?>
-                    <?php
+                    <?php 
                     // Set timezone to Philippines (Asia/Manila, UTC+8) for all datetime operations
                     // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
                     $ph_timezone = new DateTimeZone('Asia/Manila');
-                    
+                    ?>
+                    <?php foreach ($users as $user): ?>
+                    <?php
                     // Format login duration for display
                     $login_duration_display = 'Never logged in';
                     if (!empty($user['last_login_duration'])) {
@@ -283,7 +284,10 @@ include '../includes/header.php';
                             <?php if (!empty($user['last_login'])): ?>
                             <small class="text-muted">
                                 <i class="bi bi-clock me-1" aria-hidden="true"></i>
-                                <?php echo date('M d, Y H:i', strtotime($user['last_login'])); ?>
+                                <?php 
+                                $last_login_dt = new DateTime($user['last_login'], $ph_timezone);
+                                echo $last_login_dt->format('M d, Y H:i'); 
+                                ?>
                             </small>
                             <?php else: ?>
                             <small class="text-muted">
@@ -336,7 +340,10 @@ include '../includes/header.php';
                         <td data-label="Date Created" class="d-none d-xl-table-cell">
                             <small class="text-muted">
                                 <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>
-                                <?php echo date('M d, Y', strtotime($user['date_created'])); ?>
+                                <?php 
+                                $date_created_dt = new DateTime($user['date_created'], $ph_timezone);
+                                echo $date_created_dt->format('M d, Y'); 
+                                ?>
                             </small>
                         </td>
                         <td data-label="Actions">
