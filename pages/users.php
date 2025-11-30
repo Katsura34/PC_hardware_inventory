@@ -144,6 +144,11 @@ include '../includes/header.php';
             <h5 class="mb-0 d-flex align-items-center gap-2">
                 <i class="bi bi-table" aria-hidden="true"></i> All Users
                 <span class="badge bg-light text-primary ms-2"><?php echo $total_records; ?></span>
+                <!-- Live update indicator -->
+                <span class="badge bg-success ms-2 live-indicator" title="Table updates automatically every 5 seconds">
+                    <i class="bi bi-broadcast" aria-hidden="true"></i>
+                    <span class="d-none d-sm-inline">Live</span>
+                </span>
             </h5>
             <!-- Toggle Search Button - HCI: Show/Hide filter -->
             <button class="btn btn-sm btn-light" type="button" id="toggleSearchBtn" 
@@ -220,7 +225,7 @@ include '../includes/header.php';
                         }
                     }
                     ?>
-                    <tr tabindex="0" role="row">
+                    <tr tabindex="0" role="row" data-user-id="<?php echo $user['id']; ?>">
                         <td data-label="Username">
                             <div class="d-flex align-items-center gap-2">
                                 <!-- User Avatar -->
@@ -285,17 +290,29 @@ include '../includes/header.php';
                         <td data-label="Session Duration" class="d-none d-lg-table-cell">
                             <?php if ($is_user_active && !empty($user['last_login'])): ?>
                             <?php 
-                            // Calculate initial duration on server side to avoid client/server clock mismatch
-                            $login_timestamp = strtotime($user['last_login']);
-                            // Validate that strtotime returned a valid timestamp
+                            // Set timezone to Philippines (Asia/Manila, UTC+8)
+                            $ph_timezone = new DateTimeZone('Asia/Manila');
+                            
+                            // Create DateTime object from login timestamp in the database's timezone (assumed server timezone)
+                            $login_datetime = new DateTime($user['last_login']);
+                            // Convert to Philippines timezone
+                            $login_datetime->setTimezone($ph_timezone);
+                            $login_timestamp = $login_datetime->getTimestamp();
+                            
+                            // Get current time in Philippines timezone
+                            $current_ph_time = new DateTime('now', $ph_timezone);
+                            $current_timestamp = $current_ph_time->getTimestamp();
+                            
+                            // Validate that login_timestamp is valid
                             if ($login_timestamp !== false):
-                                $initial_duration = max(0, time() - $login_timestamp);
+                                // Calculate initial duration: current Philippines time - login time
+                                $initial_duration = max(0, $current_timestamp - $login_timestamp);
                             ?>
                             <!-- Live session counter for online users -->
                             <small>
                                 <span class="badge bg-success live-session-badge" 
-                                      data-initial-duration="<?php echo $initial_duration; ?>"
-                                      title="Current session started at <?php echo date('M d, Y H:i', $login_timestamp); ?>">
+                                      data-login-timestamp="<?php echo $login_timestamp * 1000; ?>"
+                                      title="Current session started at <?php echo $login_datetime->format('M d, Y H:i'); ?> (PH Time)">
                                     <i class="bi bi-play-circle me-1" aria-hidden="true"></i>
                                     <span class="live-duration">Calculating...</span>
                                 </span>
@@ -465,8 +482,15 @@ if (!window.usersPageKeyboardHandlerAdded) {
 }
 
 // ============ Live Session Duration Counter ============
-// Track when page was loaded (for calculating elapsed time)
-var pageLoadTime = Date.now();
+// Get current time in Philippines timezone (Asia/Manila, UTC+8)
+function getPhilippinesTime() {
+    // Get current UTC time
+    var now = new Date();
+    // Philippines is UTC+8, so add 8 hours in milliseconds
+    var utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    var philippinesOffset = 8 * 60 * 60000; // 8 hours in milliseconds
+    return utcTime + philippinesOffset;
+}
 
 // Format duration in seconds to human-readable string
 function formatDuration(seconds) {
@@ -486,15 +510,16 @@ function formatDuration(seconds) {
 // Update all live session duration counters
 function updateLiveSessionDurations() {
     var badges = document.querySelectorAll('.live-session-badge');
-    // Calculate seconds elapsed since page load
-    var elapsedSincePageLoad = Math.floor((Date.now() - pageLoadTime) / 1000);
+    // Get current Philippines time in milliseconds
+    var currentPhTime = getPhilippinesTime();
     
     badges.forEach(function(badge) {
-        // Get initial duration calculated by server (avoids clock mismatch issues)
-        var initialDuration = parseInt(badge.getAttribute('data-initial-duration'), 10);
-        if (!isNaN(initialDuration) && initialDuration >= 0) {
-            // Total duration = server-calculated initial duration + time elapsed since page load
-            var duration = initialDuration + elapsedSincePageLoad;
+        // Get login timestamp in milliseconds (already converted to PH time on server)
+        var loginTimestamp = parseInt(badge.getAttribute('data-login-timestamp'), 10);
+        if (!isNaN(loginTimestamp) && loginTimestamp > 0) {
+            // Calculate duration: current Philippines time - login timestamp
+            var durationMs = currentPhTime - loginTimestamp;
+            var duration = Math.max(0, Math.floor(durationMs / 1000));
             var durationSpan = badge.querySelector('.live-duration');
             if (durationSpan) {
                 durationSpan.textContent = formatDuration(duration);
@@ -503,14 +528,168 @@ function updateLiveSessionDurations() {
     });
 }
 
-// Initialize live session counters and update every second
+// ============ Live Table Updates (React-like behavior) ============
+var liveTableIntervalId = null;
 var liveSessionIntervalId = null;
+var currentPage = <?php echo $page; ?>;
+var isUpdating = false;
+
+// Store user data for edit operations
+var usersDataCache = {};
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Handle edit button click using event delegation
+function handleEditClick(userId) {
+    var user = usersDataCache[userId];
+    if (user) {
+        editUser(user);
+    }
+}
+
+// Generate table row HTML for a user
+function generateUserRow(user) {
+    // Cache user data for edit operations
+    usersDataCache[user.id] = user;
+    
+    var statusBadge = user.is_active 
+        ? '<span class="badge bg-success d-inline-flex align-items-center gap-1" title="User is currently online"><span class="status-dot status-online"></span>Online</span>'
+        : '<span class="badge bg-secondary d-inline-flex align-items-center gap-1" title="User is offline"><span class="status-dot status-offline"></span>Offline</span>';
+    
+    var roleBadge = user.role === 'admin'
+        ? '<span class="badge-role badge-role-admin" title="Administrator">Admin</span>'
+        : '<span class="badge-role badge-role-staff" title="Staff member">Staff</span>';
+    
+    var youBadge = user.is_current_user ? '<span class="badge bg-info badge-sm ms-1">You</span>' : '';
+    
+    var lastLoginHtml = user.last_login_display 
+        ? '<small class="text-muted"><i class="bi bi-clock me-1" aria-hidden="true"></i>' + escapeHtml(user.last_login_display) + '</small>'
+        : '<small class="text-muted"><i class="bi bi-dash-circle me-1" aria-hidden="true"></i>Never</small>';
+    
+    var sessionDurationHtml = '';
+    if (user.is_active && user.login_timestamp_ms) {
+        sessionDurationHtml = '<small><span class="badge bg-success live-session-badge" data-login-timestamp="' + user.login_timestamp_ms + '" title="Current session started at ' + escapeHtml(user.login_display) + ' (PH Time)"><i class="bi bi-play-circle me-1" aria-hidden="true"></i><span class="live-duration">Calculating...</span></span></small>';
+    } else if (user.last_login_duration_display) {
+        sessionDurationHtml = '<small><span class="badge bg-secondary" title="Last session duration"><i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>' + escapeHtml(user.last_login_duration_display) + '</span></small>';
+    } else {
+        sessionDurationHtml = '<small class="text-muted">-</small>';
+    }
+    
+    var deleteButton = !user.is_current_user 
+        ? '<a href="?delete=' + parseInt(user.id, 10) + '" class="btn btn-action btn-danger" onclick="return confirmDelete(\'Are you sure you want to delete user &quot;' + escapeHtml(user.username) + '&quot;? This action cannot be undone.\', this)" aria-label="Delete user ' + escapeHtml(user.username) + '"><i class="bi bi-trash" aria-hidden="true"></i><span class="d-none d-sm-inline">Delete</span></a>'
+        : '';
+    
+    return '<tr tabindex="0" role="row" data-user-id="' + parseInt(user.id, 10) + '">' +
+        '<td data-label="Username">' +
+            '<div class="d-flex align-items-center gap-2">' +
+                '<div class="user-avatar-sm" style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-page, #f5f7f9); display: flex; align-items: center; justify-content: center; color: var(--primary, #1e6fb8);">' +
+                    '<i class="bi bi-person-fill" aria-hidden="true"></i>' +
+                '</div>' +
+                '<div>' +
+                    '<strong>' + escapeHtml(user.username) + '</strong>' + youBadge +
+                '</div>' +
+            '</div>' +
+        '</td>' +
+        '<td data-label="Full Name">' + escapeHtml(user.full_name) + '</td>' +
+        '<td data-label="Role">' + roleBadge + '</td>' +
+        '<td data-label="Status">' + statusBadge + '</td>' +
+        '<td data-label="Last Login" class="d-none d-md-table-cell">' + lastLoginHtml + '</td>' +
+        '<td data-label="Session Duration" class="d-none d-lg-table-cell">' + sessionDurationHtml + '</td>' +
+        '<td data-label="Date Created" class="d-none d-xl-table-cell">' +
+            '<small class="text-muted"><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>' + escapeHtml(user.date_created) + '</small>' +
+        '</td>' +
+        '<td data-label="Actions">' +
+            '<div class="d-flex gap-1 flex-wrap">' +
+                '<button class="btn btn-action btn-info" data-user-id="' + parseInt(user.id, 10) + '" onclick="handleEditClick(' + parseInt(user.id, 10) + ')" aria-label="Edit user ' + escapeHtml(user.username) + '">' +
+                    '<i class="bi bi-pencil" aria-hidden="true"></i>' +
+                    '<span class="d-none d-sm-inline">Edit</span>' +
+                '</button>' +
+                deleteButton +
+            '</div>' +
+        '</td>' +
+    '</tr>';
+}
+
+// Fetch and update table data
+function refreshUsersTable() {
+    if (isUpdating) return;
+    isUpdating = true;
+    
+    fetch('api_users.php?page=' + currentPage)
+        .then(function(response) {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(function(data) {
+            if (!data.success) {
+                console.error('API error:', data.error);
+                return;
+            }
+            
+            var tbody = document.querySelector('#usersTable tbody');
+            if (!tbody) return;
+            
+            // Generate new table content
+            var newContent = '';
+            if (data.users.length === 0) {
+                newContent = '<tr><td colspan="8">' +
+                    '<div class="empty-state-hci">' +
+                        '<i class="bi bi-people empty-icon" aria-hidden="true"></i>' +
+                        '<h5>No users found</h5>' +
+                        '<p>Get started by adding your first user to the system.</p>' +
+                        '<button class="btn btn-primary-cta" data-bs-toggle="modal" data-bs-target="#addUserModal">' +
+                            '<i class="bi bi-plus-circle" aria-hidden="true"></i> Add First User' +
+                        '</button>' +
+                    '</div>' +
+                '</td></tr>';
+            } else {
+                data.users.forEach(function(user) {
+                    newContent += generateUserRow(user);
+                });
+            }
+            
+            // Update table body
+            tbody.innerHTML = newContent;
+            
+            // Update total count badge
+            var countBadge = document.querySelector('.card-header-primary .badge');
+            if (countBadge) {
+                countBadge.textContent = data.pagination.total_records;
+            }
+            
+            // Immediately update session durations for the new content
+            updateLiveSessionDurations();
+        })
+        .catch(function(error) {
+            console.error('Error fetching users:', error);
+        })
+        .finally(function() {
+            isUpdating = false;
+        });
+}
+
+// Initialize live updates
 document.addEventListener('DOMContentLoaded', function() {
-    // Initial update
+    // Initial update for session durations
     updateLiveSessionDurations();
     
-    // Update every second (store interval ID for potential cleanup)
+    // Update session durations every second
     liveSessionIntervalId = setInterval(updateLiveSessionDurations, 1000);
+    
+    // Refresh table data every 5 seconds for live updates (like React)
+    liveTableIntervalId = setInterval(refreshUsersTable, 5000);
+});
+
+// Cleanup intervals when leaving page
+window.addEventListener('beforeunload', function() {
+    if (liveSessionIntervalId) clearInterval(liveSessionIntervalId);
+    if (liveTableIntervalId) clearInterval(liveTableIntervalId);
 });
 </script>
 

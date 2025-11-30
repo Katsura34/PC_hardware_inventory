@@ -1011,3 +1011,32 @@ body.has-topbar {
         box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
     }
 }
+
+/* ============================================
+   Live Table Update Indicator
+   ============================================ */
+.live-indicator {
+    animation: pulse-live 2s infinite;
+}
+
+.live-indicator i {
+    animation: broadcast-pulse 1.5s infinite;
+}
+
+@keyframes pulse-live {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes broadcast-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
