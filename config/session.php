@@ -38,6 +38,8 @@ function requireLogin() {
         header('Location: ' . BASE_PATH . 'login.php');
         exit();
     }
+    // Update user's last activity timestamp
+    updateUserActivity();
 }
 
 // Require admin
@@ -69,7 +71,36 @@ function setUserSession($user) {
     $_SESSION['username'] = $user['username'];
     $_SESSION['full_name'] = $user['full_name'];
     $_SESSION['role'] = $user['role'];
+    $_SESSION['login_time'] = time(); // Track when user logged in
     session_regenerate_id(true);
+}
+
+// Update user's last activity timestamp (called on each page request)
+function updateUserActivity() {
+    if (!isLoggedIn()) {
+        return;
+    }
+    
+    // Only update every 60 seconds to reduce database load
+    $last_update = $_SESSION['last_activity_update'] ?? 0;
+    if (time() - $last_update < 60) {
+        return;
+    }
+    
+    require_once __DIR__ . '/database.php';
+    $conn = getDBConnection();
+    
+    // Update last activity timestamp
+    $stmt = $conn->prepare("UPDATE users SET last_activity = NOW(), is_active = 1 WHERE id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->close();
+    
+    $_SESSION['last_activity_update'] = time();
+    
+    // Also mark users as inactive if they haven't had activity in 15 minutes
+    $timeout_minutes = 15;
+    $conn->query("UPDATE users SET is_active = 0 WHERE last_activity < DATE_SUB(NOW(), INTERVAL {$timeout_minutes} MINUTE) AND is_active = 1");
 }
 
 // Clear session

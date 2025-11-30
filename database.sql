@@ -67,7 +67,11 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,           -- store hashed passwords
     full_name VARCHAR(255) NOT NULL,
     role VARCHAR(50) DEFAULT 'staff',        -- admin or staff
-    date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP NULL DEFAULT NULL,   -- tracks when user last logged in
+    last_login_duration INT NULL DEFAULT NULL, -- stores duration of last session in seconds
+    is_active TINYINT(1) DEFAULT 0,           -- 1 if user is currently logged in, 0 if not
+    last_activity TIMESTAMP NULL DEFAULT NULL -- tracks user's last activity for timeout detection
 );
 
 -- Sample Users (passwords are hashed using password_hash in PHP)

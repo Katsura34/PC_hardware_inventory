@@ -178,14 +178,17 @@ include '../includes/header.php';
                         <th scope="col">Username</th>
                         <th scope="col">Full Name</th>
                         <th scope="col">Role</th>
-                        <th scope="col" class="d-none d-md-table-cell">Date Created</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="d-none d-md-table-cell">Last Login</th>
+                        <th scope="col" class="d-none d-lg-table-cell">Session Duration</th>
+                        <th scope="col" class="d-none d-xl-table-cell">Date Created</th>
                         <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($users)): ?>
                     <tr>
-                        <td colspan="5">
+                        <td colspan="8">
                             <!-- Empty State - HCI: Clear guidance -->
                             <div class="empty-state-hci">
                                 <i class="bi bi-people empty-icon" aria-hidden="true"></i>
@@ -199,6 +202,24 @@ include '../includes/header.php';
                     </tr>
                     <?php else: ?>
                     <?php foreach ($users as $user): ?>
+                    <?php
+                    // Format login duration for display
+                    $login_duration_display = 'Never logged in';
+                    if (!empty($user['last_login_duration'])) {
+                        $duration_seconds = (int)$user['last_login_duration'];
+                        if ($duration_seconds < 60) {
+                            $login_duration_display = $duration_seconds . ' sec';
+                        } elseif ($duration_seconds < 3600) {
+                            $minutes = floor($duration_seconds / 60);
+                            $seconds = $duration_seconds % 60;
+                            $login_duration_display = $minutes . ' min' . ($seconds > 0 ? ' ' . $seconds . ' sec' : '');
+                        } else {
+                            $hours = floor($duration_seconds / 3600);
+                            $minutes = floor(($duration_seconds % 3600) / 60);
+                            $login_duration_display = $hours . ' hr' . ($minutes > 0 ? ' ' . $minutes . ' min' : '');
+                        }
+                    }
+                    ?>
                     <tr tabindex="0" role="row">
                         <td data-label="Username">
                             <div class="d-flex align-items-center gap-2">
@@ -223,7 +244,57 @@ include '../includes/header.php';
                             <span class="badge-role badge-role-staff" title="Staff member">Staff</span>
                             <?php endif; ?>
                         </td>
-                        <td data-label="Date Created" class="d-none d-md-table-cell">
+                        <td data-label="Status">
+                            <?php 
+                            // Check if user is active based on is_active flag and last_activity
+                            $is_user_active = !empty($user['is_active']) && $user['is_active'] == 1;
+                            // Also check if last_activity was within the last 15 minutes for accuracy
+                            if ($is_user_active && !empty($user['last_activity'])) {
+                                $last_activity_time = strtotime($user['last_activity']);
+                                $timeout_seconds = 15 * 60; // 15 minutes
+                                if (time() - $last_activity_time > $timeout_seconds) {
+                                    $is_user_active = false;
+                                }
+                            }
+                            ?>
+                            <?php if ($is_user_active): ?>
+                            <span class="badge bg-success d-inline-flex align-items-center gap-1" title="User is currently online">
+                                <span class="status-dot status-online"></span>
+                                Online
+                            </span>
+                            <?php else: ?>
+                            <span class="badge bg-secondary d-inline-flex align-items-center gap-1" title="User is offline">
+                                <span class="status-dot status-offline"></span>
+                                Offline
+                            </span>
+                            <?php endif; ?>
+                        </td>
+                        <td data-label="Last Login" class="d-none d-md-table-cell">
+                            <?php if (!empty($user['last_login'])): ?>
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1" aria-hidden="true"></i>
+                                <?php echo date('M d, Y H:i', strtotime($user['last_login'])); ?>
+                            </small>
+                            <?php else: ?>
+                            <small class="text-muted">
+                                <i class="bi bi-dash-circle me-1" aria-hidden="true"></i>
+                                Never
+                            </small>
+                            <?php endif; ?>
+                        </td>
+                        <td data-label="Session Duration" class="d-none d-lg-table-cell">
+                            <?php if (!empty($user['last_login_duration'])): ?>
+                            <small>
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>
+                                    <?php echo escapeOutput($login_duration_display); ?>
+                                </span>
+                            </small>
+                            <?php else: ?>
+                            <small class="text-muted">-</small>
+                            <?php endif; ?>
+                        </td>
+                        <td data-label="Date Created" class="d-none d-xl-table-cell">
                             <small class="text-muted">
                                 <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>
                                 <?php echo date('M d, Y', strtotime($user['date_created'])); ?>
@@ -509,5 +580,37 @@ function editUser(user) {
     });
 })();
 </script>
+
+<!-- Status indicator styles -->
+<style>
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-online {
+    background-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    animation: pulse-online 2s infinite;
+}
+
+.status-offline {
+    background-color: #6b7280;
+}
+
+@keyframes pulse-online {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+</style>
 
 <?php include '../includes/footer.php'; ?>

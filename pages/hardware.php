@@ -138,6 +138,103 @@ if (isset($_GET['permanent_delete']) && validateInt($_GET['permanent_delete']) &
     $stmt->close();
 }
 
+// Handle batch restore (for deleted items)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_action']) && $_POST['batch_action'] === 'restore') {
+    $ids = isset($_POST['ids']) ? array_map('intval', $_POST['ids']) : [];
+    
+    if (!empty($ids)) {
+        $restored_count = 0;
+        foreach ($ids as $id) {
+            // Restore hardware
+            $stmt = $conn->prepare("UPDATE hardware SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL");
+            $stmt->bind_param("i", $id);
+            
+            if ($stmt->execute() && $stmt->affected_rows > 0) {
+                $stmt->close();
+                
+                // Log restore action to history
+                $detail_stmt = $conn->prepare("SELECT h.name, h.serial_number, h.total_quantity, h.unused_quantity, h.in_use_quantity, h.damaged_quantity, h.repair_quantity, c.name as category_name 
+                                               FROM hardware h 
+                                               LEFT JOIN categories c ON h.category_id = c.id 
+                                               WHERE h.id = ?");
+                $detail_stmt->bind_param("i", $id);
+                $detail_stmt->execute();
+                $detail_result = $detail_stmt->get_result();
+                $detail_data = $detail_result->fetch_assoc();
+                $detail_stmt->close();
+                
+                if ($detail_data) {
+                    $user_id = $_SESSION['user_id'];
+                    $user_name = $_SESSION['full_name'];
+                    $hardware_name = $detail_data['name'] ?? '';
+                    $category_name = $detail_data['category_name'] ?? '';
+                    $serial_number = $detail_data['serial_number'] ?? '';
+                    $total_quantity = (int)($detail_data['total_quantity'] ?? 0);
+                    $old_unused = 0;
+                    $old_in_use = 0;
+                    $old_damaged = 0;
+                    $old_repair = 0;
+                    $new_unused = (int)($detail_data['unused_quantity'] ?? 0);
+                    $new_in_use = (int)($detail_data['in_use_quantity'] ?? 0);
+                    $new_damaged = (int)($detail_data['damaged_quantity'] ?? 0);
+                    $new_repair = (int)($detail_data['repair_quantity'] ?? 0);
+                    
+                    $log_stmt = $conn->prepare("INSERT INTO inventory_history (hardware_id, hardware_name, category_name, serial_number, 
+                                               user_id, user_name, action_type, quantity_change, 
+                                               old_unused, old_in_use, old_damaged, old_repair, 
+                                               new_unused, new_in_use, new_damaged, new_repair) 
+                                               VALUES (?, ?, ?, ?, ?, ?, 'Restored', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $log_stmt->bind_param("isssisiiiiiiiii", $id, $hardware_name, $category_name, 
+                                         $serial_number, $user_id, $user_name, $total_quantity, 
+                                         $old_unused, $old_in_use, $old_damaged, $old_repair,
+                                         $new_unused, $new_in_use, $new_damaged, $new_repair);
+                    $log_stmt->execute();
+                    $log_stmt->close();
+                }
+                
+                $restored_count++;
+            } else {
+                $stmt->close();
+            }
+        }
+        
+        if ($restored_count > 0) {
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php?deleted_only=1', "$restored_count item(s) restored successfully.", 'success');
+        } else {
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php?deleted_only=1', 'No items were restored.', 'error');
+        }
+    } else {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php?deleted_only=1', 'No items selected.', 'error');
+    }
+}
+
+// Handle batch permanent delete (admin only)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_action']) && $_POST['batch_action'] === 'permanent_delete' && isAdmin()) {
+    $ids = isset($_POST['ids']) ? array_map('intval', $_POST['ids']) : [];
+    
+    if (!empty($ids)) {
+        $deleted_count = 0;
+        foreach ($ids as $id) {
+            // Permanently delete hardware
+            $stmt = $conn->prepare("DELETE FROM hardware WHERE id = ? AND deleted_at IS NOT NULL");
+            $stmt->bind_param("i", $id);
+            
+            if ($stmt->execute() && $stmt->affected_rows > 0) {
+                $deleted_count++;
+            }
+            $stmt->close();
+        }
+        
+        if ($deleted_count > 0) {
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php?deleted_only=1', "$deleted_count item(s) permanently deleted.", 'success');
+        } else {
+            redirectWithMessage(BASE_PATH . 'pages/hardware.php?deleted_only=1', 'No items were permanently deleted.', 'error');
+        }
+    } else {
+        redirectWithMessage(BASE_PATH . 'pages/hardware.php?deleted_only=1', 'No items selected.', 'error');
+    }
+}
+
 // Handle batch delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_action']) && $_POST['batch_action'] === 'delete') {
     $ids = isset($_POST['ids']) ? array_map('intval', $_POST['ids']) : [];
@@ -761,17 +858,30 @@ include '../includes/header.php';
         </div>
         <?php endif; ?>
     </div>
-    <!-- Batch Operations Toolbar -->
+    <!-- Batch Operations Toolbar (for active items) -->
     <div class="card-body bg-light border-bottom py-2 d-none" id="batchToolbar">
         <div class="d-flex flex-wrap align-items-center gap-2">
             <span class="text-muted"><strong id="selectedCount">0</strong> items selected</span>
             <div class="vr d-none d-sm-block"></div>
+            <?php if ($deleted_only): ?>
+            <!-- Batch operations for deleted items (trash view) -->
+            <button type="button" class="btn btn-sm btn-success" onclick="batchRestore()">
+                <i class="bi bi-arrow-counterclockwise"></i> Restore Selected
+            </button>
+            <?php if (isAdmin()): ?>
+            <button type="button" class="btn btn-sm btn-danger" onclick="batchPermanentDelete()">
+                <i class="bi bi-x-circle"></i> Permanently Delete
+            </button>
+            <?php endif; ?>
+            <?php else: ?>
+            <!-- Batch operations for active items -->
             <button type="button" class="btn btn-sm btn-warning" onclick="showBatchStatusModal()">
                 <i class="bi bi-pencil-square"></i> Update Status
             </button>
             <button type="button" class="btn btn-sm btn-danger" onclick="batchDelete()">
                 <i class="bi bi-trash"></i> Delete Selected
             </button>
+            <?php endif; ?>
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
                 <i class="bi bi-x-lg"></i> Clear Selection
             </button>
@@ -814,7 +924,10 @@ include '../includes/header.php';
                     <?php $isDeleted = !empty($item['deleted_at']); ?>
                     <tr class="<?php echo $isDeleted ? 'table-secondary opacity-75' : ''; ?>" data-item-id="<?php echo $item['id']; ?>">
                         <td class="text-center">
-                            <?php if (!$isDeleted): ?>
+                            <?php if ($deleted_only && $isDeleted): ?>
+                            <!-- Checkbox for deleted items in trash view -->
+                            <input type="checkbox" class="form-check-input item-checkbox" value="<?php echo $item['id']; ?>" aria-label="Select <?php echo escapeOutput($item['name']); ?>">
+                            <?php elseif (!$isDeleted): ?>
                             <input type="checkbox" class="form-check-input item-checkbox" value="<?php echo $item['id']; ?>" aria-label="Select <?php echo escapeOutput($item['name']); ?>">
                             <?php endif; ?>
                         </td>
@@ -1658,6 +1771,88 @@ function batchDelete() {
             actionInput.type = 'hidden';
             actionInput.name = 'batch_action';
             actionInput.value = 'delete';
+            form.appendChild(actionInput);
+            
+            ids.forEach(function(id) {
+                var idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'ids[]';
+                idInput.value = id;
+                form.appendChild(idInput);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+// Batch restore function for deleted items
+function batchRestore() {
+    var ids = getSelectedIds();
+    if (ids.length === 0) {
+        showAlert('Please select at least one item.', 'No Selection', 'warning');
+        return;
+    }
+    
+    showConfirmation(
+        'Are you sure you want to restore ' + ids.length + ' selected item(s)? This will move them back to active inventory.',
+        'Confirm Bulk Restore',
+        'Restore Selected',
+        'info'
+    ).then(function(confirmed) {
+        if (confirmed) {
+            showLoading('Restoring selected items...');
+            // Create and submit form
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+            
+            var actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'batch_action';
+            actionInput.value = 'restore';
+            form.appendChild(actionInput);
+            
+            ids.forEach(function(id) {
+                var idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'ids[]';
+                idInput.value = id;
+                form.appendChild(idInput);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+// Batch permanent delete function (admin only)
+function batchPermanentDelete() {
+    var ids = getSelectedIds();
+    if (ids.length === 0) {
+        showAlert('Please select at least one item.', 'No Selection', 'warning');
+        return;
+    }
+    
+    showConfirmation(
+        'WARNING: Are you sure you want to PERMANENTLY delete ' + ids.length + ' selected item(s)? This action CANNOT be undone!',
+        'Confirm Permanent Delete',
+        'Permanently Delete',
+        'danger'
+    ).then(function(confirmed) {
+        if (confirmed) {
+            showLoading('Permanently deleting selected items...');
+            // Create and submit form
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+            
+            var actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'batch_action';
+            actionInput.value = 'permanent_delete';
             form.appendChild(actionInput);
             
             ids.forEach(function(id) {
