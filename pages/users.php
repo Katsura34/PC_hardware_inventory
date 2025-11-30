@@ -288,33 +288,32 @@ include '../includes/header.php';
                             <?php endif; ?>
                         </td>
                         <td data-label="Session Duration" class="d-none d-lg-table-cell">
-                            <?php if ($is_user_active && !empty($user['last_login'])): ?>
+                            <?php if ($is_user_active && !empty($user['session_start'])): ?>
                             <?php 
                             // Set timezone to Philippines (Asia/Manila, UTC+8)
                             $ph_timezone = new DateTimeZone('Asia/Manila');
                             
-                            // Create DateTime object from login timestamp in the database's timezone (assumed server timezone)
-                            $login_datetime = new DateTime($user['last_login']);
+                            // Create DateTime object from session_start timestamp in the database's timezone (assumed server timezone)
+                            $session_datetime = new DateTime($user['session_start']);
                             // Convert to Philippines timezone
-                            $login_datetime->setTimezone($ph_timezone);
-                            $login_timestamp = $login_datetime->getTimestamp();
+                            $session_datetime->setTimezone($ph_timezone);
+                            $sessionStartEpoch = $session_datetime->getTimestamp();
                             
                             // Get current time in Philippines timezone
                             $current_ph_time = new DateTime('now', $ph_timezone);
-                            $current_timestamp = $current_ph_time->getTimestamp();
+                            $serverNowEpoch = $current_ph_time->getTimestamp();
                             
-                            // Validate that login_timestamp is valid
-                            if ($login_timestamp !== false):
-                                // Calculate initial duration: current Philippines time - login time
-                                $initial_duration = max(0, $current_timestamp - $login_timestamp);
+                            // Validate that session_start timestamp is valid
+                            if ($sessionStartEpoch !== false):
                             ?>
                             <!-- Live session counter for online users -->
                             <small>
-                                <span class="badge bg-success live-session-badge" 
-                                      data-login-timestamp="<?php echo $login_timestamp * 1000; ?>"
-                                      title="Current session started at <?php echo $login_datetime->format('M d, Y H:i'); ?> (PH Time)">
+                                <span class="badge bg-success live-session-badge online-timer" 
+                                      data-session-start="<?php echo $sessionStartEpoch; ?>"
+                                      data-server-now="<?php echo $serverNowEpoch; ?>"
+                                      title="Current session started at <?php echo $session_datetime->format('M d, Y H:i'); ?> (PH Time)">
                                     <i class="bi bi-play-circle me-1" aria-hidden="true"></i>
-                                    <span class="live-duration">Calculating...</span>
+                                    <span class="live-duration">0 sec</span>
                                 </span>
                             </small>
                             <?php else: ?>
@@ -519,16 +518,15 @@ function formatDuration(seconds) {
 // Update all live session duration counters
 function updateLiveSessionDurations() {
     var badges = document.querySelectorAll('.live-session-badge');
-    // Get current time in milliseconds (Unix timestamp)
-    var currentTimeMs = getCurrentTimeMs();
+    // Get current time in seconds (Unix timestamp)
+    var currentTimeSec = Math.floor(getCurrentTimeMs() / 1000);
     
     badges.forEach(function(badge) {
-        // Get login timestamp in milliseconds (Unix timestamp from server)
-        var loginTimestamp = parseInt(badge.getAttribute('data-login-timestamp'), 10);
-        if (!isNaN(loginTimestamp) && loginTimestamp > 0) {
-            // Calculate duration: current time - login time
-            var durationMs = currentTimeMs - loginTimestamp;
-            var duration = Math.max(0, Math.floor(durationMs / 1000));
+        // Get session start timestamp in seconds (Unix timestamp from server)
+        var sessionStartEpoch = parseInt(badge.getAttribute('data-session-start'), 10);
+        if (!isNaN(sessionStartEpoch) && sessionStartEpoch > 0) {
+            // Calculate duration: current time - session start time
+            var duration = Math.max(0, currentTimeSec - sessionStartEpoch);
             var durationSpan = badge.querySelector('.live-duration');
             if (durationSpan) {
                 durationSpan.textContent = formatDuration(duration);
@@ -582,8 +580,8 @@ function generateUserRow(user) {
         : '<small class="text-muted"><i class="bi bi-dash-circle me-1" aria-hidden="true"></i>Never</small>';
     
     var sessionDurationHtml = '';
-    if (user.is_active && user.login_timestamp_ms) {
-        sessionDurationHtml = '<small><span class="badge bg-success live-session-badge" data-login-timestamp="' + user.login_timestamp_ms + '" title="Current session started at ' + escapeHtml(user.login_display) + ' (PH Time)"><i class="bi bi-play-circle me-1" aria-hidden="true"></i><span class="live-duration">Calculating...</span></span></small>';
+    if (user.is_active && user.session_start_epoch) {
+        sessionDurationHtml = '<small><span class="badge bg-success live-session-badge online-timer" data-session-start="' + user.session_start_epoch + '" data-server-now="' + user.server_now_epoch + '" title="Current session started at ' + escapeHtml(user.login_display) + ' (PH Time)"><i class="bi bi-play-circle me-1" aria-hidden="true"></i><span class="live-duration">0 sec</span></span></small>';
     } else if (user.last_login_duration_display) {
         sessionDurationHtml = '<small><span class="badge bg-secondary" title="Last session duration"><i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>' + escapeHtml(user.last_login_duration_display) + '</span></small>';
     } else {

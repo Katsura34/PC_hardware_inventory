@@ -31,7 +31,7 @@ $total_pages = ceil($total_records / $records_per_page);
 
 // Get users with pagination
 $users = [];
-$stmt = $conn->prepare("SELECT id, username, full_name, role, date_created, last_login, last_login_duration, is_active, last_activity FROM users ORDER BY date_created DESC LIMIT ? OFFSET ?");
+$stmt = $conn->prepare("SELECT id, username, full_name, role, date_created, last_login, last_login_duration, is_active, last_activity, session_start FROM users ORDER BY date_created DESC LIMIT ? OFFSET ?");
 $stmt->bind_param("ii", $records_per_page, $offset);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -58,14 +58,17 @@ while ($row = $result->fetch_assoc()) {
         }
     }
     
-    // Calculate login timestamp for live session duration (Philippines time)
+    // Calculate session start timestamp for live session duration (Philippines time)
+    $session_start_epoch = null;
+    $server_now_epoch = $current_ph_timestamp;
     $login_timestamp_ms = null;
     $login_display = null;
-    if ($is_user_active && !empty($row['last_login'])) {
-        $login_datetime = new DateTime($row['last_login']);
-        $login_datetime->setTimezone($ph_timezone);
-        $login_timestamp_ms = $login_datetime->getTimestamp() * 1000;
-        $login_display = $login_datetime->format('M d, Y H:i');
+    if ($is_user_active && !empty($row['session_start'])) {
+        $session_datetime = new DateTime($row['session_start']);
+        $session_datetime->setTimezone($ph_timezone);
+        $session_start_epoch = $session_datetime->getTimestamp();
+        $login_timestamp_ms = $session_start_epoch * 1000;
+        $login_display = $session_datetime->format('M d, Y H:i');
     }
     
     // Format last login duration for offline users
@@ -111,6 +114,8 @@ while ($row = $result->fetch_assoc()) {
         'is_active' => $is_user_active,
         'login_timestamp_ms' => $login_timestamp_ms,
         'login_display' => $login_display,
+        'session_start_epoch' => $session_start_epoch,
+        'server_now_epoch' => $server_now_epoch,
         'is_current_user' => ($row['id'] == $current_user_id)
     ];
 }

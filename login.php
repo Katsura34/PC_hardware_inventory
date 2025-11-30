@@ -33,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Verify password
             if (verifyPassword($password, $user['password'])) {
-                // Update last login timestamp and set user as active
-                $update_login_stmt = $conn->prepare("UPDATE users SET last_login = NOW(), is_active = 1, last_activity = NOW() WHERE id = ?");
+                // Update last login timestamp, session_start and set user as active
+                $update_login_stmt = $conn->prepare("UPDATE users SET last_login = NOW(), session_start = NOW(), is_active = 1, last_activity = NOW() WHERE id = ?");
                 $update_login_stmt->bind_param("i", $user['id']);
                 $update_login_stmt->execute();
                 $update_login_stmt->close();
