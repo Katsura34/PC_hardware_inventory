@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $sql = file_get_contents($uploaded_file['tmp_name']);
                 
                 // Validate this is a backup file created by our system
-                if (strpos($sql, '-- PC Hardware Inventory Backup') !== 0) {
+                if (strpos(trim($sql), '-- PC Hardware Inventory Backup') !== 0) {
                     redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Invalid backup file format. Only backups created by this system can be imported.', 'error');
                     exit;
                 }
@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 ];
                 
                 foreach ($dangerous_patterns as $pattern) {
-                    if (stripos($sql_lower, $pattern) !== false) {
+                    if (strpos($sql_lower, $pattern) !== false) {
                         redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Backup file contains potentially dangerous SQL. Import aborted.', 'error');
                         exit;
                     }
@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ];
             
             foreach ($dangerous_patterns as $pattern) {
-                if (stripos($sql_lower, $pattern) !== false) {
+                if (strpos($sql_lower, $pattern) !== false) {
                     redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Backup file contains potentially dangerous SQL. Restore aborted.', 'error');
                     exit;
                 }
