@@ -108,22 +108,8 @@ if (!isset($pageTitle)) {
                     <?php endif; ?>
                 </ul>
                 
-                <!-- Right Side: Active Time & User Menu -->
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <!-- Live Active Time Display -->
-                    <?php
-                    // Get session start time for live timer
-                    $sessionStartEpoch = isset($_SESSION['login_time']) ? $_SESSION['login_time'] : time();
-                    ?>
-                    <li class="nav-item me-2 d-none d-sm-block">
-                        <span class="nav-link active-time-display d-flex align-items-center gap-1" 
-                              id="activeTimeDisplay"
-                              data-session-start="<?php echo $sessionStartEpoch; ?>"
-                              title="Session active time">
-                            <i class="bi bi-clock-history" aria-hidden="true"></i>
-                            <span id="activeTimeValue">0:00:00</span>
-                        </span>
-                    </li>
+                <!-- Right Side: User Menu -->
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" 
                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -141,14 +127,6 @@ if (!isset($pageTitle)) {
                                 <small class="text-muted">Logged in as <?php echo escapeOutput($_SESSION['role']); ?></small>
                             </li>
                             <li><hr class="dropdown-divider"></li>
-                            <!-- Active Time in Dropdown (visible on mobile) -->
-                            <li class="dropdown-item-text d-sm-none">
-                                <div class="d-flex align-items-center gap-2 text-muted">
-                                    <i class="bi bi-clock-history" aria-hidden="true"></i>
-                                    <span>Active: <span id="activeTimeValueMobile">0:00:00</span></span>
-                                </div>
-                            </li>
-                            <li class="d-sm-none"><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="<?php echo BASE_PATH; ?>logout.php">
                                     <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
