@@ -36,20 +36,24 @@ $stmt->bind_param("ii", $records_per_page, $offset);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Set timezone to Philippines (Asia/Manila, UTC+8)
+// Set timezone to Philippines (Asia/Manila, UTC+8) for all datetime operations
 $ph_timezone = new DateTimeZone('Asia/Manila');
 $current_ph_time = new DateTime('now', $ph_timezone);
+$current_ph_timestamp = $current_ph_time->getTimestamp();
 $current_user_id = $_SESSION['user_id'];
+$timeout_seconds = SESSION_TIMEOUT_MINUTES * 60;
 
 while ($row = $result->fetch_assoc()) {
     // Check if user is active based on is_active flag and last_activity
     $is_user_active = !empty($row['is_active']) && $row['is_active'] == 1;
     
     // Also check if last_activity was within the timeout period for accuracy
+    // Use Philippines timezone for consistency
     if ($is_user_active && !empty($row['last_activity'])) {
-        $last_activity_time = strtotime($row['last_activity']);
-        $timeout_seconds = SESSION_TIMEOUT_MINUTES * 60;
-        if (time() - $last_activity_time > $timeout_seconds) {
+        $last_activity_datetime = new DateTime($row['last_activity']);
+        $last_activity_datetime->setTimezone($ph_timezone);
+        $last_activity_timestamp = $last_activity_datetime->getTimestamp();
+        if ($current_ph_timestamp - $last_activity_timestamp > $timeout_seconds) {
             $is_user_active = false;
         }
     }
@@ -81,18 +85,25 @@ while ($row = $result->fetch_assoc()) {
         }
     }
     
-    // Format last login for display
+    // Format last login for display using Philippines timezone
     $last_login_display = null;
     if (!empty($row['last_login'])) {
-        $last_login_display = date('M d, Y H:i', strtotime($row['last_login']));
+        $last_login_dt = new DateTime($row['last_login']);
+        $last_login_dt->setTimezone($ph_timezone);
+        $last_login_display = $last_login_dt->format('M d, Y H:i');
     }
+    
+    // Format date_created using Philippines timezone
+    $date_created_dt = new DateTime($row['date_created']);
+    $date_created_dt->setTimezone($ph_timezone);
+    $date_created_display = $date_created_dt->format('M d, Y');
     
     $users[] = [
         'id' => (int)$row['id'],
         'username' => $row['username'],
         'full_name' => $row['full_name'],
         'role' => $row['role'],
-        'date_created' => date('M d, Y', strtotime($row['date_created'])),
+        'date_created' => $date_created_display,
         'last_login' => $row['last_login'],
         'last_login_display' => $last_login_display,
         'last_login_duration' => $row['last_login_duration'],
@@ -116,6 +127,6 @@ echo json_encode([
         'records_per_page' => $records_per_page,
         'offset' => $offset
     ],
-    'server_time' => $current_ph_time->getTimestamp() * 1000
+    'server_time' => $current_ph_timestamp * 1000
 ]);
 ?>

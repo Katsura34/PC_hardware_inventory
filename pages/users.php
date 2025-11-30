@@ -484,12 +484,12 @@ if (!window.usersPageKeyboardHandlerAdded) {
 // ============ Live Session Duration Counter ============
 // Get current time in Philippines timezone (Asia/Manila, UTC+8)
 function getPhilippinesTime() {
-    // Create a date object with Philippines timezone
+    // Get current UTC time
     var now = new Date();
-    // Get the Philippines time using Intl.DateTimeFormat
-    var options = { timeZone: 'Asia/Manila' };
-    var philippinesTimeStr = now.toLocaleString('en-US', options);
-    return new Date(philippinesTimeStr).getTime();
+    // Philippines is UTC+8, so add 8 hours in milliseconds
+    var utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    var philippinesOffset = 8 * 60 * 60000; // 8 hours in milliseconds
+    return utcTime + philippinesOffset;
 }
 
 // Format duration in seconds to human-readable string
@@ -534,6 +534,9 @@ var liveSessionIntervalId = null;
 var currentPage = <?php echo $page; ?>;
 var isUpdating = false;
 
+// Store user data for edit operations
+var usersDataCache = {};
+
 // Escape HTML to prevent XSS
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
@@ -542,8 +545,19 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Handle edit button click using event delegation
+function handleEditClick(userId) {
+    var user = usersDataCache[userId];
+    if (user) {
+        editUser(user);
+    }
+}
+
 // Generate table row HTML for a user
 function generateUserRow(user) {
+    // Cache user data for edit operations
+    usersDataCache[user.id] = user;
+    
     var statusBadge = user.is_active 
         ? '<span class="badge bg-success d-inline-flex align-items-center gap-1" title="User is currently online"><span class="status-dot status-online"></span>Online</span>'
         : '<span class="badge bg-secondary d-inline-flex align-items-center gap-1" title="User is offline"><span class="status-dot status-offline"></span>Offline</span>';
@@ -568,10 +582,10 @@ function generateUserRow(user) {
     }
     
     var deleteButton = !user.is_current_user 
-        ? '<a href="?delete=' + user.id + '" class="btn btn-action btn-danger" onclick="return confirmDelete(\'Are you sure you want to delete user &quot;' + escapeHtml(user.username) + '&quot;? This action cannot be undone.\', this)" aria-label="Delete user ' + escapeHtml(user.username) + '"><i class="bi bi-trash" aria-hidden="true"></i><span class="d-none d-sm-inline">Delete</span></a>'
+        ? '<a href="?delete=' + parseInt(user.id, 10) + '" class="btn btn-action btn-danger" onclick="return confirmDelete(\'Are you sure you want to delete user &quot;' + escapeHtml(user.username) + '&quot;? This action cannot be undone.\', this)" aria-label="Delete user ' + escapeHtml(user.username) + '"><i class="bi bi-trash" aria-hidden="true"></i><span class="d-none d-sm-inline">Delete</span></a>'
         : '';
     
-    return '<tr tabindex="0" role="row" data-user-id="' + user.id + '">' +
+    return '<tr tabindex="0" role="row" data-user-id="' + parseInt(user.id, 10) + '">' +
         '<td data-label="Username">' +
             '<div class="d-flex align-items-center gap-2">' +
                 '<div class="user-avatar-sm" style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-page, #f5f7f9); display: flex; align-items: center; justify-content: center; color: var(--primary, #1e6fb8);">' +
@@ -592,7 +606,7 @@ function generateUserRow(user) {
         '</td>' +
         '<td data-label="Actions">' +
             '<div class="d-flex gap-1 flex-wrap">' +
-                '<button class="btn btn-action btn-info" onclick=\'editUser(' + JSON.stringify(user).replace(/'/g, "\\'") + ')\' aria-label="Edit user ' + escapeHtml(user.username) + '">' +
+                '<button class="btn btn-action btn-info" data-user-id="' + parseInt(user.id, 10) + '" onclick="handleEditClick(' + parseInt(user.id, 10) + ')" aria-label="Edit user ' + escapeHtml(user.username) + '">' +
                     '<i class="bi bi-pencil" aria-hidden="true"></i>' +
                     '<span class="d-none d-sm-inline">Edit</span>' +
                 '</button>' +
