@@ -210,6 +210,18 @@ include '../includes/header.php';
                     // Use the system's default timezone for all datetime operations
                     // This allows the system to work with any server timezone configuration
                     $server_timezone = new DateTimeZone(date_default_timezone_get());
+                    // Ensure `$ph_timezone` is defined and valid. Some includes may set
+                    // a Philippines timezone variable; if not present, fall back to
+                    // the explicit Philippines timezone so DateTime constructors
+                    // that expect this variable don't trigger a notice.
+                    if (!isset($ph_timezone) || !($ph_timezone instanceof DateTimeZone)) {
+                        try {
+                            $ph_timezone = new DateTimeZone('Asia/Manila');
+                        } catch (Exception $e) {
+                            // If for some reason 'Asia/Manila' is invalid, fall back to server timezone
+                            $ph_timezone = $server_timezone;
+                        }
+                    }
                     ?>
                     <?php foreach ($users as $user): ?>
                     <?php

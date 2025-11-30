@@ -172,7 +172,7 @@ if (!isset($pageTitle)) {
                         <div class="update-entry mb-4">
                             <div class="d-flex align-items-center mb-2">
                                 <span class="badge bg-success me-2">NEW</span>
-                                <h6 class="mb-0">Version 2.1 - November 2025</h6>
+                                <h6 class="mb-0">Version 2.0 - November 2025</h6>
                             </div>
                             <ul class="list-unstyled ms-3">
                                 <li class="mb-2">
@@ -191,30 +191,8 @@ if (!isset($pageTitle)) {
                         </div>
                         
                         <hr>
-                        
-                        <!-- Previous Update -->
-                        <div class="update-entry mb-4">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-secondary me-2">v2.0</span>
-                                <h6 class="mb-0">Version 2.0 - Session Tracking</h6>
-                            </div>
-                            <ul class="list-unstyled ms-3">
-                                <li class="mb-2">
-                                    <i class="bi bi-check-circle text-primary me-2"></i>
-                                    <strong>Live Session Duration:</strong> Admins can now see live session duration for online users in the Users page.
-                                </li>
-                                <li class="mb-2">
-                                    <i class="bi bi-check-circle text-primary me-2"></i>
-                                    <strong>User Status Tracking:</strong> Real-time online/offline status for all users.
-                                </li>
-                                <li class="mb-2">
-                                    <i class="bi bi-check-circle text-primary me-2"></i>
-                                    <strong>Enhanced UI:</strong> Improved navigation and user experience throughout the system.
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <hr>
+ 
+                       
                         
                         <!-- Initial Release -->
                         <div class="update-entry">
