@@ -181,11 +181,11 @@ include '../includes/header.php';
                 <thead>
                     <tr>
                         <th scope="col">Username</th>
-                        <th scope="col">Full Name</th>
+                        <th scope="col" class="d-none d-md-table-cell">Full Name</th>
                         <th scope="col">Role</th>
                         <th scope="col">Status</th>
-                        <th scope="col" class="d-none d-md-table-cell">Last Login</th>
-                        <th scope="col" class="d-none d-lg-table-cell">Session Duration</th>
+                        <th scope="col" class="d-none d-lg-table-cell">Last Login</th>
+                        <th scope="col">Session Duration</th>
                         <th scope="col" class="d-none d-xl-table-cell">Date Created</th>
                         <th scope="col">Actions</th>
                     </tr>
@@ -245,7 +245,7 @@ include '../includes/header.php';
                                 </div>
                             </div>
                         </td>
-                        <td data-label="Full Name"><?php echo escapeOutput($user['full_name']); ?></td>
+                        <td data-label="Full Name" class="d-none d-md-table-cell"><?php echo escapeOutput($user['full_name']); ?></td>
                         <td data-label="Role">
                             <!-- Role Badges - HCI: Visual distinction with muted styling -->
                             <?php if ($user['role'] === 'admin'): ?>
@@ -280,7 +280,7 @@ include '../includes/header.php';
                             </span>
                             <?php endif; ?>
                         </td>
-                        <td data-label="Last Login" class="d-none d-md-table-cell">
+                        <td data-label="Last Login" class="d-none d-lg-table-cell">
                             <?php if (!empty($user['last_login'])): ?>
                             <small class="text-muted">
                                 <i class="bi bi-clock me-1" aria-hidden="true"></i>
@@ -296,7 +296,7 @@ include '../includes/header.php';
                             </small>
                             <?php endif; ?>
                         </td>
-                        <td data-label="Session Duration" class="d-none d-lg-table-cell">
+                        <td data-label="Session Duration">
                             <?php if ($is_user_active && !empty($user['session_start'])): ?>
                             <?php 
                             // Create DateTime object from session_start timestamp
@@ -347,8 +347,8 @@ include '../includes/header.php';
                             </small>
                         </td>
                         <td data-label="Actions">
-                            <div class="d-flex gap-1 flex-wrap">
-                                <!-- Edit Button - HCI: Icon + label -->
+                            <!-- Desktop: Regular buttons -->
+                            <div class="d-none d-md-flex gap-1 flex-wrap">
                                 <button class="btn btn-action btn-info" 
                                         onclick='editUser(<?php echo htmlspecialchars(json_encode($user), ENT_QUOTES, "UTF-8"); ?>)'
                                         aria-label="Edit user <?php echo escapeOutput($user['username']); ?>">
@@ -356,7 +356,6 @@ include '../includes/header.php';
                                     <span class="d-none d-sm-inline">Edit</span>
                                 </button>
                                 <?php if ($user['id'] !== $_SESSION['user_id']): ?>
-                                <!-- Delete Button - HCI: Confirmation required -->
                                 <a href="?delete=<?php echo $user['id']; ?>" 
                                    class="btn btn-action btn-danger" 
                                    onclick="return confirmDelete('Are you sure you want to delete user &quot;<?php echo escapeOutput($user['username']); ?>&quot;? This action cannot be undone.', this)"
@@ -365,6 +364,34 @@ include '../includes/header.php';
                                     <span class="d-none d-sm-inline">Delete</span>
                                 </a>
                                 <?php endif; ?>
+                            </div>
+                            <!-- Mobile: 3-dot dropdown menu -->
+                            <div class="d-md-none dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle-no-caret" 
+                                        type="button" 
+                                        data-bs-toggle="dropdown" 
+                                        aria-expanded="false"
+                                        aria-label="Actions for <?php echo escapeOutput($user['username']); ?>">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item" 
+                                                onclick='editUser(<?php echo htmlspecialchars(json_encode($user), ENT_QUOTES, "UTF-8"); ?>)'>
+                                            <i class="bi bi-pencil me-2 text-info"></i> Edit User
+                                        </button>
+                                    </li>
+                                    <?php if ($user['id'] !== $_SESSION['user_id']): ?>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item text-danger" 
+                                           href="?delete=<?php echo $user['id']; ?>"
+                                           onclick="return confirmDelete('Are you sure you want to delete user &quot;<?php echo escapeOutput($user['username']); ?>&quot;? This action cannot be undone.', this)">
+                                            <i class="bi bi-trash me-2"></i> Delete User
+                                        </a>
+                                    </li>
+                                    <?php endif; ?>
+                                </ul>
                             </div>
                         </td>
                     </tr>
@@ -596,8 +623,14 @@ function generateUserRow(user) {
         sessionDurationHtml = '<small class="text-muted">-</small>';
     }
     
-    var deleteButton = !user.is_current_user 
+    // Desktop delete button
+    var deleteButtonDesktop = !user.is_current_user 
         ? '<a href="?delete=' + parseInt(user.id, 10) + '" class="btn btn-action btn-danger" onclick="return confirmDelete(\'Are you sure you want to delete user &quot;' + escapeHtml(user.username) + '&quot;? This action cannot be undone.\', this)" aria-label="Delete user ' + escapeHtml(user.username) + '"><i class="bi bi-trash" aria-hidden="true"></i><span class="d-none d-sm-inline">Delete</span></a>'
+        : '';
+    
+    // Mobile delete dropdown item
+    var deleteDropdownItem = !user.is_current_user 
+        ? '<li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="?delete=' + parseInt(user.id, 10) + '" onclick="return confirmDelete(\'Are you sure you want to delete user &quot;' + escapeHtml(user.username) + '&quot;? This action cannot be undone.\', this)"><i class="bi bi-trash me-2"></i> Delete User</a></li>'
         : '';
     
     return '<tr tabindex="0" role="row" data-user-id="' + parseInt(user.id, 10) + '">' +
@@ -611,21 +644,30 @@ function generateUserRow(user) {
                 '</div>' +
             '</div>' +
         '</td>' +
-        '<td data-label="Full Name">' + escapeHtml(user.full_name) + '</td>' +
+        '<td data-label="Full Name" class="d-none d-md-table-cell">' + escapeHtml(user.full_name) + '</td>' +
         '<td data-label="Role">' + roleBadge + '</td>' +
         '<td data-label="Status">' + statusBadge + '</td>' +
-        '<td data-label="Last Login" class="d-none d-md-table-cell">' + lastLoginHtml + '</td>' +
-        '<td data-label="Session Duration" class="d-none d-lg-table-cell">' + sessionDurationHtml + '</td>' +
+        '<td data-label="Last Login" class="d-none d-lg-table-cell">' + lastLoginHtml + '</td>' +
+        '<td data-label="Session Duration">' + sessionDurationHtml + '</td>' +
         '<td data-label="Date Created" class="d-none d-xl-table-cell">' +
             '<small class="text-muted"><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>' + escapeHtml(user.date_created) + '</small>' +
         '</td>' +
         '<td data-label="Actions">' +
-            '<div class="d-flex gap-1 flex-wrap">' +
+            '<div class="d-none d-md-flex gap-1 flex-wrap">' +
                 '<button class="btn btn-action btn-info" data-user-id="' + parseInt(user.id, 10) + '" onclick="handleEditClick(' + parseInt(user.id, 10) + ')" aria-label="Edit user ' + escapeHtml(user.username) + '">' +
                     '<i class="bi bi-pencil" aria-hidden="true"></i>' +
                     '<span class="d-none d-sm-inline">Edit</span>' +
                 '</button>' +
-                deleteButton +
+                deleteButtonDesktop +
+            '</div>' +
+            '<div class="d-md-none dropdown">' +
+                '<button class="btn btn-sm btn-outline-secondary dropdown-toggle-no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions for ' + escapeHtml(user.username) + '">' +
+                    '<i class="bi bi-three-dots-vertical"></i>' +
+                '</button>' +
+                '<ul class="dropdown-menu dropdown-menu-end">' +
+                    '<li><button class="dropdown-item" onclick="handleEditClick(' + parseInt(user.id, 10) + ')"><i class="bi bi-pencil me-2 text-info"></i> Edit User</button></li>' +
+                    deleteDropdownItem +
+                '</ul>' +
             '</div>' +
         '</td>' +
     '</tr>';
