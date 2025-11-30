@@ -94,12 +94,12 @@ if (isset($_GET['download']) && !empty($_GET['download'])) {
     }
 }
 
-// Handle backup deletion
-if (isset($_GET['delete']) && !empty($_GET['delete'])) {
-    $filename = basename($_GET['delete']); // Prevent directory traversal
+// Handle backup deletion (POST request required for security)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_backup') {
+    $filename = isset($_POST['filename']) ? basename($_POST['filename']) : ''; // Prevent directory traversal
     $filepath = $backups_dir . '/' . $filename;
     
-    if (file_exists($filepath) && pathinfo($filepath, PATHINFO_EXTENSION) === 'sql') {
+    if (!empty($filename) && file_exists($filepath) && pathinfo($filepath, PATHINFO_EXTENSION) === 'sql') {
         if (unlink($filepath)) {
             redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Backup deleted successfully.', 'success');
         } else {
@@ -107,6 +107,74 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
         }
     } else {
         redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Backup file not found.', 'error');
+    }
+}
+
+// Handle SQL file import
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'import_sql') {
+    if (!isset($_FILES['sqlFile']) || $_FILES['sqlFile']['error'] !== UPLOAD_ERR_OK) {
+        redirectWithMessage(BASE_PATH . 'pages/backup.php', 'No file uploaded or upload error.', 'error');
+    } else {
+        $uploaded_file = $_FILES['sqlFile'];
+        $file_ext = strtolower(pathinfo($uploaded_file['name'], PATHINFO_EXTENSION));
+        
+        // Validate file extension
+        if ($file_ext !== 'sql') {
+            redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Invalid file type. Only SQL files are allowed.', 'error');
+        } else {
+            try {
+                $sql = file_get_contents($uploaded_file['tmp_name']);
+                
+                // Validate this is a backup file created by our system
+                if (strpos(trim($sql), '-- PC Hardware Inventory Backup') !== 0) {
+                    redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Invalid backup file format. Only backups created by this system can be imported.', 'error');
+                    exit;
+                }
+                
+                // Additional validation: check for potentially dangerous SQL patterns
+                $sql_lower = strtolower($sql);
+                $dangerous_patterns = [
+                    'drop database', 'create database', 'grant ', 'revoke ', 
+                    'create user', 'alter user', 'drop user', 'load_file', 
+                    'into outfile', 'into dumpfile', 'information_schema',
+                    'mysql.user', 'sleep(', 'benchmark('
+                ];
+                
+                foreach ($dangerous_patterns as $pattern) {
+                    if (strpos($sql_lower, $pattern) !== false) {
+                        redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Backup file contains potentially dangerous SQL. Import aborted.', 'error');
+                        exit;
+                    }
+                }
+                
+                // Disable foreign key checks to allow dropping tables in any order
+                $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+                
+                // Split SQL into individual statements and execute
+                $conn->multi_query($sql);
+                
+                // Process all result sets
+                do {
+                    if ($result = $conn->store_result()) {
+                        $result->free();
+                    }
+                } while ($conn->more_results() && $conn->next_result());
+                
+                $import_error = $conn->error;
+                
+                // Get a fresh connection to re-enable foreign key checks
+                $conn = getDBConnection();
+                $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+                
+                if ($import_error) {
+                    redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Import failed: ' . $import_error, 'error');
+                } else {
+                    redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Database imported successfully from uploaded file.', 'success');
+                }
+            } catch (Exception $e) {
+                redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Import failed: ' . $e->getMessage(), 'error');
+            }
+        }
     }
 }
 
@@ -138,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ];
             
             foreach ($dangerous_patterns as $pattern) {
-                if (stripos($sql_lower, $pattern) !== false) {
+                if (strpos($sql_lower, $pattern) !== false) {
                     redirectWithMessage(BASE_PATH . 'pages/backup.php', 'Backup file contains potentially dangerous SQL. Restore aborted.', 'error');
                     exit;
                 }
@@ -208,12 +276,17 @@ include '../includes/header.php';
                 </h1>
                 <p class="text-muted">Manage database backups (Admin only)</p>
             </div>
-            <form method="POST" class="d-inline">
-                <input type="hidden" name="action" value="create_backup">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-download"></i> Create Backup Now
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importSQLModal">
+                    <i class="bi bi-upload"></i> Import SQL
                 </button>
-            </form>
+                <form method="POST" class="d-inline">
+                    <input type="hidden" name="action" value="create_backup">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-download"></i> Create Backup Now
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -302,10 +375,10 @@ include '../includes/header.php';
                                     onclick="confirmRestore('<?php echo escapeOutput($backup['filename']); ?>')">
                                 <i class="bi bi-arrow-counterclockwise"></i> Restore
                             </button>
-                            <a href="?delete=<?php echo urlencode($backup['filename']); ?>" class="btn btn-sm btn-danger"
-                               onclick="return confirm('Are you sure you want to delete this backup?')">
+                            <button type="button" class="btn btn-sm btn-danger"
+                                    onclick="confirmDeleteBackup('<?php echo escapeOutput($backup['filename']); ?>')">
                                 <i class="bi bi-trash"></i> Delete
-                            </a>
+                            </button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -345,11 +418,83 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteBackupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-trash"></i> Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="delete_backup">
+                    <input type="hidden" name="filename" id="delete_filename">
+                    <div class="alert alert-warning">
+                        <strong><i class="bi bi-exclamation-triangle"></i> Warning!</strong>
+                        <p class="mb-0">This backup file will be permanently deleted. This action cannot be undone.</p>
+                    </div>
+                    <p>Are you sure you want to delete: <strong id="delete_filename_display"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Yes, Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import SQL Modal -->
+<div class="modal fade" id="importSQLModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-upload"></i> Import SQL Backup</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="import_sql">
+                    <div class="alert alert-info">
+                        <strong><i class="bi bi-info-circle"></i> Information</strong>
+                        <p class="mb-0">Upload a SQL backup file that was previously downloaded from this system. Only .sql files created by this backup system are accepted.</p>
+                    </div>
+                    <div class="alert alert-danger">
+                        <strong><i class="bi bi-exclamation-triangle"></i> Warning!</strong>
+                        <p class="mb-0">Importing a backup will replace ALL current data. This action cannot be undone. Make sure to create a backup first!</p>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sqlFile" class="form-label">Select SQL Backup File</label>
+                        <input type="file" class="form-control" id="sqlFile" name="sqlFile" accept=".sql" required>
+                        <div class="form-text">Only .sql files are accepted</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-upload"></i> Import Backup
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 function confirmRestore(filename) {
     document.getElementById('restore_filename').value = filename;
     document.getElementById('restore_filename_display').textContent = filename;
     var modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+    modal.show();
+}
+
+function confirmDeleteBackup(filename) {
+    document.getElementById('delete_filename').value = filename;
+    document.getElementById('delete_filename_display').textContent = filename;
+    var modal = new bootstrap.Modal(document.getElementById('deleteBackupModal'));
     modal.show();
 }
 </script>
