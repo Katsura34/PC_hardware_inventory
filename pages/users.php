@@ -287,7 +287,9 @@ include '../includes/header.php';
                             <?php 
                             // Calculate initial duration on server side to avoid client/server clock mismatch
                             $login_timestamp = strtotime($user['last_login']);
-                            $initial_duration = max(0, time() - $login_timestamp);
+                            // Validate that strtotime returned a valid timestamp
+                            if ($login_timestamp !== false):
+                                $initial_duration = max(0, time() - $login_timestamp);
                             ?>
                             <!-- Live session counter for online users -->
                             <small>
@@ -298,6 +300,10 @@ include '../includes/header.php';
                                     <span class="live-duration">Calculating...</span>
                                 </span>
                             </small>
+                            <?php else: ?>
+                            <!-- Invalid date format fallback -->
+                            <small class="text-muted">-</small>
+                            <?php endif; ?>
                             <?php elseif (!empty($user['last_login_duration'])): ?>
                             <!-- Last session duration for offline users -->
                             <small>
