@@ -581,7 +581,7 @@ function generateUserRow(user) {
     
     var sessionDurationHtml = '';
     if (user.is_active && user.session_start_epoch) {
-        sessionDurationHtml = '<small><span class="badge bg-success live-session-badge online-timer" data-session-start="' + user.session_start_epoch + '" data-server-now="' + user.server_now_epoch + '" title="Current session started at ' + escapeHtml(user.login_display) + ' (PH Time)"><i class="bi bi-play-circle me-1" aria-hidden="true"></i><span class="live-duration">0 sec</span></span></small>';
+        sessionDurationHtml = '<small><span class="badge bg-success live-session-badge online-timer" data-session-start="' + user.session_start_epoch + '" data-server-now="' + user.server_now_epoch + '" title="Current session started at ' + escapeHtml(user.session_start_display) + ' (PH Time)"><i class="bi bi-play-circle me-1" aria-hidden="true"></i><span class="live-duration">0 sec</span></span></small>';
     } else if (user.last_login_duration_display) {
         sessionDurationHtml = '<small><span class="badge bg-secondary" title="Last session duration"><i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>' + escapeHtml(user.last_login_duration_display) + '</span></small>';
     } else {

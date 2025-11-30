@@ -61,14 +61,12 @@ while ($row = $result->fetch_assoc()) {
     // Calculate session start timestamp for live session duration (Philippines time)
     $session_start_epoch = null;
     $server_now_epoch = $current_ph_timestamp;
-    $login_timestamp_ms = null;
-    $login_display = null;
+    $session_start_display = null;
     if ($is_user_active && !empty($row['session_start'])) {
         $session_datetime = new DateTime($row['session_start']);
         $session_datetime->setTimezone($ph_timezone);
         $session_start_epoch = $session_datetime->getTimestamp();
-        $login_timestamp_ms = $session_start_epoch * 1000;
-        $login_display = $session_datetime->format('M d, Y H:i');
+        $session_start_display = $session_datetime->format('M d, Y H:i');
     }
     
     // Format last login duration for offline users
@@ -112,9 +110,8 @@ while ($row = $result->fetch_assoc()) {
         'last_login_duration' => $row['last_login_duration'],
         'last_login_duration_display' => $login_duration_display,
         'is_active' => $is_user_active,
-        'login_timestamp_ms' => $login_timestamp_ms,
-        'login_display' => $login_display,
         'session_start_epoch' => $session_start_epoch,
+        'session_start_display' => $session_start_display,
         'server_now_epoch' => $server_now_epoch,
         'is_current_user' => ($row['id'] == $current_user_id)
     ];
