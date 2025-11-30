@@ -24,6 +24,9 @@ if (!isset($pageTitle)) {
     <!-- Inter Font for better readability -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="<?php echo BASE_PATH; ?>assets/images/logo.png">
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/style.css">
     

@@ -134,15 +134,46 @@ include '../includes/header.php';
                 $active_filter_count = (!empty($action_filter) ? 1 : 0) + (!empty($date_from) ? 1 : 0) + (!empty($date_to) ? 1 : 0);
                 $has_filters = $active_filter_count > 0;
                 ?>
-                <button class="btn btn-sm <?php echo $has_filters ? 'btn-warning' : 'btn-light'; ?>" 
-                        type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" 
-                        aria-expanded="false" aria-controls="filterCollapse">
-                    <i class="bi bi-funnel<?php echo $has_filters ? '-fill' : ''; ?>"></i>
-                    <span class="d-none d-sm-inline"> Filters</span>
-                    <?php if ($has_filters): ?>
-                    <span class="badge bg-dark text-white ms-1"><?php echo $active_filter_count; ?></span>
-                    <?php endif; ?>
-                </button>
+                <div class="dropdown">
+                    <button class="btn btn-sm <?php echo $has_filters ? 'btn-warning' : 'btn-light'; ?>" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        <i class="bi bi-funnel<?php echo $has_filters ? '-fill' : ''; ?>"></i>
+                        <span class="d-none d-sm-inline"> Filters</span>
+                        <?php if ($has_filters): ?>
+                        <span class="badge bg-dark text-white ms-1"><?php echo $active_filter_count; ?></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end filter-dropdown p-3 shadow-lg" aria-labelledby="filterDropdown" style="min-width: 300px;">
+                        <form method="GET" id="filterForm">
+                            <h6 class="dropdown-header px-0 mb-2"><i class="bi bi-funnel me-1"></i> Filter History</h6>
+                            <div class="mb-3">
+                                <label for="action" class="form-label small mb-1">Action Type</label>
+                                <select class="form-select form-select-sm" id="action" name="action">
+                                    <option value="">All Actions</option>
+                                    <option value="Added" <?php echo $action_filter === 'Added' ? 'selected' : ''; ?>>Added</option>
+                                    <option value="Updated" <?php echo $action_filter === 'Updated' ? 'selected' : ''; ?>>Updated</option>
+                                    <option value="Deleted" <?php echo $action_filter === 'Deleted' ? 'selected' : ''; ?>>Deleted</option>
+                                    <option value="Restored" <?php echo $action_filter === 'Restored' ? 'selected' : ''; ?>>Restored</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="date_from" class="form-label small mb-1"><i class="bi bi-calendar-event me-1"></i>Start Date</label>
+                                <input type="date" class="form-control form-control-sm" id="date_from" name="date_from" value="<?php echo escapeOutput($date_from); ?>" title="Filter records from this date">
+                            </div>
+                            <div class="mb-3">
+                                <label for="date_to" class="form-label small mb-1"><i class="bi bi-calendar-event me-1"></i>End Date</label>
+                                <input type="date" class="form-control form-control-sm" id="date_to" name="date_to" value="<?php echo escapeOutput($date_to); ?>" title="Filter records up to this date">
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                                    <i class="bi bi-check-lg"></i> Apply
+                                </button>
+                                <a href="<?php echo BASE_PATH; ?>pages/history.php" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-x-lg"></i> Clear
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- Collapsible Search Panel -->
@@ -160,39 +191,6 @@ include '../includes/header.php';
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </div>
-        </div>
-        <!-- Collapsible Filters Panel -->
-        <div class="collapse mt-3" id="filterCollapse">
-        <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-3 col-sm-6">
-                <label for="action" class="form-label small mb-1 text-white-50">Action Type</label>
-                <select class="form-select form-select-sm" id="action" name="action">
-                    <option value="">All Actions</option>
-                    <option value="Added" <?php echo $action_filter === 'Added' ? 'selected' : ''; ?>>Added</option>
-                    <option value="Updated" <?php echo $action_filter === 'Updated' ? 'selected' : ''; ?>>Updated</option>
-                    <option value="Deleted" <?php echo $action_filter === 'Deleted' ? 'selected' : ''; ?>>Deleted</option>
-                    <option value="Restored" <?php echo $action_filter === 'Restored' ? 'selected' : ''; ?>>Restored</option>
-                </select>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <label for="date_from" class="form-label small mb-1 text-white-50"><i class="bi bi-calendar-event me-1"></i>Start Date</label>
-                <input type="date" class="form-control form-control-sm" id="date_from" name="date_from" value="<?php echo escapeOutput($date_from); ?>" title="Filter records from this date">
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <label for="date_to" class="form-label small mb-1 text-white-50"><i class="bi bi-calendar-event me-1"></i>End Date</label>
-                <input type="date" class="form-control form-control-sm" id="date_to" name="date_to" value="<?php echo escapeOutput($date_to); ?>" title="Filter records up to this date">
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-light btn-sm flex-grow-1">
-                        <i class="bi bi-check-lg"></i> Apply
-                    </button>
-                    <a href="<?php echo BASE_PATH; ?>pages/history.php" class="btn btn-outline-light btn-sm">
-                        <i class="bi bi-x-lg"></i> Clear
-                    </a>
-                </div>
-            </div>
-        </form>
         </div>
         <?php if ($has_filters): ?>
         <div class="filter-tags d-flex flex-wrap gap-2 align-items-center mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.2);">
