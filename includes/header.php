@@ -128,6 +128,13 @@ if (!isset($pageTitle)) {
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="<?php echo BASE_PATH; ?>pages/profile.php">
+                                    <i class="bi bi-person-gear" aria-hidden="true"></i>
+                                    Profile Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
                                 <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="<?php echo BASE_PATH; ?>logout.php">
                                     <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
                                     Sign Out
