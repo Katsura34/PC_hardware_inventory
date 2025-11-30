@@ -38,4 +38,12 @@ if (!defined('BASE_PATH')) {
         define('BASE_PATH', $basePath);
     }
 }
+
+// Session and activity tracking constants
+if (!defined('ACTIVITY_UPDATE_INTERVAL')) {
+    define('ACTIVITY_UPDATE_INTERVAL', 60); // Seconds between activity updates
+}
+if (!defined('SESSION_TIMEOUT_MINUTES')) {
+    define('SESSION_TIMEOUT_MINUTES', 15); // Minutes before user is marked as inactive
+}
 ?>
