@@ -255,9 +255,12 @@ include '../includes/header.php';
                             $is_user_active = !empty($user['is_active']) && $user['is_active'] == 1;
                             // Also check if last_activity was within the timeout period for accuracy
                             if ($is_user_active && !empty($user['last_activity'])) {
-                                $last_activity_time = strtotime($user['last_activity']);
+                                // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
+                                $ph_tz = new DateTimeZone('Asia/Manila');
+                                $last_activity_dt = new DateTime($user['last_activity'], $ph_tz);
+                                $current_dt = new DateTime('now', $ph_tz);
                                 $timeout_seconds = SESSION_TIMEOUT_MINUTES * 60;
-                                if (time() - $last_activity_time > $timeout_seconds) {
+                                if ($current_dt->getTimestamp() - $last_activity_dt->getTimestamp() > $timeout_seconds) {
                                     $is_user_active = false;
                                 }
                             }
@@ -293,10 +296,10 @@ include '../includes/header.php';
                             // Set timezone to Philippines (Asia/Manila, UTC+8)
                             $ph_timezone = new DateTimeZone('Asia/Manila');
                             
-                            // Create DateTime object from session_start timestamp in the database's timezone (assumed server timezone)
-                            $session_datetime = new DateTime($user['session_start']);
-                            // Convert to Philippines timezone
-                            $session_datetime->setTimezone($ph_timezone);
+                            // Create DateTime object from session_start timestamp
+                            // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
+                            // We must specify the timezone when parsing to get the correct Unix timestamp
+                            $session_datetime = new DateTime($user['session_start'], $ph_timezone);
                             $sessionStartEpoch = $session_datetime->getTimestamp();
                             
                             // Get current time in Philippines timezone

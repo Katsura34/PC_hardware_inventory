@@ -50,8 +50,8 @@ while ($row = $result->fetch_assoc()) {
     // Also check if last_activity was within the timeout period for accuracy
     // Use Philippines timezone for consistency
     if ($is_user_active && !empty($row['last_activity'])) {
-        $last_activity_datetime = new DateTime($row['last_activity']);
-        $last_activity_datetime->setTimezone($ph_timezone);
+        // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
+        $last_activity_datetime = new DateTime($row['last_activity'], $ph_timezone);
         $last_activity_timestamp = $last_activity_datetime->getTimestamp();
         if ($current_ph_timestamp - $last_activity_timestamp > $timeout_seconds) {
             $is_user_active = false;
@@ -63,8 +63,9 @@ while ($row = $result->fetch_assoc()) {
     $server_now_epoch = $current_ph_timestamp;
     $session_start_display = null;
     if ($is_user_active && !empty($row['session_start'])) {
-        $session_datetime = new DateTime($row['session_start']);
-        $session_datetime->setTimezone($ph_timezone);
+        // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
+        // We must specify the timezone when parsing to get the correct Unix timestamp
+        $session_datetime = new DateTime($row['session_start'], $ph_timezone);
         $session_start_epoch = $session_datetime->getTimestamp();
         $session_start_display = $session_datetime->format('M d, Y H:i');
     }
@@ -89,14 +90,14 @@ while ($row = $result->fetch_assoc()) {
     // Format last login for display using Philippines timezone
     $last_login_display = null;
     if (!empty($row['last_login'])) {
-        $last_login_dt = new DateTime($row['last_login']);
-        $last_login_dt->setTimezone($ph_timezone);
+        // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
+        $last_login_dt = new DateTime($row['last_login'], $ph_timezone);
         $last_login_display = $last_login_dt->format('M d, Y H:i');
     }
     
     // Format date_created using Philippines timezone
-    $date_created_dt = new DateTime($row['date_created']);
-    $date_created_dt->setTimezone($ph_timezone);
+    // MySQL NOW() stores timestamps in the server's local timezone (Philippines)
+    $date_created_dt = new DateTime($row['date_created'], $ph_timezone);
     $date_created_display = $date_created_dt->format('M d, Y');
     
     $users[] = [
