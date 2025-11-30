@@ -1040,3 +1040,82 @@ body.has-topbar {
         transform: scale(1.1);
     }
 }
+
+/* ============================================
+   Mobile Responsive - User Table
+   ============================================ */
+
+/* 3-dot dropdown button without caret */
+.dropdown-toggle-no-caret::after {
+    display: none !important;
+}
+
+.dropdown-toggle-no-caret {
+    padding: 6px 10px;
+    border-radius: var(--radius-sm, 6px);
+}
+
+/* Mobile dropdown menu styling */
+@media (max-width: 767.98px) {
+    /* Session Duration badge styling for mobile */
+    .live-session-badge,
+    td[data-label="Session Duration"] .badge.bg-success,
+    td[data-label="Session Duration"] .badge.bg-secondary {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    /* Session duration column on mobile - compact display */
+    td[data-label="Session Duration"] {
+        white-space: nowrap;
+    }
+    
+    td[data-label="Session Duration"] small {
+        font-size: 11px;
+    }
+    
+    td[data-label="Session Duration"] .badge {
+        font-size: 10px;
+        padding: 2px 5px;
+    }
+    
+    td[data-label="Session Duration"] .badge i {
+        font-size: 10px;
+    }
+    
+    /* Mobile action dropdown */
+    .dropdown-menu {
+        min-width: 160px;
+    }
+    
+    .dropdown-menu .dropdown-item {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .dropdown-menu .dropdown-item i {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Further optimize for very small screens */
+    td[data-label="Session Duration"] .live-duration {
+        font-size: 9px;
+    }
+    
+    td[data-label="Session Duration"] .badge i {
+        margin-right: 2px !important;
+    }
+    
+    /* Compact table on mobile */
+    .table-hci thead th {
+        font-size: 10px;
+        padding: 10px 6px;
+    }
+    
+    .table-hci tbody td {
+        padding: 10px 6px;
+        font-size: 13px;
+    }
+}
