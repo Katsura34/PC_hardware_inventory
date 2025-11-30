@@ -85,7 +85,7 @@ if (!isset($pageTitle)) {
                            href="<?php echo BASE_PATH; ?>pages/history.php"
                            <?php echo ($current_page === 'history.php') ? 'aria-current="page"' : ''; ?>>
                             <i class="bi bi-clock-history me-1" aria-hidden="true"></i>
-                            Audit Trail
+                           History
                         </a>
                     </li>
                     <?php if (isAdmin()): ?>

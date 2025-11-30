@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Hardware Inventory System - Demonstration Script</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --text-color: #334155;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --script-bg: #eff6ff;
+            --script-border: #bfdbfe;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.5rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: #1e293b;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            color: #334155;
+            margin-top: 2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 3rem;
+        }
+
+        .toc h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            border-bottom: none;
+        }
+
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        /* Script Boxes ("What to say") */
+        .script-box {
+            background-color: var(--script-bg);
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .script-title {
+            font-weight: bold;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Action Lists */
+        .action-list {
+            background-color: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px 20px 20px 40px;
+            margin-top: 1rem;
+        }
+        
+        .action-list li {
+            margin-bottom: 5px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--card-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        /* Code Blocks */
+        code {
+            background-color: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Utility */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+
+        footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>PC Hardware Inventory System</h1>
+        <p class="subtitle">Demonstration Script & Guide</p>
+        <p>This document provides a comprehensive script for demonstrating the PC Hardware Inventory System from the login page through all features. Use this as a guide when presenting the system to stakeholders, panelists, or users.</p>
+    </header>
+
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li>1. <a href="#1-opening-introduction">Opening Introduction</a></li>
+            <li>2. <a href="#2-login-page">Login Page</a></li>
+            <li>3. <a href="#3-dashboard">Dashboard</a></li>
+            <li>4. <a href="#4-hardware-management">Hardware Management</a></li>
+            <li>5. <a href="#5-audit-trail-history">Audit Trail (History)</a></li>
+            <li>6. <a href="#6-user-management-admin-only">User Management (Admin Only)</a></li>
+            <li>7. <a href="#7-backup-restore-admin-only">Backup & Restore (Admin Only)</a></li>
+            <li>8. <a href="#8-profile-settings">Profile Settings</a></li>
+            <li>9. <a href="#9-logout">Logout</a></li>
+            <li>10. <a href="#10-key-features-summary">Key Features Summary</a></li>
+        </ul>
+    </div>
+
+    <main>
+
+        <section id="1-opening-introduction">
+            <h2>1. Opening Introduction</h2>
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"Good [morning/afternoon/evening]. Today I will demonstrate the PC Hardware Inventory System developed for ACLC College of Ormoc. This web-based system helps manage and track all PC hardware components in the institution, including CPUs, RAM, storage drives, monitors, and other peripherals.</p>
+                <p>The system features:</p>
+                <ul>
+                    <li>A modern, responsive user interface built with Bootstrap 5</li>
+                    <li>Role-based access control (Admin and Staff)</li>
+                    <li>Complete audit trail of all inventory changes</li>
+                    <li>Database backup and restore capabilities</li>
+                    <li>CSV import/export functionality</li>
+                </ul>
+                <p>Let me walk you through the system, starting from the login page."</p>
+            </div>
+        </section>
+
+        <section id="2-login-page">
+            <h2>2. Login Page</h2>
+            <p><strong>URL:</strong> <code>login.php</code></p>
+
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"This is the login page of the PC Hardware Inventory System. As you can see, it features the ACLC College logo and a clean, professional login form.</p>
+                <p><strong>Security Features:</strong></p>
+                <ul>
+                    <li>The system uses secure password hashing</li>
+                    <li>SQL injection prevention with prepared statements</li>
+                    <li>XSS protection with output escaping</li>
+                    <li>Session-based authentication</li>
+                </ul>
+                <p><strong>User Experience Features:</strong></p>
+                <ul>
+                    <li>Password visibility toggle - users can click the eye icon to show/hide their password</li>
+                    <li>'Remember Me' functionality to save the username for convenience</li>
+                    <li>Clear error messages when login fails</li>
+                    <li>Loading overlay when signing in</li>
+                </ul>
+                <p>Let me log in with the admin account to show you the full features of the system."</p>
+            </div>
+
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Show the login form fields</li>
+                <li>Click the eye icon to demonstrate password visibility toggle</li>
+                <li>Point out the "Remember me" checkbox</li>
+                <li>Enter credentials: <code>admin</code> / <code>password123</code></li>
+                <li>Click "Sign In" to proceed</li>
+            </ol>
+        </section>
+
+        <section id="3-dashboard">
+            <h2>3. Dashboard</h2>
+            <p><strong>URL:</strong> <code>dashboard.php</code></p>
+
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"After logging in, users are directed to the Dashboard. This is the central hub that provides an at-a-glance overview of the entire inventory.</p>
+                
+                <p><strong>Top Navigation Bar:</strong></p>
+                <ul>
+                    <li>The navigation bar shows all available pages</li>
+                    <li>The current page is highlighted for easy identification</li>
+                    <li>Admin users see additional options like 'Users' and 'Backup'</li>
+                    <li>The user's name and role are displayed on the right side</li>
+                </ul>
+
+                <p><strong>Welcome Banner:</strong></p>
+                <ul>
+                    <li>Personalized greeting with the logged-in user's name</li>
+                    <li>Today's date for reference</li>
+                    <li>Quick action button to add new hardware</li>
+                </ul>
+
+                <p><strong>Statistics Cards:</strong><br>
+                These six cards provide real-time inventory metrics:</p>
+                <ol>
+                    <li><strong>Total Items</strong> - Total number of unique hardware types</li>
+                    <li><strong>Total Quantity</strong> - Sum of all hardware units</li>
+                    <li><strong>Available</strong> - Units ready for deployment</li>
+                    <li><strong>In Use</strong> - Currently deployed units</li>
+                    <li><strong>Damaged</strong> - Units that need repair or replacement</li>
+                    <li><strong>In Repair</strong> - Units currently being fixed</li>
+                </ol>
+
+                <p><strong>Recent Hardware Section:</strong></p>
+                <ul>
+                    <li>Shows the 5 most recently added items</li>
+                    <li>Displays name, category, total quantity, and available count</li>
+                    <li>Quick link to view all hardware</li>
+                </ul>
+
+                <p><strong>Low Stock Alert Section:</strong></p>
+                <ul>
+                    <li>Highlights items with low availability (less than 2 units)</li>
+                    <li>Shows warning badges for items at risk</li>
+                    <li>Helps administrators prioritize restocking</li>
+                </ul>
+
+                <p><strong>Out of Stock Items:</strong></p>
+                <ul>
+                    <li>Lists all items with zero available units</li>
+                    <li>Shows where units currently are (in use, damaged, repair)</li>
+                    <li>Critical for inventory planning</li>
+                </ul>
+
+                <p><strong>Categories Summary:</strong></p>
+                <ul>
+                    <li>Visual overview of all hardware categories</li>
+                    <li>Shows item count and total quantity per category</li>
+                    <li>Examples: CPU, RAM, SSD, HDD, Monitor, Keyboard, etc.</li>
+                </ul>
+                <p>This dashboard gives administrators immediate visibility into inventory health and alerts them to potential issues."</p>
+            </div>
+
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Point to the navigation bar and explain each menu item</li>
+                <li>Show the statistics cards and their real-time values</li>
+                <li>Scroll down to show recent hardware</li>
+                <li>Show the low stock alert section</li>
+                <li>Explain the categories summary</li>
+            </ol>
+        </section>
+
+        <section id="4-hardware-management">
+            <h2>4. Hardware Management</h2>
+            <p><strong>URL:</strong> <code>pages/hardware.php</code></p>
+
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"The Hardware Management page is where users can view, add, edit, and manage all hardware items in the inventory.</p>
+
+                <p><strong>Page Header:</strong></p>
+                <ul>
+                    <li>Clear title with total item count</li>
+                    <li>Import CSV button for bulk data entry</li>
+                    <li>Add Hardware button for individual entries</li>
+                </ul>
+
+                <p><strong>Table Features:</strong></p>
+                <ul>
+                    <li><strong>Search:</strong> Click the search button or press '/' to open the search panel. Search filters the table in real-time by name, category, brand, or model.</li>
+                    <li><strong>Filters:</strong> Filter by category, brand, or model using the filter dropdown</li>
+                    <li><strong>Export:</strong> Download inventory data as CSV for reporting</li>
+                    <li><strong>Pagination:</strong> Navigate through large datasets</li>
+                </ul>
+
+                <p><strong>Hardware Table Columns:</strong></p>
+                <ul>
+                    <li>Checkbox for batch selection</li>
+                    <li>Name and category</li>
+                    <li>Brand/Model information</li>
+                    <li>Serial number</li>
+                    <li>Total quantity</li>
+                    <li>Available (unused) quantity</li>
+                    <li>In use, damaged, and repair quantities</li>
+                    <li>Location</li>
+                    <li>Action buttons (Edit/Delete)</li>
+                </ul>
+
+                <p><strong>Batch Operations:</strong></p>
+                <ul>
+                    <li>Select multiple items using checkboxes</li>
+                    <li>Update status in bulk (change quantities)</li>
+                    <li>Delete multiple items at once</li>
+                </ul>
+                <p>Let me demonstrate adding a new hardware item..."</p>
+            </div>
+
+            <h3>4.1 Adding Hardware</h3>
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"Click the 'Add Hardware' button to open the form.</p>
+                <p><strong>Form Fields:</strong></p>
+                <ul>
+                    <li><strong>Hardware Name</strong> (required) - Descriptive name like 'Intel Core i5-12400'</li>
+                    <li><strong>Category</strong> (required) - Select from existing categories or add new</li>
+                    <li><strong>Type</strong> - Specific type within category</li>
+                    <li><strong>Brand</strong> - Manufacturer name</li>
+                    <li><strong>Model</strong> - Model number</li>
+                    <li><strong>Serial Number</strong> - For tracking individual units</li>
+                    <li><strong>Location</strong> - Physical location (Lab 1, Lab 2, Office, etc.)</li>
+                </ul>
+                <p><strong>Quantity Fields:</strong></p>
+                <ul>
+                    <li><strong>Available</strong> - Units ready for deployment</li>
+                    <li><strong>In Use</strong> - Currently deployed units</li>
+                    <li><strong>Damaged</strong> - Broken units</li>
+                    <li><strong>In Repair</strong> - Units being fixed</li>
+                </ul>
+                <p>The total quantity is automatically calculated from these four fields."</p>
+            </div>
+
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Click "Add Hardware" button</li>
+                <li>Fill in sample data</li>
+                <li>Show category dropdown (with "Add New Category" option)</li>
+                <li>Show location dropdown</li>
+                <li>Explain quantity fields</li>
+                <li>Submit the form</li>
+            </ol>
+
+            <h3>4.2 Editing Hardware</h3>
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"To edit an item, click the Edit button. The form pre-fills with existing data, and you can modify any field. All changes are logged in the audit trail."</p>
+            </div>
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Click Edit on an existing item</li>
+                <li>Change a quantity</li>
+                <li>Save and show the update</li>
+            </ol>
+
+            <h3>4.3 Deleting Hardware (Soft Delete)</h3>
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"When you delete hardware, it's not permanently removed. The system uses 'soft delete' - items are moved to trash and can be restored.</p>
+                <p><strong>Trash/Deleted Items View:</strong></p>
+                <ul>
+                    <li>Click 'View Trash' to see deleted items</li>
+                    <li>Items can be restored by any logged-in user</li>
+                    <li>Only admins can permanently delete items"</li>
+                </ul>
+            </div>
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Delete an item (soft delete)</li>
+                <li>Click "View Trash"</li>
+                <li>Show restore and permanent delete options</li>
+            </ol>
+
+            <h3>4.4 CSV Import</h3>
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"For bulk data entry, use the CSV Import feature.</p>
+                <p><strong>CSV Format:</strong><br>
+                The system expects these columns:<br>
+                <code>name, category, type, brand, model, serial_number, unused_quantity, in_use_quantity, damaged_quantity, repair_quantity, location</code></p>
+                <p><strong>Import Process:</strong></p>
+                <ol>
+                    <li>Click 'Import CSV'</li>
+                    <li>Select your file</li>
+                    <li>Optionally set a default location</li>
+                    <li>Preview the data</li>
+                    <li>Click Import</li>
+                </ol>
+                <p>All imported items are automatically logged in the audit trail."</p>
+            </div>
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Click "Import CSV" button</li>
+                <li>Show the format instructions</li>
+                <li>Demonstrate with sample_hardware.csv if available</li>
+            </ol>
+        </section>
+
+        <section id="5-audit-trail-history">
+            <h2>5. Audit Trail (History)</h2>
+            <p><strong>URL:</strong> <code>pages/history.php</code></p>
+
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"The Audit Trail page provides a complete history of all inventory changes. This is crucial for accountability and tracking.</p>
+
+                <p><strong>Logged Actions:</strong></p>
+                <ul>
+                    <li><span style="color:green;font-weight:bold;">Added</span> - New hardware items</li>
+                    <li><span style="color:orange;font-weight:bold;">Updated</span> - Modified items</li>
+                    <li><span style="color:red;font-weight:bold;">Deleted</span> - Removed items</li>
+                    <li><span style="color:blue;font-weight:bold;">Restored</span> - Items recovered from trash</li>
+                </ul>
+
+                <p><strong>Information Captured:</strong></p>
+                <ul>
+                    <li>Date and time of the action</li>
+                    <li>Hardware item name and serial number</li>
+                    <li>Category</li>
+                    <li>Who made the change</li>
+                    <li>Quantity changes</li>
+                    <li>Before and after status</li>
+                </ul>
+
+                <p><strong>Filtering Options:</strong></p>
+                <ul>
+                    <li>Filter by action type</li>
+                    <li>Filter by date range</li>
+                    <li>Search by hardware name or user</li>
+                </ul>
+
+                <p><strong>Denormalized Data:</strong><br>
+                The system stores complete information at the time of the action, so history is preserved even if the original hardware or user is later deleted.</p>
+                <p>This audit trail meets compliance requirements and helps track who changed what and when."</p>
+            </div>
+
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Show the history table</li>
+                <li>Demonstrate the action type filter</li>
+                <li>Show date range filtering</li>
+                <li>Point out the before/after status columns</li>
+                <li>Explain how deleted items are still tracked</li>
+            </ol>
+        </section>
+
+        <section id="6-user-management-admin-only">
+            <h2>6. User Management (Admin Only)</h2>
+            <p><strong>URL:</strong> <code>pages/users.php</code></p>
+
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"The User Management page is only accessible to administrators. Here, admins can create, edit, and delete user accounts.</p>
+                
+                <p><strong>User Roles:</strong></p>
+                <ul>
+                    <li><strong>Admin</strong> - Full access to all features including user management and backup</li>
+                    <li><strong>Staff</strong> - Can manage hardware and view history, but cannot manage users or backups</li>
+                </ul>
+
+                <p><strong>User Table Shows:</strong></p>
+                <ul>
+                    <li>Username and full name</li>
+                    <li>Role (Admin/Staff)</li>
+                    <li>Online/Offline status with real-time indicator</li>
+                    <li>Last login time</li>
+                    <li>Live session duration for online users</li>
+                    <li>Date account was created</li>
+                </ul>
+
+                <p><strong>Real-time Features:</strong></p>
+                <ul>
+                    <li>The table updates automatically every 5 seconds</li>
+                    <li>Online users show a green 'Online' badge</li>
+                    <li>Session timer counts up in real-time</li>
+                </ul>
+
+                <p><strong>Live Indicator:</strong></p>
+                <ul>
+                    <li>The green 'Live' badge shows the table auto-refreshes</li>
+                    <li>No need to manually reload the page</li>
+                </ul>
+
+                <p><strong>Managing Users:</strong></p>
+                <ul>
+                    <li>Click 'Add User' to create a new account</li>
+                    <li>Edit button to modify user details</li>
+                    <li>Delete removes the user (cannot delete yourself)</li>
+                    <li>Password can be reset by admin"</li>
+                </ul>
+            </div>
+
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Show the user table with status indicators</li>
+                <li>Point out the live session timers</li>
+                <li>Click "Add User" and show the form</li>
+                <li>Demonstrate editing a user</li>
+                <li>Show that you cannot delete your own account</li>
+            </ol>
+        </section>
+
+        <section id="7-backup-restore-admin-only">
+            <h2>7. Backup & Restore (Admin Only)</h2>
+            <p><strong>URL:</strong> <code>pages/backup.php</code></p>
+
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"The Backup & Restore page allows administrators to create database backups and restore from previous backups.</p>
+
+                <p><strong>Backup Includes:</strong></p>
+                <ul>
+                    <li>All categories</li>
+                    <li>All hardware items</li>
+                    <li>All user accounts</li>
+                    <li>Complete audit trail/history</li>
+                </ul>
+
+                <p><strong>Creating a Backup:</strong></p>
+                <ul>
+                    <li>Click 'Create Backup Now'</li>
+                    <li>System generates a timestamped SQL file</li>
+                    <li>Files are stored in the /backups directory</li>
+                </ul>
+
+                <p><strong>Available Backups List:</strong></p>
+                <ul>
+                    <li>Shows all backup files</li>
+                    <li>Creation date and time</li>
+                    <li>File size</li>
+                    <li>Download, Restore, and Delete options</li>
+                </ul>
+
+                <p><strong>Restoring from Backup:</strong></p>
+                <ul>
+                    <li>Select a backup file</li>
+                    <li>Confirm the restore action</li>
+                    <li>WARNING: This replaces ALL current data</li>
+                </ul>
+
+                <p><strong>Security Validation:</strong></p>
+                <ul>
+                    <li>Only backups created by this system can be restored</li>
+                    <li>Prevents malicious SQL injection</li>
+                    <li>Checks for dangerous SQL patterns</li>
+                </ul>
+                <p>Regular backups are recommended to prevent data loss."</p>
+            </div>
+
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Click "Create Backup Now"</li>
+                <li>Show the new backup in the list</li>
+                <li>Download a backup to show the file</li>
+                <li>Explain the restore warning (do not actually restore during demo)</li>
+            </ol>
+        </section>
+
+        <section id="8-profile-settings">
+            <h2>8. Profile Settings</h2>
+            <p><strong>URL:</strong> <code>pages/profile.php</code></p>
+
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"Every logged-in user can access their Profile Settings from the user dropdown menu in the top navigation.</p>
+
+                <p><strong>Profile Information:</strong></p>
+                <ul>
+                    <li>Change username</li>
+                    <li>Update full name (display name)</li>
+                    <li>View current role (cannot be self-modified)</li>
+                </ul>
+
+                <p><strong>Change Password:</strong></p>
+                <ul>
+                    <li>Enter current password for verification</li>
+                    <li>Set new password (minimum 6 characters)</li>
+                    <li>Confirm new password</li>
+                    <li>Password visibility toggle for all fields</li>
+                    <li>Confirmation dialog before changing</li>
+                </ul>
+
+                <p><strong>Security:</strong></p>
+                <ul>
+                    <li>Passwords are securely hashed</li>
+                    <li>Current password must be verified</li>
+                    <li>Session remains active after password change"</li>
+                </ul>
+            </div>
+
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Click on user name in navigation</li>
+                <li>Select "Profile Settings"</li>
+                <li>Show the profile form</li>
+                <li>Demonstrate the password change fields (don't actually change)</li>
+                <li>Show the password visibility toggles</li>
+            </ol>
+        </section>
+
+        <section id="9-logout">
+            <h2>9. Logout</h2>
+            <div class="script-box">
+                <span class="script-title">What to say:</span>
+                <p>"To log out, click on your name in the top navigation and select 'Sign Out'.</p>
+                <p><strong>Logout Process:</strong></p>
+                <ul>
+                    <li>Session is properly destroyed</li>
+                    <li>User is redirected to login page</li>
+                    <li>Session duration is recorded for the user's record</li>
+                </ul>
+                <p><strong>Session Tracking:</strong></p>
+                <ul>
+                    <li>The system tracks how long each user is logged in</li>
+                    <li>This information is visible in the User Management page</li>
+                    <li>Helps monitor system usage"</li>
+                </ul>
+            </div>
+            <p><strong>Demo Actions:</strong></p>
+            <ol class="action-list">
+                <li>Click user dropdown</li>
+                <li>Click "Sign Out"</li>
+                <li>Show redirect to login page</li>
+            </ol>
+        </section>
+
+        <section id="10-key-features-summary">
+            <h2>10. Key Features Summary</h2>
+            <div class="script-box">
+                <span class="script-title">What to say for closing:</span>
+                <p>"To summarize, the PC Hardware Inventory System provides:</p>
+                <p><strong>For Daily Operations:</strong></p>
+                <ul>
+                    <li>Easy hardware tracking with detailed information</li>
+                    <li>Quick search and filtering capabilities</li>
+                    <li>Bulk import via CSV for efficiency</li>
+                    <li>Real-time dashboard statistics</li>
+                </ul>
+                <p><strong>For Management:</strong></p>
+                <ul>
+                    <li>Complete audit trail for accountability</li>
+                    <li>Role-based access control</li>
+                    <li>Low stock and out-of-stock alerts</li>
+                    <li>Category-based organization</li>
+                </ul>
+                <p><strong>For IT Administration:</strong></p>
+                <ul>
+                    <li>User account management</li>
+                    <li>Database backup and restore</li>
+                    <li>Soft delete with recovery option</li>
+                    <li>Session tracking</li>
+                </ul>
+                <p><strong>Technical Excellence:</strong></p>
+                <ul>
+                    <li>Responsive design works on all devices</li>
+                    <li>Modern UI/UX following HCI principles</li>
+                    <li>Secure authentication and authorization</li>
+                    <li>SQL injection and XSS prevention</li>
+                </ul>
+                <p><strong>Questions?</strong></p>
+                <p>Thank you for your attention. Do you have any questions about the system?"</p>
+            </div>
+        </section>
+
+        <section id="appendix">
+            <h2>Appendix: Quick Reference</h2>
+
+            <h3>Default Credentials</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Username</th>
+                        <th>Password</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Admin</td>
+                        <td>admin</td>
+                        <td>password123</td>
+                    </tr>
+                    <tr>
+                        <td>Staff</td>
+                        <td>staff01</td>
+                        <td>password123</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Navigation URLs</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Page</th>
+                        <th>URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Login</td>
+                        <td><code>/login.php</code></td>
+                    </tr>
+                    <tr>
+                        <td>Dashboard</td>
+                        <td><code>/dashboard.php</code></td>
+                    </tr>
+                    <tr>
+                        <td>Hardware</td>
+                        <td><code>/pages/hardware.php</code></td>
+                    </tr>
+                    <tr>
+                        <td>History</td>
+                        <td><code>/pages/history.php</code></td>
+                    </tr>
+                    <tr>
+                        <td>Users (Admin)</td>
+                        <td><code>/pages/users.php</code></td>
+                    </tr>
+                    <tr>
+                        <td>Backup (Admin)</td>
+                        <td><code>/pages/backup.php</code></td>
+                    </tr>
+                    <tr>
+                        <td>Profile</td>
+                        <td><code>/pages/profile.php</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Keyboard Shortcuts</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/</code></td>
+                        <td>Open search panel</td>
+                    </tr>
+                    <tr>
+                        <td><code>Esc</code></td>
+                        <td>Close search panel</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>CSV Import Format</h3>
+            <pre><code>name,category,type,brand,model,serial_number,unused_quantity,in_use_quantity,damaged_quantity,repair_quantity,location</code></pre>
+        </section>
+
+    </main>
+
+    <footer>
+        <p><em>This demonstration script was created for ACLC College of Ormoc PC Hardware Inventory System.</em></p>
+    </footer>
+
+</div>
+
+</body>
+</html>
