@@ -642,7 +642,8 @@ function refreshUsersTable() {
             }
             
             // Update server-client time offset for accurate live duration
-            if (data.server_time) {
+            // Validate that server_time is a valid positive timestamp
+            if (data.server_time && typeof data.server_time === 'number' && data.server_time > 0) {
                 serverClientTimeOffset = data.server_time - Date.now();
             }
             
