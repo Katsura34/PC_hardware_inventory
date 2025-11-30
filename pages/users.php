@@ -283,9 +283,20 @@ include '../includes/header.php';
                             <?php endif; ?>
                         </td>
                         <td data-label="Session Duration" class="d-none d-lg-table-cell">
-                            <?php if (!empty($user['last_login_duration'])): ?>
+                            <?php if ($is_user_active && !empty($user['last_login'])): ?>
+                            <!-- Live session counter for online users -->
                             <small>
-                                <span class="badge bg-secondary">
+                                <span class="badge bg-success live-session-badge" 
+                                      data-login-time="<?php echo strtotime($user['last_login']); ?>"
+                                      title="Current session started at <?php echo date('M d, Y H:i', strtotime($user['last_login'])); ?>">
+                                    <i class="bi bi-play-circle me-1" aria-hidden="true"></i>
+                                    <span class="live-duration">Calculating...</span>
+                                </span>
+                            </small>
+                            <?php elseif (!empty($user['last_login_duration'])): ?>
+                            <!-- Last session duration for offline users -->
+                            <small>
+                                <span class="badge bg-secondary" title="Last session duration">
                                     <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>
                                     <?php echo escapeOutput($login_duration_display); ?>
                                 </span>
@@ -441,6 +452,53 @@ if (!window.usersPageKeyboardHandlerAdded) {
         }
     });
 }
+
+// ============ Live Session Duration Counter ============
+// Format duration in seconds to human-readable string
+function formatDuration(seconds) {
+    if (seconds < 60) {
+        return seconds + ' sec';
+    } else if (seconds < 3600) {
+        var minutes = Math.floor(seconds / 60);
+        var secs = seconds % 60;
+        return minutes + ' min' + (secs > 0 ? ' ' + secs + ' sec' : '');
+    } else {
+        var hours = Math.floor(seconds / 3600);
+        var minutes = Math.floor((seconds % 3600) / 60);
+        return hours + ' hr' + (minutes > 0 ? ' ' + minutes + ' min' : '');
+    }
+}
+
+// Update all live session duration counters
+function updateLiveSessionDurations() {
+    var badges = document.querySelectorAll('.live-session-badge');
+    var currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+    
+    badges.forEach(function(badge) {
+        var loginTime = parseInt(badge.getAttribute('data-login-time'), 10);
+        if (loginTime) {
+            var duration = currentTime - loginTime;
+            // Ensure duration is not negative (in case of clock sync issues)
+            if (duration < 0) {
+                duration = 0;
+            }
+            var durationSpan = badge.querySelector('.live-duration');
+            if (durationSpan) {
+                durationSpan.textContent = formatDuration(duration);
+            }
+        }
+    });
+}
+
+// Initialize live session counters and update every second
+var liveSessionIntervalId = null;
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial update
+    updateLiveSessionDurations();
+    
+    // Update every second (store interval ID for potential cleanup)
+    liveSessionIntervalId = setInterval(updateLiveSessionDurations, 1000);
+});
 </script>
 
 <!-- Add User Modal -->
