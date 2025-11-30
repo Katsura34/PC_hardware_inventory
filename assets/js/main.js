@@ -627,7 +627,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                // Get the response text first to check for non-JSON responses
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        // If JSON parsing fails, provide a helpful error message
+                        console.error('Server response was not valid JSON:', text);
+                        throw new Error('Server returned an invalid response. Please check if you are logged in and try again.');
+                    }
+                });
+            })
             .then(data => {
                 hideLoading();
                 importBtn.disabled = false;

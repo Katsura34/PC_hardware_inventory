@@ -1,10 +1,49 @@
 <?php
+// Suppress PHP errors from outputting HTML - capture them instead
+// This prevents "Unexpected token '<'" JSON parse errors
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+// Start output buffering to catch any unexpected output
+ob_start();
+
+// Custom error handler to capture errors and return JSON
+set_error_handler(function($severity, $message, $file, $line) {
+    // Don't handle errors that are suppressed with @
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+// Shutdown handler to catch fatal errors
+register_shutdown_function(function() {
+    $error = error_get_last();
+    // Handle fatal error types: E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR
+    $fatal_error_types = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR];
+    if ($error !== null && in_array($error['type'], $fatal_error_types)) {
+        // Clear any buffered output
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        header('Content-Type: application/json');
+        // Use a generic error message to avoid exposing sensitive information
+        echo json_encode([
+            'success' => false,
+            'message' => 'A server error occurred while processing the CSV file. Please try again or contact support if the problem persists.'
+        ]);
+    }
+});
+
 require_once '../config/database.php';
 require_once '../config/session.php';
 require_once '../config/security.php';
 
 // Require login
 requireLogin();
+
+// Clear any output that might have been generated during includes
+ob_clean();
 
 header('Content-Type: application/json');
 
@@ -255,8 +294,15 @@ try {
     ]);
     
 } catch (Exception $e) {
+    // Clear any buffered output that might have occurred
+    if (ob_get_level()) {
+        ob_clean();
+    }
     echo json_encode([
         'success' => false,
         'message' => 'Error processing CSV: ' . $e->getMessage()
     ]);
 }
+
+// End output buffering and send response
+ob_end_flush();
