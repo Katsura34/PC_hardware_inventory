@@ -148,6 +148,24 @@ function updateLoadingProgress(percent) {
     }
 }
 
+// Update loading message
+function updateLoadingMessage(message, subtext = '') {
+    const messageEl = document.getElementById('loadingMessage');
+    const subtextEl = document.getElementById('loadingSubtext');
+    
+    if (messageEl) {
+        messageEl.textContent = message;
+    }
+    if (subtextEl) {
+        if (subtext) {
+            subtextEl.textContent = subtext;
+            subtextEl.style.display = 'block';
+        } else {
+            subtextEl.style.display = 'none';
+        }
+    }
+}
+
 // Hide loading overlay
 function hideLoading() {
     const overlay = document.getElementById('loadingOverlay');
@@ -610,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Handle CSV import form submission
+    // Handle CSV import form submission with progress tracking
     if (importForm) {
         importForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -620,39 +638,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalText = importBtn.innerHTML;
             
             importBtn.disabled = true;
-            importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
-            showLoading('Importing CSV data...');
+            importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Starting import...';
+            
+            // Show loading with progress bar
+            showLoading('Starting import job...', '0%');
+            updateLoadingProgress(0);
             
             fetch(window.BASE_PATH + 'pages/import_csv.php', {
                 method: 'POST',
                 body: formData
             })
             .then(response => {
-                // Get the response text first to check for non-JSON responses
                 return response.text().then(text => {
                     try {
                         return JSON.parse(text);
                     } catch (e) {
-                        // If JSON parsing fails, provide a helpful error message
                         console.error('Server response was not valid JSON:', text);
                         throw new Error('Server returned an invalid response. Please check if you are logged in and try again.');
                     }
                 });
             })
             .then(data => {
-                hideLoading();
-                importBtn.disabled = false;
-                importBtn.innerHTML = originalText;
-                
-                if (data.success) {
-                    showAlert(data.message, 'Import Successful', 'success').then(function() {
-                        // Close modal and reload page after alert is dismissed
-                        showLoading('Refreshing page...');
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
-                        modal.hide();
-                        window.location.reload();
-                    });
+                if (data.success && data.job_id) {
+                    // Job started successfully, start polling for progress
+                    updateLoadingMessage('Importing CSV data...', 'Processing rows...');
+                    pollImportProgress(data.job_id, importBtn, originalText);
                 } else {
+                    // Job failed to start
+                    hideLoading();
+                    importBtn.disabled = false;
+                    importBtn.innerHTML = originalText;
                     showAlert('Import failed: ' + data.message, 'Import Failed', 'error');
                 }
             })
@@ -660,11 +675,89 @@ document.addEventListener('DOMContentLoaded', function() {
                 hideLoading();
                 importBtn.disabled = false;
                 importBtn.innerHTML = originalText;
-                showAlert('Error importing CSV: ' + error.message, 'Error', 'error');
+                showAlert('Error starting import: ' + error.message, 'Error', 'error');
             });
         });
     }
 });
+
+/**
+ * Poll import progress every 1 second
+ */
+function pollImportProgress(jobId, importBtn, originalText) {
+    let pollInterval = setInterval(function() {
+        fetch(window.BASE_PATH + 'pages/import_progress.php?job_id=' + jobId)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    clearInterval(pollInterval);
+                    hideLoading();
+                    importBtn.disabled = false;
+                    importBtn.innerHTML = originalText;
+                    showAlert('Failed to get import progress', 'Error', 'error');
+                    return;
+                }
+                
+                // Update progress bar and message
+                const progress = data.progress || 0;
+                const processed = data.processed || 0;
+                const total = data.total || 0;
+                
+                updateLoadingProgress(progress);
+                updateLoadingMessage(
+                    'Importing CSV data...',
+                    `Processed ${processed}${total > 0 ? ' of ' + total : ''} rows (${progress}%)`
+                );
+                
+                // Check if completed
+                if (data.status === 'completed') {
+                    clearInterval(pollInterval);
+                    updateLoadingProgress(100);
+                    
+                    // Build success message
+                    let message = `Successfully imported ${data.imported || 0} new record(s)`;
+                    if (data.updated > 0) {
+                        message += `, updated ${data.updated} existing record(s)`;
+                    }
+                    if (data.categories_created > 0) {
+                        message += `, created ${data.categories_created} new category(ies)`;
+                    }
+                    if (data.errors && data.errors.length > 0) {
+                        message += `\n\nWarnings:\n${data.errors.slice(0, 5).join('\n')}`;
+                        if (data.errors.length > 5) {
+                            message += `\n...and ${data.errors.length - 5} more`;
+                        }
+                    }
+                    
+                    hideLoading();
+                    showAlert(message, 'Import Completed', 'success').then(function() {
+                        // Close modal and reload page
+                        showLoading('Refreshing page...');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                        window.location.reload();
+                    });
+                } else if (data.status === 'failed') {
+                    clearInterval(pollInterval);
+                    hideLoading();
+                    importBtn.disabled = false;
+                    importBtn.innerHTML = originalText;
+                    
+                    let errorMsg = 'Import failed';
+                    if (data.errors && data.errors.length > 0) {
+                        errorMsg += ': ' + data.errors.join(', ');
+                    }
+                    showAlert(errorMsg, 'Import Failed', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error polling progress:', error);
+                // Continue polling even on error (network hiccup)
+            });
+    }, 1000); // Poll every 1 second
+}
 
 // Location filter functionality
 document.addEventListener('DOMContentLoaded', function() {
